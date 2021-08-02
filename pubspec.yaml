@@ -1,5 +1,5 @@
 name: schema
-description: A new Flutter project.
+description: An all-in-one customizable approach to managing notes, tasks, events, and more.
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -24,6 +24,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  ### Tried to use latest version but required a newer version of meta than flutter_test
+  ###json_annotation:
+
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -32,6 +35,10 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  ###build_runner: ^2.0.0
+  ### Tried to use latest version but required a newer version of meta than flutter_test
+  ###json_serializable:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
