@@ -1,6 +1,6 @@
 // It's a note, what can I say
 class Note {
-  final int id;
+  int id;
   int index;
   int tempIndex;
   String title;
@@ -8,6 +8,8 @@ class Note {
   bool drag;
   double dragX = 0;
   double dragY = 0;
+  bool deleted;
 
-  Note(this.id, this.index, this.title, this.text, this.tempIndex, this.drag);
+  Note(this.id, this.index, this.title, this.text, this.tempIndex, this.drag,
+      {this.deleted = false});
 }
