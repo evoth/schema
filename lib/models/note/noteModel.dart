@@ -10,6 +10,13 @@ class Note {
   double dragY = 0;
   bool deleted;
 
-  Note(this.id, this.index, this.title, this.text, this.tempIndex, this.drag,
-      {this.deleted = false});
+  Note(
+    this.id,
+    this.index,
+    this.title,
+    this.text,
+    this.tempIndex,
+    this.drag, {
+    this.deleted = false,
+  });
 }

@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:schema/models/note/noteModel.dart';
-import 'dart:io' show Platform;
+import "package:flutter/material.dart";
+import "package:schema/models/note/noteModel.dart";
+import "dart:io" show Platform;
 
 // Unfocuses text fields and dismisses keyboard
 void unfocus(BuildContext context) {

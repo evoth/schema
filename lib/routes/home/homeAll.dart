@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:schema/layout/grid.dart';
-import 'package:schema/models/note/noteModel.dart';
-import 'package:schema/models/note/noteWidgetModel.dart';
-import 'package:schema/functions/general.dart';
-import 'package:schema/data/noteData.dart';
+import "package:flutter/material.dart";
+import "package:schema/layout/grid.dart";
+import "package:schema/models/note/noteModel.dart";
+import "package:schema/models/note/noteWidgetModel.dart";
+import "package:schema/functions/general.dart";
+import "package:schema/functions/constants.dart";
+import "package:schema/data/noteData.dart";
 
 class HomeScreenAll extends StatefulWidget {
   HomeScreenAll({Key? key}) : super(key: key);
@@ -18,11 +19,10 @@ class _HomeScreenAllState extends State<HomeScreenAll> {
   List<Note> _notes = noteData.notes;
 
   // Adds a new blank note
-  // *Doesn't need any special provider because it's changing the state directly?
   void _newNote() async {
     // Literally add a note
     _notes.add(
-      Note(noteData.idCounter, _notes.length, '', '', _notes.length, false),
+      Note(noteData.idCounter, _notes.length, "", "", _notes.length, false),
     );
     // Increases id counter by 1
     noteData.incId();
@@ -31,17 +31,19 @@ class _HomeScreenAllState extends State<HomeScreenAll> {
     int newIndex = _notes.length - 1;
     await Navigator.pushNamed(
       context,
-      '/edit0',
+      "/edit0",
       arguments: NoteWidgetData(_editNote, _deleteNote,
           note: _notes[newIndex], isNew: true),
     );
-    // Removes note if empty
+    // Removes note if empty or deleted
     if (_notes.length == newIndex + 1) {
-      if (_notes.last.title == '' && _notes.last.text == '') {
+      if (_notes.last.title == "" && _notes.last.text == "") {
         _notes.removeLast();
         ScaffoldMessenger.of(context)
           ..removeCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text('Empty note discarded')));
+          ..showSnackBar(SnackBar(content: Text(Constants.discardMessage)));
+      } else if (_notes.last.deleted) {
+        _deleteNote(_notes.length - 1);
       }
       setState(() {});
     }
@@ -64,7 +66,7 @@ class _HomeScreenAllState extends State<HomeScreenAll> {
     }
     ScaffoldMessenger.of(context)
       ..removeCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('Note deleted')));
+      ..showSnackBar(SnackBar(content: Text(Constants.deleteMessage)));
     setState(() {});
   }
 
@@ -88,13 +90,13 @@ class _HomeScreenAllState extends State<HomeScreenAll> {
     if (deleteMode) {
       return FloatingActionButton(
         onPressed: deleteNote,
-        tooltip: 'Delete Note',
+        tooltip: "Delete Note",
         child: Icon(Icons.delete),
       );
     } else {
       return FloatingActionButton(
         onPressed: _newNote,
-        tooltip: 'New Note',
+        tooltip: "New Note",
         child: Icon(Icons.add),
       );
     }
@@ -110,7 +112,8 @@ class _HomeScreenAllState extends State<HomeScreenAll> {
       child: Scaffold(
         // App bar with title
         appBar: new AppBar(
-          title: new Text('Simple Notes App (no save)'),
+          title: new Text(Constants.appTitle),
+          elevation: 0,
         ),
         // Stack so that buttons can go over the grid
         body: Stack(
@@ -123,7 +126,7 @@ class _HomeScreenAllState extends State<HomeScreenAll> {
               padding: const EdgeInsets.all(20),
               child: FloatingActionButton(
                 onPressed: _newNote,
-                tooltip: 'New Note',
+                tooltip: Constants.newNoteTip,
                 child: Icon(Icons.add),
               ),
             ),

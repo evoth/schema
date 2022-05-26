@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:schema/models/note/noteModel.dart';
-import 'package:schema/models/note/noteWidgetModel.dart';
-import 'package:schema/functions/general.dart';
-import 'package:schema/data/noteData.dart';
-import 'dart:math';
+import "package:flutter/material.dart";
+import "package:schema/models/note/noteModel.dart";
+import "package:schema/models/note/noteWidgetModel.dart";
+import "package:schema/functions/general.dart";
+import "package:schema/data/noteData.dart";
+import "dart:math";
 
 // Returns a note widget
 class NoteWidget extends StatefulWidget {
@@ -24,15 +24,20 @@ class _NoteWidgetState extends State<NoteWidget> {
       // Unfocuses text fields when dragged
       unfocus(context);
       // Gives grid some info about dragging
-      widget.noteWidgetData.drag1!(widget.noteWidgetData.note!.index, true,
-          originalX: widget.noteWidgetData.originalX,
-          originalY: widget.noteWidgetData.originalY);
+      widget.noteWidgetData.drag1!(
+        widget.noteWidgetData.note!.index,
+        true,
+        originalX: widget.noteWidgetData.originalX,
+        originalY: widget.noteWidgetData.originalY,
+      );
     }
 
     void _dragUpdateFunction(DragUpdateDetails dragDetails) {
       // Gives grid some info about dragging
       widget.noteWidgetData.drag2!(
-          widget.noteWidgetData.note!.index, dragDetails);
+        widget.noteWidgetData.note!.index,
+        dragDetails,
+      );
     }
 
     void _dragEndFunction(DraggableDetails dragDetails) {
@@ -55,14 +60,15 @@ class _NoteWidgetState extends State<NoteWidget> {
               width: constraints.maxWidth,
               height: constraints.maxHeight,
             ),
-            // Note when dragged (had to wrap in a Material because of a weird glitch)
+            // Note when dragged (had to wrap in a Material because of a glitch)
             feedback: Material(
               color: Colors.transparent,
               child: NoteWidgetBase(
-                  noteWidgetData: widget.noteWidgetData,
-                  width: constraints.maxWidth,
-                  height: constraints.maxHeight,
-                  select: true),
+                noteWidgetData: widget.noteWidgetData,
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+                select: true,
+              ),
             ),
             childWhenDragging: Container(),
             // See drag functions above
@@ -80,14 +86,15 @@ class _NoteWidgetState extends State<NoteWidget> {
               width: constraints.maxWidth,
               height: constraints.maxHeight,
             ),
-            // Note when dragged (had to wrap in a Material because of a weird glitch)
+            // Note when dragged (had to wrap in a Material because of a glitch)
             feedback: Material(
               color: Colors.transparent,
               child: NoteWidgetBase(
-                  noteWidgetData: widget.noteWidgetData,
-                  width: constraints.maxWidth,
-                  height: constraints.maxHeight,
-                  select: true),
+                noteWidgetData: widget.noteWidgetData,
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+                select: true,
+              ),
             ),
             childWhenDragging: Container(),
             // See drag functions above
@@ -105,13 +112,13 @@ class _NoteWidgetState extends State<NoteWidget> {
 
 // Returns a note widget base, used to draw the actual widget
 class NoteWidgetBase extends StatefulWidget {
-  NoteWidgetBase(
-      {Key? key,
-      required this.noteWidgetData,
-      required this.width,
-      required this.height,
-      this.select = false})
-      : super(key: key);
+  NoteWidgetBase({
+    Key? key,
+    required this.noteWidgetData,
+    required this.width,
+    required this.height,
+    this.select = false,
+  }) : super(key: key);
 
   // Defines data to be displayed and used
   // Data that's been handed down through the generations
@@ -132,19 +139,19 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
     if (widget.select) {
       return BoxDecoration(
         color: Theme.of(context).primaryColor.withOpacity(0.8),
-        border: Border.all(
+        /*border: Border.all(
           color: Theme.of(context).primaryColorDark,
           width: 2,
-        ),
+        ),*/
         borderRadius: BorderRadius.circular(10),
       );
     } else {
       return BoxDecoration(
         color: Theme.of(context).backgroundColor.withOpacity(0.8),
-        border: Border.all(
+        /*border: Border.all(
           color: Theme.of(context).primaryColor,
           width: 1,
-        ),
+        ),*/
         borderRadius: BorderRadius.circular(10),
       );
     }
@@ -155,7 +162,7 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
     // Navigate to the second screen using a named route.
     await Navigator.pushNamed(
       context,
-      '/edit0',
+      "/edit0",
       arguments: widget.noteWidgetData,
     );
     // Removes note if deleted
@@ -171,13 +178,13 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
     // Adds widgets conditionally
     List<Widget> texts = [];
     // If there's a title
-    if (widget.noteWidgetData.note!.title != '') {
+    if (widget.noteWidgetData.note!.title != "") {
       // Title
       texts.add(Text(
         widget.noteWidgetData.note!.title,
         style:
             Theme.of(context).textTheme.headline6!.apply(fontSizeFactor: 0.9),
-        // Allow for two lines, overflow with ellipsis (it's nice how easy Flutter makes this)
+        // Allow for two lines, overflow with ellipsis
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ));
@@ -245,16 +252,17 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
 // Returns a list of note widgets
 class NoteWidgetList {
   List<NoteWidget> all(List<Note> notes, NoteWidgetData noteWidgetData) {
-    return notes
-        .map(
-          (note) => NoteWidget(
-            noteWidgetData: NoteWidgetData(
-                noteWidgetData.edit, noteWidgetData.delete,
-                drag1: noteWidgetData.drag1,
-                drag2: noteWidgetData.drag2,
-                note: note),
-          ),
-        )
-        .toList();
+    return List.generate(
+      notes.length,
+      (i) => NoteWidget(
+        noteWidgetData: NoteWidgetData(
+          noteWidgetData.edit,
+          noteWidgetData.delete,
+          drag1: noteWidgetData.drag1,
+          drag2: noteWidgetData.drag2,
+          note: notes[i],
+        ),
+      ),
+    );
   }
 }

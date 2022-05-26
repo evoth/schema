@@ -1,23 +1,19 @@
-import 'package:flutter/material.dart';
-import 'package:schema/models/note/noteModel.dart';
-import 'package:schema/models/note/noteWidgetModel.dart';
+import "package:flutter/material.dart";
+import "package:schema/models/note/noteModel.dart";
+import "package:schema/models/note/noteWidgetModel.dart";
+import "package:schema/functions/constants.dart";
 
 // Returns a note widget base, used to draw the actual widget
-class NoteEditFields extends StatefulWidget {
+class NoteEditFields extends StatelessWidget {
   NoteEditFields(this._noteWidgetData);
 
   // Note widget data, yep
   final NoteWidgetData _noteWidgetData;
 
   @override
-  _NoteEditFieldsState createState() => _NoteEditFieldsState();
-}
-
-class _NoteEditFieldsState extends State<NoteEditFields> {
-  @override
   Widget build(BuildContext context) {
     // Sets note variable for convenience
-    Note _note = widget._noteWidgetData.note!;
+    Note _note = _noteWidgetData.note!;
 
     // Text controllers to be used while editing
     final _customTextController0 = TextEditingController(text: _note.title);
@@ -37,12 +33,10 @@ class _NoteEditFieldsState extends State<NoteEditFields> {
             errorBorder: InputBorder.none,
             disabledBorder: InputBorder.none,
             // Text label
-            hintText: 'Title',
+            hintText: Constants.titleHint,
           ),
           // Text style
           style: Theme.of(context).textTheme.headline6,
-          // Can fil multiple lines
-          maxLines: null,
           // Pre-populates text
           controller: _customTextController0,
           // Capitalization
@@ -50,7 +44,7 @@ class _NoteEditFieldsState extends State<NoteEditFields> {
           // Edits the note when text is changed
           onChanged: (newText) {
             _note.title = newText;
-            widget._noteWidgetData.edit();
+            _noteWidgetData.edit();
           },
         ),
         Expanded(
@@ -65,7 +59,7 @@ class _NoteEditFieldsState extends State<NoteEditFields> {
               errorBorder: InputBorder.none,
               disabledBorder: InputBorder.none,
               // Text label
-              hintText: 'Note',
+              hintText: Constants.textHint,
             ),
             // Text style
             //style: Theme.of(context).textTheme.bodyText1,
@@ -73,7 +67,7 @@ class _NoteEditFieldsState extends State<NoteEditFields> {
             keyboardType: TextInputType.multiline,
             maxLines: null,
             // Focus on this field initially
-            autofocus: widget._noteWidgetData.isNew,
+            autofocus: _noteWidgetData.isNew,
             // Pre-populates text
             controller: _customTextController1,
             // Capitalization
@@ -81,7 +75,7 @@ class _NoteEditFieldsState extends State<NoteEditFields> {
             // Edits the note when text is changed
             onChanged: (newText) {
               _note.text = newText;
-              widget._noteWidgetData.edit();
+              _noteWidgetData.edit();
             },
           ),
         ),

@@ -1,6 +1,7 @@
-import 'package:schema/models/note/noteModel.dart';
+import "package:schema/models/note/noteModel.dart";
 
-// Easy way to store and pass all the data needed by notes widgets at multiple levels
+// Easy way to store and pass all the data needed by notes widgets at multiple
+// levels
 class NoteWidgetData {
   Note? note;
   final Function edit;
@@ -11,11 +12,14 @@ class NoteWidgetData {
   final double originalY;
   final bool isNew;
 
-  NoteWidgetData(this.edit, this.delete,
-      {this.drag1,
-      this.drag2,
-      this.note,
-      this.originalX = 0,
-      this.originalY = 0,
-      this.isNew = false});
+  NoteWidgetData(
+    this.edit,
+    this.delete, {
+    this.drag1,
+    this.drag2,
+    this.note,
+    this.originalX = 0,
+    this.originalY = 0,
+    this.isNew = false,
+  });
 }

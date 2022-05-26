@@ -1,6 +1,6 @@
-import 'package:schema/models/note/noteModel.dart';
+import "package:schema/models/note/noteModel.dart";
 
-// It's a note, what can I say
+// Keeps track of notes and counts id
 class NoteData {
   List<Note> notes;
   int idCounter;

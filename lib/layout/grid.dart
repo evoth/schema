@@ -1,47 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:schema/widgets/noteWidget.dart';
-import 'package:schema/models/note/noteModel.dart';
-import 'package:schema/models/note/noteWidgetModel.dart';
-import 'dart:math';
-import 'package:schema/functions/general.dart';
-import 'package:schema/data/noteData.dart';
-
-/*
-// Fixed grid
-class Grid extends StatefulWidget {
-  Grid({Key? key, required this.notes, required this.noteWidgetData},)
-      : super(key: key);
-
-  // A list of notes to be displayed
-  // *Will have to deal with different types of notes in the future
-  final List<Note> notes;
-
-  // Gets note wdget data to pass down
-  final NoteWidgetData noteWidgetData;
-
-  @override
-  _GridState createState() => _GridState();
-}
-
-class _GridState extends State<Grid> {
-  // Returns number of columns based on space available (min width 250)
-  int _nColumns(double gridWidth) {
-    return max((gridWidth) ~/ 200, 2);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-        builder: (context, constraints) => GridView.count(
-            padding: const EdgeInsets.all(10),
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            crossAxisCount: _nColumns(constraints.maxWidth),
-            children:
-                NoteWidgetList().all(widget.notes, widget.noteWidgetData),),);
-  }
-}
-*/
+import "package:flutter/material.dart";
+import "package:schema/widgets/noteWidget.dart";
+import "package:schema/models/note/noteModel.dart";
+import "package:schema/models/note/noteWidgetModel.dart";
+import "dart:math";
+import "package:schema/functions/general.dart";
+import "package:schema/functions/constants.dart";
+import "package:schema/data/noteData.dart";
 
 // Dynamic, animated grid
 class DynamicGrid extends StatefulWidget {
@@ -61,25 +25,19 @@ class _DynamicGridState extends State<DynamicGrid> {
   // Sets grid style variables
   final double _gridPadding = 10;
 
-  // Stores the constraints of the grid each time it is built (through the calcNotePositions function) so that it can be used elsewhere
+  // Stores the constraints of the grid each time it is built (through the
+  // calcNotePositions function) so that it can be used elsewhere
   double _globalGridWidth = 0;
 
-  // Min and preferred widths of a note
-  // *Put this somewhere else as a const later
-  final double minNoteWidth = 200;
-  final double prefNoteWidth = 250;
-  // Note aspect ratio (height/width)
-  // *This will not work this way later
-  final double noteAR = 1;
   // *Fill mode (finalize later)
   final bool _fillMode = isMobile();
 
   // Returns number of columns based on space available
   int nColumns(double gridWidth) {
     if (_fillMode) {
-      return max(gridWidth ~/ minNoteWidth, 1);
+      return max(gridWidth ~/ Constants.minNoteWidth, 1);
     } else {
-      return max(gridWidth ~/ prefNoteWidth, 1);
+      return max(gridWidth ~/ Constants.prefNoteWidth, 1);
     }
   }
 
@@ -90,8 +48,8 @@ class _DynamicGridState extends State<DynamicGrid> {
     if (_fillMode) {
       gridWidth = maxWidth;
     } else {
-      if (maxWidth >= prefNoteWidth) {
-        gridWidth = maxWidth - maxWidth.remainder(prefNoteWidth);
+      if (maxWidth >= Constants.prefNoteWidth) {
+        gridWidth = maxWidth - maxWidth.remainder(Constants.prefNoteWidth);
       } else {
         gridWidth = maxWidth;
       }
@@ -106,11 +64,12 @@ class _DynamicGridState extends State<DynamicGrid> {
     // Calculates width based off of grid width and padding
     double width = (gridWidth - (padding * (nColumns + 1))) / nColumns;
     // Calculates height based off of aspect ratio (for now)
-    double height = width * noteAR;
+    double height = width * Constants.noteAR;
     return <double>[height, width];
   }
 
-  // Creates a list of note positions based off of tempIndex, used when building and arranging
+  // Creates a list of note positions based off of tempIndex, used when building
+  // and arranging
   NotePositionData calcNotePositions(List<Note> notes, double gridWidth,
       int nColumns, double padding, bool useTemp) {
     // Stores grid width so that it can be used elsewhere
@@ -134,12 +93,13 @@ class _DynamicGridState extends State<DynamicGrid> {
       }
       notePositions.add(
         NotePosition(
-            width,
-            height,
-            padding + (width + padding) * (noteIndex % nColumns),
-            padding + (height + padding) * (noteIndex ~/ nColumns),
-            notes[i].index,
-            notes[i].id),
+          width,
+          height,
+          padding + (width + padding) * (noteIndex % nColumns),
+          padding + (height + padding) * (noteIndex ~/ nColumns),
+          notes[i].index,
+          notes[i].id,
+        ),
       );
     }
 
@@ -148,10 +108,11 @@ class _DynamicGridState extends State<DynamicGrid> {
     );
 
     NotePositionData positions = NotePositionData(
-        notePositions,
-        padding + (height + padding) * (1 + (notes.length - 1) ~/ nColumns),
-        width,
-        height);
+      notePositions,
+      padding + (height + padding) * (1 + (notes.length - 1) ~/ nColumns),
+      width,
+      height,
+    );
 
     return positions;
   }
@@ -212,7 +173,6 @@ class _DynamicGridState extends State<DynamicGrid> {
   }
 
   // Allows undragged notes to shift around accordingly
-  // *Keeps track of position in a way that works (cumulative delta), but it shouldn't be that hard
   void dragUpdateNotePositions(int index, DragUpdateDetails dragUpdateDetails) {
     // Keeps track of relative postition since beginning of drag
     _notes[index].dragX += dragUpdateDetails.delta.dx;
@@ -236,7 +196,7 @@ class _DynamicGridState extends State<DynamicGrid> {
         max(closeRow * nColumns(_globalGridWidth) + closeColumn, 0),
         _notes.length - 1);
 
-    // Doesn't have to change anything if it's already been dealt with
+    // Doesn't have to change anything if it"s already been dealt with
     if (closeIndex != _notes[index].tempIndex) {
       // tempIndex for a dragging widget is the closest index
       _notes[index].tempIndex = closeIndex;
@@ -277,15 +237,17 @@ class _DynamicGridState extends State<DynamicGrid> {
             child: Container(
               // See calcWidth()
               width: calcWidth(constraints.maxWidth),
-              // Stack of note widgets and a container which defines its height (for scroll)
+              // Stack of note widgets and a container which defines its height
+              // (for scroll)
               child: Stack(
                 children: DynamicGridNoteWidgetList().all(
-                    _notes,
-                    widget.noteWidgetData,
-                    calcNotePositions(_notes, calcWidth(constraints.maxWidth),
-                        nColumns(constraints.maxWidth), _gridPadding, true),
-                    dragUpdateNote,
-                    dragUpdateNotePositions),
+                  _notes,
+                  widget.noteWidgetData,
+                  calcNotePositions(_notes, calcWidth(constraints.maxWidth),
+                      nColumns(constraints.maxWidth), _gridPadding, true),
+                  dragUpdateNote,
+                  dragUpdateNotePositions,
+                ),
               ),
             ),
           ),
@@ -315,40 +277,41 @@ class DynamicGridNoteWidgetList {
       (a, b) => a.id.compareTo(b.id),
     );
     // Positions note widgets
-    List<AnimatedPositioned> noteWidgets = sortedNotes
-        .map(
-          (note) => AnimatedPositioned(
-            duration: Duration(milliseconds: 300),
-            curve: Curves.fastOutSlowIn,
-            left: notePositionData.notePositions
-                .firstWhere((i) => i.id == note.id)
+    List<AnimatedPositioned> noteWidgets = List.generate(
+      sortedNotes.length,
+      (j) => AnimatedPositioned(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.fastOutSlowIn,
+        left: notePositionData.notePositions
+            .firstWhere((i) => i.id == sortedNotes[j].id)
+            .left,
+        top: notePositionData.notePositions
+            .firstWhere((i) => i.id == sortedNotes[j].id)
+            .top,
+        width: notePositionData.notePositions
+            .firstWhere((i) => i.id == sortedNotes[j].id)
+            .width,
+        height: notePositionData.notePositions
+            .firstWhere((i) => i.id == sortedNotes[j].id)
+            .height,
+        // *Obnoxious, inefficient
+        child: NoteWidget(
+          noteWidgetData: NoteWidgetData(
+            noteWidgetData.edit,
+            noteWidgetData.delete,
+            drag1: drag1,
+            drag2: drag2,
+            note: sortedNotes[j],
+            originalX: notePositionData.notePositions
+                .firstWhere((i) => i.id == sortedNotes[j].id)
                 .left,
-            top: notePositionData.notePositions
-                .firstWhere((i) => i.id == note.id)
+            originalY: notePositionData.notePositions
+                .firstWhere((i) => i.id == sortedNotes[j].id)
                 .top,
-            width: notePositionData.notePositions
-                .firstWhere((i) => i.id == note.id)
-                .width,
-            height: notePositionData.notePositions
-                .firstWhere((i) => i.id == note.id)
-                .height,
-            // *Obnoxious, inefficient
-            child: NoteWidget(
-              noteWidgetData: NoteWidgetData(
-                  noteWidgetData.edit, noteWidgetData.delete,
-                  drag1: drag1,
-                  drag2: drag2,
-                  note: note,
-                  originalX: notePositionData.notePositions
-                      .firstWhere((i) => i.id == note.id)
-                      .left,
-                  originalY: notePositionData.notePositions
-                      .firstWhere((i) => i.id == note.id)
-                      .top),
-            ),
           ),
-        )
-        .toList();
+        ),
+      ),
+    );
 
     // Conversion from List<Positioned> to List<Widget>
     // *Jank, find out better way
@@ -359,7 +322,8 @@ class DynamicGridNoteWidgetList {
       );
     }
 
-    // Adds a container to specify the total height of the stack (Positioned() widgets don't count toward dimensions)
+    // Adds a container to specify the total height of the stack (Positioned
+    // widgets don't count toward dimensions)
     allWidgets.add(
       Container(height: notePositionData.gridHeight),
     );
@@ -378,10 +342,16 @@ class NotePosition {
   final int id;
 
   NotePosition(
-      this.width, this.height, this.left, this.top, this.index, this.id);
+    this.width,
+    this.height,
+    this.left,
+    this.top,
+    this.index,
+    this.id,
+  );
 }
 
-// Just what it looks like: a jank way to get the correct data to DynamicGridNoteWidgetList
+// A way to get the correct data to DynamicGridNoteWidgetList
 class NotePositionData {
   List<NotePosition> notePositions;
   double gridHeight;
@@ -389,5 +359,9 @@ class NotePositionData {
   double noteHeight;
 
   NotePositionData(
-      this.notePositions, this.gridHeight, this.noteWidth, this.noteHeight);
+    this.notePositions,
+    this.gridHeight,
+    this.noteWidth,
+    this.noteHeight,
+  );
 }

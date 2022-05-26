@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:schema/routes/home/homeAll.dart';
-import 'package:schema/routes/note/noteEdit.dart';
+import "package:flutter/material.dart";
+import "package:schema/routes/home/homeAll.dart";
+import "package:schema/routes/note/noteEdit.dart";
+import "package:schema/functions/constants.dart";
 
 void main() {
   runApp(Schema());
@@ -11,19 +12,19 @@ class Schema extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Simple Notes App',
+      title: Constants.appTitle,
       // Defaut route
-      initialRoute: '/',
+      initialRoute: "/",
       routes: {
         // Home screen
-        '/': (context) => HomeScreenAll(),
+        "/": (context) => HomeScreenAll(),
         // Edit note screen
-        '/edit0': (context) => NoteEditScreen(),
+        "/edit0": (context) => NoteEditScreen(),
       },
       // *Play around with this, add ways to change theme (much later)
       theme: ThemeData(
         // Sets theme colors
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.green,
       ),
     );
   }
