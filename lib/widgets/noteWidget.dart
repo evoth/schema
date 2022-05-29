@@ -1,9 +1,9 @@
-import "package:flutter/material.dart";
-import "package:schema/models/noteModel.dart";
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:schema/data/noteData.dart';
+import 'package:schema/functions/general.dart';
+import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
-import "package:schema/functions/general.dart";
-import "package:schema/data/noteData.dart";
-import "dart:math";
 
 // Returns a note widget
 class NoteWidget extends StatefulWidget {
@@ -47,7 +47,7 @@ class _NoteWidgetState extends State<NoteWidget> {
 
     // Different draggable mode for different devices
     LayoutBuilder deviceDraggable() {
-      if (isMobile()) {
+      if (isMobileDevice()) {
         return LayoutBuilder(
           builder: (context, constraints) => LongPressDraggable(
             // buzz
@@ -162,7 +162,7 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
     // Navigate to the second screen using a named route.
     await Navigator.pushNamed(
       context,
-      "/edit0",
+      '/edit0',
       arguments: widget.noteWidgetData,
     );
     // Removes note if deleted
@@ -178,7 +178,7 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
     // Adds widgets conditionally
     List<Widget> texts = [];
     // If there's a title
-    if (widget.noteWidgetData.note!.title != "") {
+    if (widget.noteWidgetData.note!.title != '') {
       // Title
       texts.add(Text(
         widget.noteWidgetData.note!.title,

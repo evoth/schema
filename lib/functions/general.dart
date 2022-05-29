@@ -1,6 +1,7 @@
-import "package:flutter/material.dart";
-import "package:schema/models/noteModel.dart";
-import "dart:io" show Platform;
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:schema/models/noteModel.dart';
 
 // Unfocuses text fields and dismisses keyboard
 void unfocus(BuildContext context) {
@@ -16,8 +17,8 @@ Note getNote(List<Note> notes, int id) {
   return notes.firstWhere((i) => i.id == id);
 }
 
-// Returns whether mobile or not
-bool isMobile() {
+// Returns whether the platform is mobile or not
+bool isMobilePlatform() {
   bool mobile;
   try {
     if (Platform.isAndroid || Platform.isFuchsia || Platform.isIOS) {
@@ -28,5 +29,19 @@ bool isMobile() {
   } catch (e) {
     mobile = false;
   }
+
+  return mobile;
+}
+
+// Returns whether we are on a mobile device (includes mobile web browser)
+bool isMobileDevice() {
+  bool mobile = isMobilePlatform();
+
+  if (!mobile) {
+    mobile = kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.android);
+  }
+
   return mobile;
 }

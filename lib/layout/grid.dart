@@ -1,11 +1,11 @@
-import "package:flutter/material.dart";
-import "package:schema/widgets/noteWidget.dart";
-import "package:schema/models/noteModel.dart";
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:schema/data/noteData.dart';
+import 'package:schema/functions/constants.dart';
+import 'package:schema/functions/general.dart';
+import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
-import "dart:math";
-import "package:schema/functions/general.dart";
-import "package:schema/functions/constants.dart";
-import "package:schema/data/noteData.dart";
+import 'package:schema/widgets/noteWidget.dart';
 
 // Dynamic, animated grid
 class DynamicGrid extends StatefulWidget {
@@ -30,7 +30,7 @@ class _DynamicGridState extends State<DynamicGrid> {
   double _globalGridWidth = 0;
 
   // *Fill mode (finalize later)
-  final bool _fillMode = isMobile();
+  final bool _fillMode = isMobileDevice();
 
   // Returns number of columns based on space available
   int nColumns(double gridWidth) {

@@ -1,4 +1,4 @@
-import "package:schema/models/noteModel.dart";
+import 'package:schema/models/noteModel.dart';
 
 // Easy way to store and pass all the data needed by notes widgets at multiple
 // levels

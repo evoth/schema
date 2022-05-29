@@ -1,10 +1,10 @@
-import "package:flutter/material.dart";
-import "package:schema/layout/grid.dart";
-import "package:schema/models/noteModel.dart";
+import 'package:flutter/material.dart';
+import 'package:schema/data/noteData.dart';
+import 'package:schema/functions/constants.dart';
+import 'package:schema/functions/general.dart';
+import 'package:schema/layout/grid.dart';
+import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
-import "package:schema/functions/general.dart";
-import "package:schema/functions/constants.dart";
-import "package:schema/data/noteData.dart";
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
@@ -22,7 +22,7 @@ class _HomePageState extends State<HomePage> {
   void _newNote() async {
     // Literally add a note
     _notes.add(
-      Note(noteData.idCounter, _notes.length, "", "", _notes.length, false),
+      Note(noteData.idCounter, _notes.length, '', '', _notes.length, false),
     );
     // Increases id counter by 1
     noteData.incId();
@@ -31,13 +31,13 @@ class _HomePageState extends State<HomePage> {
     int newIndex = _notes.length - 1;
     await Navigator.pushNamed(
       context,
-      "/edit0",
+      '/edit0',
       arguments: NoteWidgetData(_editNote, _deleteNote,
           note: _notes[newIndex], isNew: true),
     );
     // Removes note if empty or deleted
     if (_notes.length == newIndex + 1) {
-      if (_notes.last.title == "" && _notes.last.text == "") {
+      if (_notes.last.title == '' && _notes.last.text == '') {
         _notes.removeLast();
         ScaffoldMessenger.of(context)
           ..removeCurrentSnackBar()
@@ -90,13 +90,13 @@ class _HomePageState extends State<HomePage> {
     if (deleteMode) {
       return FloatingActionButton(
         onPressed: deleteNote,
-        tooltip: "Delete Note",
+        tooltip: 'Delete Note',
         child: Icon(Icons.delete),
       );
     } else {
       return FloatingActionButton(
         onPressed: _newNote,
-        tooltip: "New Note",
+        tooltip: 'New Note',
         child: Icon(Icons.add),
       );
     }
@@ -111,9 +111,10 @@ class _HomePageState extends State<HomePage> {
       // App scaffold
       child: Scaffold(
         // App bar with title
-        appBar: new AppBar(
-          title: new Text(Constants.appTitle),
+        appBar: AppBar(
+          title: Text(Constants.appTitle),
           elevation: 0,
+          automaticallyImplyLeading: false,
         ),
         // Stack so that buttons can go over the grid
         body: Stack(

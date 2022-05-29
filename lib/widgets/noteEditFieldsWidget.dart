@@ -1,7 +1,7 @@
-import "package:flutter/material.dart";
-import "package:schema/models/noteModel.dart";
+import 'package:flutter/material.dart';
+import 'package:schema/functions/constants.dart';
+import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
-import "package:schema/functions/constants.dart";
 
 // Returns a note widget base, used to draw the actual widget
 class NoteEditFields extends StatelessWidget {
@@ -23,7 +23,7 @@ class NoteEditFields extends StatelessWidget {
     return Column(
       children: <Widget>[
         TextField(
-          decoration: new InputDecoration(
+          decoration: InputDecoration(
             // Removes border
             isDense: true,
             contentPadding: EdgeInsets.symmetric(horizontal: 30, vertical: 30),
@@ -49,7 +49,7 @@ class NoteEditFields extends StatelessWidget {
         ),
         Expanded(
           child: TextField(
-            decoration: new InputDecoration(
+            decoration: InputDecoration(
               // Removes border
               isDense: true,
               contentPadding: EdgeInsets.fromLTRB(30, 0, 30, 30),

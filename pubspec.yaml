@@ -34,6 +34,8 @@ dependencies:
   firebase_core: ^1.17.1
   cloud_firestore: ^3.1.17
   firebase_auth: ^3.3.19
+  flutter_svg: ^1.1.0
+  google_sign_in: ^5.3.2
 
 dev_dependencies:
   flutter_test:
@@ -48,6 +50,9 @@ dev_dependencies:
 
 # The following section is specific to Flutter.
 flutter:
+
+  assets:
+      - assets/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
