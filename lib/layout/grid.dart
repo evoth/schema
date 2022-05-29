@@ -1,7 +1,7 @@
 import "package:flutter/material.dart";
 import "package:schema/widgets/noteWidget.dart";
-import "package:schema/models/note/noteModel.dart";
-import "package:schema/models/note/noteWidgetModel.dart";
+import "package:schema/models/noteModel.dart";
+import 'package:schema/models/noteWidgetModel.dart';
 import "dart:math";
 import "package:schema/functions/general.dart";
 import "package:schema/functions/constants.dart";
@@ -196,7 +196,7 @@ class _DynamicGridState extends State<DynamicGrid> {
         max(closeRow * nColumns(_globalGridWidth) + closeColumn, 0),
         _notes.length - 1);
 
-    // Doesn't have to change anything if it"s already been dealt with
+    // Doesn't have to change anything if it's already been dealt with
     if (closeIndex != _notes[index].tempIndex) {
       // tempIndex for a dragging widget is the closest index
       _notes[index].tempIndex = closeIndex;

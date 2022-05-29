@@ -1,19 +1,19 @@
 import "package:flutter/material.dart";
 import "package:schema/layout/grid.dart";
-import "package:schema/models/note/noteModel.dart";
-import "package:schema/models/note/noteWidgetModel.dart";
+import "package:schema/models/noteModel.dart";
+import 'package:schema/models/noteWidgetModel.dart';
 import "package:schema/functions/general.dart";
 import "package:schema/functions/constants.dart";
 import "package:schema/data/noteData.dart";
 
-class HomeScreenAll extends StatefulWidget {
-  HomeScreenAll({Key? key}) : super(key: key);
+class HomePage extends StatefulWidget {
+  HomePage({Key? key}) : super(key: key);
 
   @override
-  _HomeScreenAllState createState() => _HomeScreenAllState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _HomeScreenAllState extends State<HomeScreenAll> {
+class _HomePageState extends State<HomePage> {
   // Initializes list of notes
   // *Later will retrieve from storage
   List<Note> _notes = noteData.notes;

@@ -1,11 +1,11 @@
 import "package:flutter/material.dart";
-import "package:schema/models/note/noteModel.dart";
-import "package:schema/models/note/noteWidgetModel.dart";
+import "package:schema/models/noteModel.dart";
+import 'package:schema/models/noteWidgetModel.dart';
 import "package:schema/functions/constants.dart";
 
 // Returns a note widget base, used to draw the actual widget
 class NoteEditFields extends StatelessWidget {
-  NoteEditFields(this._noteWidgetData);
+  const NoteEditFields(this._noteWidgetData);
 
   // Note widget data, yep
   final NoteWidgetData _noteWidgetData;

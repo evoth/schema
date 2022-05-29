@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
-import "package:schema/models/note/noteModel.dart";
-import "package:schema/models/note/noteWidgetModel.dart";
+import "package:schema/models/noteModel.dart";
+import 'package:schema/models/noteWidgetModel.dart';
 import "package:schema/functions/general.dart";
 import "package:schema/data/noteData.dart";
 import "dart:math";

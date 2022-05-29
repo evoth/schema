@@ -1,4 +1,4 @@
-import "package:schema/models/note/noteModel.dart";
+import "package:schema/models/noteModel.dart";
 
 // Keeps track of notes and counts id
 class NoteData {

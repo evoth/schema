@@ -1,25 +1,36 @@
 import "package:flutter/material.dart";
-import "package:schema/routes/home/homeAll.dart";
-import "package:schema/routes/note/noteEdit.dart";
+import 'package:schema/routes/homePage.dart';
+import 'package:schema/routes/noteEditPage.dart';
+import 'package:schema/routes/loadingPage.dart';
 import "package:schema/functions/constants.dart";
 
-void main() {
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(Schema());
 }
 
 class Schema extends StatelessWidget {
-  // This widget is the root of your application.
+  // INIT
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: Constants.appTitle,
       // Defaut route
-      initialRoute: "/",
+      initialRoute: "/home",
       routes: {
         // Home screen
-        "/": (context) => HomeScreenAll(),
+        "/home": (context) => HomePage(),
         // Edit note screen
-        "/edit0": (context) => NoteEditScreen(),
+        "/edit0": (context) => NoteEditPage(),
+        // Loading screen
+        "/loading": (context) => LoadingPage(),
       },
       // *Play around with this, add ways to change theme (much later)
       theme: ThemeData(

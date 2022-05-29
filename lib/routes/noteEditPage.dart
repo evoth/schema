@@ -1,11 +1,11 @@
 import "package:flutter/material.dart";
-import "package:schema/models/note/noteModel.dart";
-import "package:schema/models/note/noteWidgetModel.dart";
-import "package:schema/routes/note/noteEditFields.dart";
+import "package:schema/models/noteModel.dart";
+import 'package:schema/models/noteWidgetModel.dart';
+import 'package:schema/widgets/noteEditFieldsWidget.dart';
 import "package:schema/data/noteData.dart";
 import "package:schema/functions/constants.dart";
 
-class NoteEditScreen extends StatelessWidget {
+class NoteEditPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Gets index of note to be edited
