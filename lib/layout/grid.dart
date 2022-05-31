@@ -9,10 +9,12 @@ import 'package:schema/widgets/noteWidget.dart';
 
 // Dynamic, animated grid
 class DynamicGrid extends StatefulWidget {
-  DynamicGrid({Key? key, required this.noteWidgetData}) : super(key: key);
+  DynamicGrid({Key? key, required this.edit, required this.delete})
+      : super(key: key);
 
-  // Gets note wdget data to pass down
-  final NoteWidgetData noteWidgetData;
+  // Gets note functions to pass down
+  final Function edit;
+  final Function delete;
 
   @override
   _DynamicGridState createState() => _DynamicGridState();
@@ -21,6 +23,7 @@ class DynamicGrid extends StatefulWidget {
 class _DynamicGridState extends State<DynamicGrid> {
   // Get notes
   List<Note> _notes = noteData.notes;
+  Map<int, Map> _meta = noteData.noteMeta;
 
   // Sets grid style variables
   final double _gridPadding = 10;
@@ -89,7 +92,7 @@ class _DynamicGridState extends State<DynamicGrid> {
       if (useTemp) {
         noteIndex = notes[i].tempIndex;
       } else {
-        noteIndex = notes[i].index;
+        noteIndex = notes[i].index();
       }
       notePositions.add(
         NotePosition(
@@ -97,7 +100,7 @@ class _DynamicGridState extends State<DynamicGrid> {
           height,
           padding + (width + padding) * (noteIndex % nColumns),
           padding + (height + padding) * (noteIndex ~/ nColumns),
-          notes[i].index,
+          notes[i].index(),
           notes[i].id,
         ),
       );
@@ -127,17 +130,17 @@ class _DynamicGridState extends State<DynamicGrid> {
     } else {
       // Reassigns indices
       for (int i = 0; i < _notes.length; i++) {
-        _notes[i].index = _notes[i].tempIndex;
+        _notes[i].setIndex(_notes[i].tempIndex);
+        _meta[_notes[i].id]?['index'] = _notes[i].tempIndex;
       }
+      // TODO: Update note data
       _notes.sort(
-        (a, b) => a.index.compareTo(b.index),
+        (a, b) => a.index().compareTo(b.index()),
       );
     }
 
     // Updates
-    setState(
-      () {},
-    );
+    setState(() {});
 
     shiftNotes(_notes);
   }
@@ -167,9 +170,7 @@ class _DynamicGridState extends State<DynamicGrid> {
     }
 
     // Update
-    setState(
-      () {},
-    );
+    setState(() {});
   }
 
   // Allows undragged notes to shift around accordingly
@@ -215,7 +216,7 @@ class _DynamicGridState extends State<DynamicGrid> {
           _notes[i].dragY += scrollDelta;
           // Runs function to update dragging note
           dragUpdateNotePositions(
-            _notes[i].index,
+            _notes[i].index(),
             DragUpdateDetails(globalPosition: Offset.zero),
           );
         }
@@ -242,7 +243,8 @@ class _DynamicGridState extends State<DynamicGrid> {
               child: Stack(
                 children: DynamicGridNoteWidgetList().all(
                   _notes,
-                  widget.noteWidgetData,
+                  widget.edit,
+                  widget.delete,
                   calcNotePositions(_notes, calcWidth(constraints.maxWidth),
                       nColumns(constraints.maxWidth), _gridPadding, true),
                   dragUpdateNote,
@@ -264,7 +266,7 @@ class _DynamicGridState extends State<DynamicGrid> {
 
 // Returns a list of positioned note widgets to put in a stack
 class DynamicGridNoteWidgetList {
-  List<Widget> all(List<Note> notes, NoteWidgetData noteWidgetData,
+  List<Widget> all(List<Note> notes, Function edit, Function delete,
       NotePositionData notePositionData, Function drag1, Function drag2) {
     // Sorts by id so that each NoteWidget will stay with the same note
     List<Note> sortedNotes = [];
@@ -297,11 +299,11 @@ class DynamicGridNoteWidgetList {
         // *Obnoxious, inefficient
         child: NoteWidget(
           noteWidgetData: NoteWidgetData(
-            noteWidgetData.edit,
-            noteWidgetData.delete,
+            sortedNotes[j],
+            edit,
+            delete,
             drag1: drag1,
             drag2: drag2,
-            note: sortedNotes[j],
             originalX: notePositionData.notePositions
                 .firstWhere((i) => i.id == sortedNotes[j].id)
                 .left,

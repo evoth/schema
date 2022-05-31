@@ -75,9 +75,9 @@ class SignInPage extends StatelessWidget {
 
 class SignInButton extends StatelessWidget {
   SignInButton({
-    required Widget this.icon,
-    required String this.text,
-    required void Function(BuildContext) this.onPressed,
+    required this.icon,
+    required this.text,
+    required this.onPressed,
   });
 
   final Widget icon;

@@ -24,9 +24,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  ### Tried to use latest version but required a newer version of meta than flutter_test
-  ###json_annotation:
-
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -36,10 +33,14 @@ dependencies:
   firebase_auth: ^3.3.19
   flutter_svg: ^1.1.0
   google_sign_in: ^5.3.2
+  json_annotation: ^4.5.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  
+  build_runner: ^2.1.11
+  json_serializable: ^6.2.0
 
   ###build_runner: ^2.0.0
   ### Tried to use latest version but required a newer version of meta than flutter_test

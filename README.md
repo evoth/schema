@@ -7,17 +7,10 @@ Functional notes app with features like labels/categories and cloud storage.
 ## Current State
 
 An extremely simple notes app. And in this version I haven't added data storage.
-- Moved around and cleaned up more things
-- Added sign in screen and sign in functionality, although it's not used for anything yet
-- Did a lot of work to get Firebase, Firestore, Authentication, and Hosting working smoothly
+- Changed a lot of things under the hood to prepare for updating and downloading notes from cloud
 
 ## Todo
-- Make it so notes are downloaded on app start and updated as needed
-- Figure out what the notes data document will consist of
-   - Date registered
-   - Note counters and stuff
-   - Note ordering (map)
-   - Other stuff probably
+- Make it so notes are downloaded on app start and update as needed
 - Think more about how transfers will work (Cloud Functions)
 - Old todo (need to look into these at some point)
    - Make public variables that should be private private

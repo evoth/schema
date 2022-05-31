@@ -13,7 +13,7 @@ class NoteEditFields extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Sets note variable for convenience
-    Note _note = _noteWidgetData.note!;
+    Note _note = _noteWidgetData.note;
 
     // Text controllers to be used while editing
     final _customTextController0 = TextEditingController(text: _note.title);
@@ -44,7 +44,7 @@ class NoteEditFields extends StatelessWidget {
           // Edits the note when text is changed
           onChanged: (newText) {
             _note.title = newText;
-            _noteWidgetData.edit();
+            //_noteWidgetData.edit();
           },
         ),
         Expanded(
@@ -67,7 +67,7 @@ class NoteEditFields extends StatelessWidget {
             keyboardType: TextInputType.multiline,
             maxLines: null,
             // Focus on this field initially
-            autofocus: _noteWidgetData.isNew,
+            autofocus: _noteWidgetData.note.isNew,
             // Pre-populates text
             controller: _customTextController1,
             // Capitalization
@@ -75,7 +75,7 @@ class NoteEditFields extends StatelessWidget {
             // Edits the note when text is changed
             onChanged: (newText) {
               _note.text = newText;
-              _noteWidgetData.edit();
+              //_noteWidgetData.edit();
             },
           ),
         ),

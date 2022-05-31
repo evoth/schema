@@ -8,5 +8,7 @@ void initApp(BuildContext context, User? user) async {
     return;
   }
 
+  // TODO: download data
+
   Navigator.of(context).pushNamed('/home');
 }

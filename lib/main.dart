@@ -26,7 +26,7 @@ class Schema extends StatelessWidget {
         // Home screen
         '/home': (context) => HomePage(),
         // Edit note screen
-        '/edit0': (context) => NoteEditPage(),
+        '/edit': (context) => NoteEditPage(),
         // Loading screen
         '/loading': (context) => LoadingPage(),
         // Sign in screen

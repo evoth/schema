@@ -13,7 +13,7 @@ class NoteEditPage extends StatelessWidget {
         ModalRoute.of(context)!.settings.arguments as NoteWidgetData;
 
     // Sets note variable for convenience
-    Note _note = _noteWidgetData.note!;
+    Note _note = _noteWidgetData.note;
 
     return Scaffold(
       appBar: AppBar(
@@ -26,7 +26,7 @@ class NoteEditPage extends StatelessWidget {
             icon: const Icon(Icons.delete),
             tooltip: Constants.deleteNoteTip,
             onPressed: () {
-              noteData.notes[_note.index].deleted = true;
+              _noteWidgetData.delete(_note.index());
               Navigator.pop(context);
             },
           ),

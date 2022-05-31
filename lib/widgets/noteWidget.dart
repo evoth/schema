@@ -25,7 +25,7 @@ class _NoteWidgetState extends State<NoteWidget> {
       unfocus(context);
       // Gives grid some info about dragging
       widget.noteWidgetData.drag1!(
-        widget.noteWidgetData.note!.index,
+        widget.noteWidgetData.note.index(),
         true,
         originalX: widget.noteWidgetData.originalX,
         originalY: widget.noteWidgetData.originalY,
@@ -35,14 +35,14 @@ class _NoteWidgetState extends State<NoteWidget> {
     void _dragUpdateFunction(DragUpdateDetails dragDetails) {
       // Gives grid some info about dragging
       widget.noteWidgetData.drag2!(
-        widget.noteWidgetData.note!.index,
+        widget.noteWidgetData.note.index(),
         dragDetails,
       );
     }
 
     void _dragEndFunction(DraggableDetails dragDetails) {
       // Gives grid some info about dragging
-      widget.noteWidgetData.drag1!(widget.noteWidgetData.note!.index, false);
+      widget.noteWidgetData.drag1!(widget.noteWidgetData.note.index(), false);
     }
 
     // Different draggable mode for different devices
@@ -158,19 +158,8 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
   }
 
   // Actions to be completed before and after note opened
-  void prePostActions() async {
-    // Navigate to the second screen using a named route.
-    await Navigator.pushNamed(
-      context,
-      '/edit0',
-      arguments: widget.noteWidgetData,
-    );
-    // Removes note if deleted
-    for (int i = 0; i < noteData.notes.length; i++) {
-      if (noteData.notes[i].deleted) {
-        widget.noteWidgetData.delete(i);
-      }
-    }
+  Future<void> edit() async {
+    await noteData.editNote(context, widget.noteWidgetData);
   }
 
   List<Widget> noteDisplayText() {
@@ -178,10 +167,10 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
     // Adds widgets conditionally
     List<Widget> texts = [];
     // If there's a title
-    if (widget.noteWidgetData.note!.title != '') {
+    if (widget.noteWidgetData.note.title != '') {
       // Title
       texts.add(Text(
-        widget.noteWidgetData.note!.title,
+        widget.noteWidgetData.note.title,
         style:
             Theme.of(context).textTheme.headline6!.apply(fontSizeFactor: 0.9),
         // Allow for two lines, overflow with ellipsis
@@ -194,7 +183,7 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
     // Text
     texts.add(
       Expanded(
-        child: mostLinesText(widget.noteWidgetData.note!.text),
+        child: mostLinesText(widget.noteWidgetData.note.text),
       ),
     );
     return texts;
@@ -229,7 +218,7 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
   Widget build(BuildContext context) {
     // Detects taps on the note
     return GestureDetector(
-      onTap: prePostActions,
+      onTap: edit,
       // Creates a container around the note in order to decorate and pad it.
       child: Container(
         // Expands to correct size when dragging
@@ -256,11 +245,11 @@ class NoteWidgetList {
       notes.length,
       (i) => NoteWidget(
         noteWidgetData: NoteWidgetData(
+          notes[i],
           noteWidgetData.edit,
           noteWidgetData.delete,
           drag1: noteWidgetData.drag1,
           drag2: noteWidgetData.drag2,
-          note: notes[i],
         ),
       ),
     );

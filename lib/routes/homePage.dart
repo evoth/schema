@@ -20,88 +20,45 @@ class _HomePageState extends State<HomePage> {
 
   // Adds a new blank note
   void _newNote() async {
-    // Literally add a note
-    _notes.add(
-      Note(noteData.idCounter, _notes.length, '', '', _notes.length, false),
-    );
-    // Increases id counter by 1
-    noteData.incId();
+    noteData.newNote();
     // Go to the edit screen for the new note
     // Waits to set state so the new note won't show mid-animation
-    int newIndex = _notes.length - 1;
-    await Navigator.pushNamed(
+    int newIndex = _notes.last.index();
+    await noteData.editNote(
       context,
-      '/edit0',
-      arguments: NoteWidgetData(_editNote, _deleteNote,
-          note: _notes[newIndex], isNew: true),
+      NoteWidgetData(
+        _notes[newIndex],
+        _editNote,
+        _deleteNote,
+      ),
     );
-    // Removes note if empty or deleted
+    // Removes note if empty
     if (_notes.length == newIndex + 1) {
       if (_notes.last.title == '' && _notes.last.text == '') {
         _notes.removeLast();
         ScaffoldMessenger.of(context)
           ..removeCurrentSnackBar()
           ..showSnackBar(SnackBar(content: Text(Constants.discardMessage)));
-      } else if (_notes.last.deleted) {
-        _deleteNote(_notes.length - 1);
+        setState(() {});
       }
-      setState(() {});
     }
   }
 
   // Callback all the way from the NoteWidget to edit note
   // *Not necessary because references?
   // *Providers??
-  void _editNote() {
+  void _editNote(int index) {
     setState(() {});
   }
 
-  // Removes note and shifts indices
+  // Removes note and displays message
   void _deleteNote(int index) {
-    _notes[index].deleted = true;
-    _notes.removeAt(index);
-    for (int i = index; i < _notes.length; i++) {
-      _notes[i].index--;
-      _notes[i].tempIndex--;
-    }
+    noteData.deleteNote(index);
     ScaffoldMessenger.of(context)
       ..removeCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(Constants.deleteMessage)));
     setState(() {});
   }
-
-  /*
-  // Stores whether button should allow delete or not (if a note is dragging)
-  bool deleteMode = false;
-
-  // deleteMode is true if any notes are dragging
-  void deleteModeUpdate() {
-    bool deleteModeTest = false;
-    for (int i = 0; i < notes.length; i++) {
-      if (notes[i].drag) {
-        deleteModeTest = true;
-      }
-    }
-    deleteMode = deleteModeTest;
-    setState(() {});
-  }
-
-  FloatingActionButton actionButton(deleteMode) {
-    if (deleteMode) {
-      return FloatingActionButton(
-        onPressed: deleteNote,
-        tooltip: 'Delete Note',
-        child: Icon(Icons.delete),
-      );
-    } else {
-      return FloatingActionButton(
-        onPressed: _newNote,
-        tooltip: 'New Note',
-        child: Icon(Icons.add),
-      );
-    }
-  }
-  */
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +77,7 @@ class _HomePageState extends State<HomePage> {
         body: Stack(
           children: <Widget>[
             // Grid with notes
-            DynamicGrid(noteWidgetData: NoteWidgetData(_editNote, _deleteNote)),
+            DynamicGrid(edit: _editNote, delete: _deleteNote),
             // Add note button
             Container(
               alignment: Alignment.bottomRight,
