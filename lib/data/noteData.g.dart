@@ -6,15 +6,18 @@ part of 'noteData.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-NoteData _$NoteDataFromJson(Map<String, dynamic> json) => NoteData()
-  ..idCounter = json['idCounter'] as int
-  ..noteMeta = (json['noteMeta'] as Map<String, dynamic>).map(
-    (k, e) => MapEntry(int.parse(k), e as Map<String, dynamic>),
-  )
-  ..timeRegistered = DateTime.parse(json['timeRegistered'] as String);
+NoteData _$NoteDataFromJson(Map<String, dynamic> json) => NoteData(
+      ownerId: json['ownerId'] as String?,
+    )
+      ..idCounter = json['idCounter'] as int
+      ..noteMeta = (json['noteMeta'] as Map<String, dynamic>).map(
+        (k, e) => MapEntry(int.parse(k), e as Map<String, dynamic>),
+      )
+      ..timeRegistered = DateTime.parse(json['timeRegistered'] as String);
 
 Map<String, dynamic> _$NoteDataToJson(NoteData instance) => <String, dynamic>{
       'idCounter': instance.idCounter,
       'noteMeta': instance.noteMeta.map((k, e) => MapEntry(k.toString(), e)),
       'timeRegistered': instance.timeRegistered.toIso8601String(),
+      'ownerId': instance.ownerId,
     };

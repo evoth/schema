@@ -25,8 +25,8 @@ class NoteEditPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.delete),
             tooltip: Constants.deleteNoteTip,
-            onPressed: () {
-              _noteWidgetData.delete(_note.index());
+            onPressed: () async {
+              await _noteWidgetData.delete(_note.index());
               Navigator.pop(context);
             },
           ),

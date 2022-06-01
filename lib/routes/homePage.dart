@@ -40,6 +40,7 @@ class _HomePageState extends State<HomePage> {
           ..removeCurrentSnackBar()
           ..showSnackBar(SnackBar(content: Text(Constants.discardMessage)));
         setState(() {});
+        // TODO: delete note document
       }
     }
   }
@@ -52,8 +53,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Removes note and displays message
-  void _deleteNote(int index) {
-    noteData.deleteNote(index);
+  void _deleteNote(int index) async {
+    await noteData.deleteNote(index);
     ScaffoldMessenger.of(context)
       ..removeCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(Constants.deleteMessage)));

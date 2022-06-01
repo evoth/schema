@@ -23,6 +23,9 @@ class Constants {
 
   /* String constants */
 
+  // Initial user id
+  static const String noUser = '<no-user>';
+
   // Page titles
   static const String appTitle = 'Schema';
   static const String editTitle = 'Edit note';

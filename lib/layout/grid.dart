@@ -133,7 +133,7 @@ class _DynamicGridState extends State<DynamicGrid> {
         _notes[i].setIndex(_notes[i].tempIndex);
         _meta[_notes[i].id]?['index'] = _notes[i].tempIndex;
       }
-      // TODO: Update note data
+      noteData.updateData();
       _notes.sort(
         (a, b) => a.index().compareTo(b.index()),
       );

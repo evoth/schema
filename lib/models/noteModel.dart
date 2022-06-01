@@ -8,6 +8,7 @@ class Note {
   int id;
   String title;
   String text;
+  String? ownerId;
   bool isDeleted;
   @JsonKey(ignore: true)
   int tempIndex = -1;
@@ -36,6 +37,7 @@ class Note {
     this.id,
     this.title,
     this.text, {
+    required this.ownerId,
     this.drag = false,
     this.isDeleted = false,
     this.isNew = false,
