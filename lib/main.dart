@@ -15,13 +15,17 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: true,
-    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
-  );
-  if (!isMobilePlatform()) {
-    await FirebaseFirestore.instance
-        .enablePersistence(const PersistenceSettings(synchronizeTabs: true));
+  try {
+    FirebaseFirestore.instance.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
+    if (!isMobilePlatform()) {
+      await FirebaseFirestore.instance
+          .enablePersistence(const PersistenceSettings(synchronizeTabs: true));
+    }
+  } catch (e) {
+    print("Cannot modify settings because Firebase has alreadly been running.");
   }
   runApp(Schema());
 }
@@ -43,7 +47,7 @@ class Schema extends StatelessWidget {
         // Loading screen
         '/loading': (context) => LoadingPage(),
         // Sign in screen
-        '/signIn': (context) => SignInPage(),
+        '/sign-in': (context) => SignInPage(),
       },
       // *Play around with this, add ways to change theme (much later)
       theme: ThemeData(

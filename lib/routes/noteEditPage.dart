@@ -9,11 +9,11 @@ class NoteEditPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Gets index of note to be edited
-    final _noteWidgetData =
+    final noteWidgetData =
         ModalRoute.of(context)!.settings.arguments as NoteWidgetData;
 
     // Sets note variable for convenience
-    Note _note = _noteWidgetData.note;
+    Note note = noteWidgetData.note;
 
     return Scaffold(
       appBar: AppBar(
@@ -26,13 +26,14 @@ class NoteEditPage extends StatelessWidget {
             icon: const Icon(Icons.delete),
             tooltip: Constants.deleteNoteTip,
             onPressed: () async {
-              await _noteWidgetData.delete(_note.index());
+              await noteWidgetData.delete(note.index());
               Navigator.pop(context);
             },
           ),
         ],
       ),
-      body: NoteEditFields(_noteWidgetData),
+      // Text fields for title and text
+      body: NoteEditFields(noteWidgetData),
     );
   }
 }

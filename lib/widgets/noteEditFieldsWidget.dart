@@ -2,63 +2,77 @@ import 'package:flutter/material.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
+import 'package:schema/widgets/noteLabelsWidget.dart';
 
 // Returns a note widget base, used to draw the actual widget
 class NoteEditFields extends StatelessWidget {
-  const NoteEditFields(this._noteWidgetData);
+  const NoteEditFields(this.noteWidgetData);
 
-  // Note widget data, yep
-  final NoteWidgetData _noteWidgetData;
+  // Note widget data
+  final NoteWidgetData noteWidgetData;
 
   @override
   Widget build(BuildContext context) {
     // Sets note variable for convenience
-    Note _note = _noteWidgetData.note;
+    Note note = noteWidgetData.note;
 
     // Text controllers to be used while editing
-    final _customTextController0 = TextEditingController(text: _note.title);
-    final _customTextController1 = TextEditingController(text: _note.text);
+    final customTextController0 = TextEditingController(text: note.title);
+    final customTextController1 = TextEditingController(text: note.text);
 
-    // Creates a container around the note in order to decorate and pad it.
+    // Removes border from textfield
+    InputDecoration noBorder({
+      EdgeInsetsGeometry? contentPadding,
+      String? hintText,
+    }) {
+      return InputDecoration(
+        // Removes border
+        isDense: true,
+        contentPadding: contentPadding,
+        border: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        errorBorder: InputBorder.none,
+        disabledBorder: InputBorder.none,
+        // Text label
+        hintText: hintText,
+      );
+    }
+
+    // Column that holds text fields and labels section
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        SizedBox(height: Constants.editPadding),
+        // Title text field
         TextField(
-          decoration: InputDecoration(
-            // Removes border
-            isDense: true,
-            contentPadding: EdgeInsets.symmetric(horizontal: 30, vertical: 30),
-            border: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            errorBorder: InputBorder.none,
-            disabledBorder: InputBorder.none,
-            // Text label
+          decoration: noBorder(
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: Constants.editPadding,
+            ),
             hintText: Constants.titleHint,
           ),
           // Text style
           style: Theme.of(context).textTheme.headline6,
           // Pre-populates text
-          controller: _customTextController0,
+          controller: customTextController0,
           // Capitalization
           textCapitalization: TextCapitalization.sentences,
           // Edits the note when text is changed
           onChanged: (newText) {
-            _note.title = newText;
-            //_noteWidgetData.edit();
+            note.title = newText;
+            //noteWidgetData.edit();
           },
         ),
-        Expanded(
+        SizedBox(height: Constants.editPadding),
+        // Text text field (with a set minimum height)
+        Container(
+          constraints: BoxConstraints(minHeight: Constants.textMinHeight),
           child: TextField(
-            decoration: InputDecoration(
-              // Removes border
-              isDense: true,
-              contentPadding: EdgeInsets.fromLTRB(30, 0, 30, 30),
-              border: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              errorBorder: InputBorder.none,
-              disabledBorder: InputBorder.none,
-              // Text label
+            decoration: noBorder(
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: Constants.editPadding,
+              ),
               hintText: Constants.textHint,
             ),
             // Text style
@@ -67,17 +81,25 @@ class NoteEditFields extends StatelessWidget {
             keyboardType: TextInputType.multiline,
             maxLines: null,
             // Focus on this field initially
-            autofocus: _noteWidgetData.note.isNew,
+            autofocus: noteWidgetData.note.isNew,
             // Pre-populates text
-            controller: _customTextController1,
+            controller: customTextController1,
             // Capitalization
             textCapitalization: TextCapitalization.sentences,
             // Edits the note when text is changed
             onChanged: (newText) {
-              _note.text = newText;
-              //_noteWidgetData.edit();
+              note.text = newText;
+              //noteWidgetData.edit();
             },
           ),
+        ),
+        SizedBox(height: Constants.editPadding),
+        // Labels section
+        Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: Constants.editPadding,
+          ),
+          child: NoteLabels(noteWidgetData),
         ),
       ],
     );

@@ -1,9 +1,11 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:schema/data/noteData.dart';
+import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
+import 'package:schema/widgets/noteLabelsWidget.dart';
 
 // Returns a note widget
 class NoteWidget extends StatefulWidget {
@@ -19,30 +21,33 @@ class NoteWidget extends StatefulWidget {
 class _NoteWidgetState extends State<NoteWidget> {
   @override
   Widget build(BuildContext context) {
+    // Sets note variable for convenience
+    Note note = widget.noteWidgetData.note;
+
     // Drag functions to be used by both LongPressDraggable and Draggable
-    void _dragStartFunction() {
+    void dragStartFunction() {
       // Unfocuses text fields when dragged
       unfocus(context);
       // Gives grid some info about dragging
       widget.noteWidgetData.drag1!(
-        widget.noteWidgetData.note.index(),
+        note.index(),
         true,
         originalX: widget.noteWidgetData.originalX,
         originalY: widget.noteWidgetData.originalY,
       );
     }
 
-    void _dragUpdateFunction(DragUpdateDetails dragDetails) {
+    void dragUpdateFunction(DragUpdateDetails dragDetails) {
       // Gives grid some info about dragging
       widget.noteWidgetData.drag2!(
-        widget.noteWidgetData.note.index(),
+        note.index(),
         dragDetails,
       );
     }
 
-    void _dragEndFunction(DraggableDetails dragDetails) {
+    void dragEndFunction(DraggableDetails dragDetails) {
       // Gives grid some info about dragging
-      widget.noteWidgetData.drag1!(widget.noteWidgetData.note.index(), false);
+      widget.noteWidgetData.drag1!(note.index(), false);
     }
 
     // Different draggable mode for different devices
@@ -50,10 +55,10 @@ class _NoteWidgetState extends State<NoteWidget> {
       if (isMobileDevice()) {
         return LayoutBuilder(
           builder: (context, constraints) => LongPressDraggable(
-            // buzz
+            // Buzz
             hapticFeedbackOnStart: true,
-            // long press  before starts to drag
-            delay: Duration(milliseconds: 500),
+            // Long press before note starts to drag
+            delay: Duration(milliseconds: Constants.noteDragDelay),
             // Note when not being dragged
             child: NoteWidgetBase(
               noteWidgetData: widget.noteWidgetData,
@@ -72,9 +77,9 @@ class _NoteWidgetState extends State<NoteWidget> {
             ),
             childWhenDragging: Container(),
             // See drag functions above
-            onDragStarted: _dragStartFunction,
-            onDragUpdate: _dragUpdateFunction,
-            onDragEnd: _dragEndFunction,
+            onDragStarted: dragStartFunction,
+            onDragUpdate: dragUpdateFunction,
+            onDragEnd: dragEndFunction,
           ),
         );
       } else {
@@ -98,9 +103,9 @@ class _NoteWidgetState extends State<NoteWidget> {
             ),
             childWhenDragging: Container(),
             // See drag functions above
-            onDragStarted: _dragStartFunction,
-            onDragUpdate: _dragUpdateFunction,
-            onDragEnd: _dragEndFunction,
+            onDragStarted: dragStartFunction,
+            onDragUpdate: dragUpdateFunction,
+            onDragEnd: dragEndFunction,
           ),
         );
       }
@@ -138,21 +143,24 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
   BoxDecoration boxDecoration() {
     if (widget.select) {
       return BoxDecoration(
-        color: Theme.of(context).primaryColor.withOpacity(0.8),
+        color:
+            Theme.of(context).primaryColor.withOpacity(Constants.noteOpacity),
         /*border: Border.all(
           color: Theme.of(context).primaryColorDark,
           width: 2,
         ),*/
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(Constants.noteRadius),
       );
     } else {
       return BoxDecoration(
-        color: Theme.of(context).backgroundColor.withOpacity(0.8),
+        color: Theme.of(context)
+            .backgroundColor
+            .withOpacity(Constants.noteOpacity),
         /*border: Border.all(
           color: Theme.of(context).primaryColor,
           width: 1,
         ),*/
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(Constants.noteRadius),
       );
     }
   }
@@ -163,14 +171,16 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
   }
 
   List<Widget> noteDisplayText() {
-    // Tries to figure out heights of
+    // Sets note variable for convenience
+    Note note = widget.noteWidgetData.note;
+
     // Adds widgets conditionally
     List<Widget> texts = [];
     // If there's a title
-    if (widget.noteWidgetData.note.title != '') {
+    if (note.title != '') {
       // Title
       texts.add(Text(
-        widget.noteWidgetData.note.title,
+        note.title,
         style:
             Theme.of(context).textTheme.headline6!.apply(fontSizeFactor: 0.9),
         // Allow for two lines, overflow with ellipsis
@@ -178,14 +188,28 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
         overflow: TextOverflow.ellipsis,
       ));
       // Space
-      texts.add(SizedBox(height: 10));
+      texts.add(SizedBox(height: Constants.noteTitleSpace));
     }
     // Text
     texts.add(
       Expanded(
-        child: mostLinesText(widget.noteWidgetData.note.text),
+        child: mostLinesText(note.text),
       ),
     );
+    // Labels
+    if (note.getLabels().isNotEmpty) {
+      texts.add(
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Wrap(
+            spacing: Constants.labelChipSpacing,
+            runSpacing: Constants.labelChipSpacing,
+            children: labelChips(
+                context, note, Theme.of(context).primaryColor, null, false),
+          ),
+        ),
+      );
+    }
     return texts;
   }
 
@@ -225,7 +249,7 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
         width: widget.width,
         height: widget.height,
         // Padding surrounding text field
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.all(Constants.notePadding),
         // Creates note outline
         decoration: boxDecoration(),
         // Column to show both title and text

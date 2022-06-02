@@ -22,22 +22,20 @@ class DynamicGrid extends StatefulWidget {
 
 class _DynamicGridState extends State<DynamicGrid> {
   // Get notes
-  List<Note> _notes = noteData.notes;
-  Map<int, Map> _meta = noteData.noteMeta;
-
-  // Sets grid style variables
-  final double _gridPadding = 10;
+  List<Note> notes = noteData.notes;
+  Map<int, Map> meta = noteData.noteMeta;
 
   // Stores the constraints of the grid each time it is built (through the
   // calcNotePositions function) so that it can be used elsewhere
-  double _globalGridWidth = 0;
+  double globalGridWidth = 0;
 
-  // *Fill mode (finalize later)
-  final bool _fillMode = isMobileDevice();
+  // Fill mode (if true, fills up entire width; if false, adds margins to
+  // maintain preferred note size)
+  final bool fillMode = isMobileDevice();
 
   // Returns number of columns based on space available
   int nColumns(double gridWidth) {
-    if (_fillMode) {
+    if (fillMode) {
       return max(gridWidth ~/ Constants.minNoteWidth, 1);
     } else {
       return max(gridWidth ~/ Constants.prefNoteWidth, 1);
@@ -48,7 +46,7 @@ class _DynamicGridState extends State<DynamicGrid> {
   // In any case, if too narrow to display two notes, note fills entire width
   double calcWidth(double maxWidth) {
     double gridWidth = 0;
-    if (_fillMode) {
+    if (fillMode) {
       gridWidth = maxWidth;
     } else {
       if (maxWidth >= Constants.prefNoteWidth) {
@@ -57,7 +55,7 @@ class _DynamicGridState extends State<DynamicGrid> {
         gridWidth = maxWidth;
       }
     }
-    _globalGridWidth = gridWidth;
+    globalGridWidth = gridWidth;
     return gridWidth;
   }
 
@@ -76,7 +74,7 @@ class _DynamicGridState extends State<DynamicGrid> {
   NotePositionData calcNotePositions(List<Note> notes, double gridWidth,
       int nColumns, double padding, bool useTemp) {
     // Stores grid width so that it can be used elsewhere
-    //_globalGridWidth = gridWidth;
+    //globalGridWidth = gridWidth;
 
     // Calculates dimensions of notes
     List<double> noteDim = calcNoteDimensions(gridWidth, nColumns, padding);
@@ -86,8 +84,7 @@ class _DynamicGridState extends State<DynamicGrid> {
     // Positions note widgets
     List<NotePosition> notePositions = [];
     for (int i = 0; i < notes.length; i++) {
-      // This is important because
-      // I don't want to use temp when using this to find index from position
+      // Shouldn't use tempIndex when using this to find index from position
       int noteIndex;
       if (useTemp) {
         noteIndex = notes[i].tempIndex;
@@ -120,21 +117,21 @@ class _DynamicGridState extends State<DynamicGrid> {
     return positions;
   }
 
-  // Marks a note as being dragged or not, resets delta
+  // Marks a note as being dragged or not and resets delta
   void dragUpdateNote(int index, bool drag,
       {double originalX = 0, double originalY = 0}) {
-    _notes[index].drag = drag;
+    notes[index].drag = drag;
     if (drag) {
-      _notes[index].dragX = originalX;
-      _notes[index].dragY = originalY;
+      notes[index].dragX = originalX;
+      notes[index].dragY = originalY;
     } else {
       // Reassigns indices
-      for (int i = 0; i < _notes.length; i++) {
-        _notes[i].setIndex(_notes[i].tempIndex);
-        _meta[_notes[i].id]?['index'] = _notes[i].tempIndex;
+      for (int i = 0; i < notes.length; i++) {
+        notes[i].setIndex(notes[i].tempIndex);
+        meta[notes[i].id]?['index'] = notes[i].tempIndex;
       }
       noteData.updateData();
-      _notes.sort(
+      notes.sort(
         (a, b) => a.index().compareTo(b.index()),
       );
     }
@@ -142,7 +139,7 @@ class _DynamicGridState extends State<DynamicGrid> {
     // Updates
     setState(() {});
 
-    shiftNotes(_notes);
+    shiftNotes(notes);
   }
 
   // Shifts notes around dragging notes
@@ -176,33 +173,39 @@ class _DynamicGridState extends State<DynamicGrid> {
   // Allows undragged notes to shift around accordingly
   void dragUpdateNotePositions(int index, DragUpdateDetails dragUpdateDetails) {
     // Keeps track of relative postition since beginning of drag
-    _notes[index].dragX += dragUpdateDetails.delta.dx;
-    _notes[index].dragY += dragUpdateDetails.delta.dy;
+    notes[index].dragX += dragUpdateDetails.delta.dx;
+    notes[index].dragY += dragUpdateDetails.delta.dy;
 
     // Gets dimensinos of notes
     List<double> noteDim = calcNoteDimensions(
-        _globalGridWidth, nColumns(_globalGridWidth), _gridPadding);
+        globalGridWidth, nColumns(globalGridWidth), Constants.gridPadding);
     double width = noteDim[0];
     double height = noteDim[1];
 
     // Gets index using math
-    // *Gets width and height from indexPositions
+    // Gets width and height from indexPositions
     int closeColumn = min(
-        max((_notes[index].dragX + 0.5 * width) ~/ (width + _gridPadding), 0),
-        nColumns(_globalGridWidth) - 1);
+        max(
+            (notes[index].dragX + 0.5 * width) ~/
+                (width + Constants.gridPadding),
+            0),
+        nColumns(globalGridWidth) - 1);
     int closeRow = min(
-        max((_notes[index].dragY + 0.5 * height) ~/ (height + _gridPadding), 0),
-        (_notes.length / nColumns(_globalGridWidth)).ceil() - 1);
+        max(
+            (notes[index].dragY + 0.5 * height) ~/
+                (height + Constants.gridPadding),
+            0),
+        (notes.length / nColumns(globalGridWidth)).ceil() - 1);
     int closeIndex = min(
-        max(closeRow * nColumns(_globalGridWidth) + closeColumn, 0),
-        _notes.length - 1);
+        max(closeRow * nColumns(globalGridWidth) + closeColumn, 0),
+        notes.length - 1);
 
     // Doesn't have to change anything if it's already been dealt with
-    if (closeIndex != _notes[index].tempIndex) {
+    if (closeIndex != notes[index].tempIndex) {
       // tempIndex for a dragging widget is the closest index
-      _notes[index].tempIndex = closeIndex;
+      notes[index].tempIndex = closeIndex;
 
-      shiftNotes(_notes);
+      shiftNotes(notes);
     }
   }
 
@@ -210,13 +213,13 @@ class _DynamicGridState extends State<DynamicGrid> {
   void dragUpdateScroll(double? scrollDelta) {
     if (scrollDelta != null) {
       // Checks for dragging notes
-      for (int i = 0; i < _notes.length; i++) {
-        if (_notes[i].drag) {
+      for (int i = 0; i < notes.length; i++) {
+        if (notes[i].drag) {
           // Changes dragY by scrollDelta
-          _notes[i].dragY += scrollDelta;
+          notes[i].dragY += scrollDelta;
           // Runs function to update dragging note
           dragUpdateNotePositions(
-            _notes[i].index(),
+            notes[i].index(),
             DragUpdateDetails(globalPosition: Offset.zero),
           );
         }
@@ -242,11 +245,15 @@ class _DynamicGridState extends State<DynamicGrid> {
               // (for scroll)
               child: Stack(
                 children: DynamicGridNoteWidgetList().all(
-                  _notes,
+                  notes,
                   widget.edit,
                   widget.delete,
-                  calcNotePositions(_notes, calcWidth(constraints.maxWidth),
-                      nColumns(constraints.maxWidth), _gridPadding, true),
+                  calcNotePositions(
+                      notes,
+                      calcWidth(constraints.maxWidth),
+                      nColumns(constraints.maxWidth),
+                      Constants.gridPadding,
+                      true),
                   dragUpdateNote,
                   dragUpdateNotePositions,
                 ),
@@ -282,7 +289,7 @@ class DynamicGridNoteWidgetList {
     List<AnimatedPositioned> noteWidgets = List.generate(
       sortedNotes.length,
       (j) => AnimatedPositioned(
-        duration: Duration(milliseconds: 300),
+        duration: Duration(milliseconds: Constants.noteShiftDuration),
         curve: Curves.fastOutSlowIn,
         left: notePositionData.notePositions
             .firstWhere((i) => i.id == sortedNotes[j].id)
@@ -296,7 +303,7 @@ class DynamicGridNoteWidgetList {
         height: notePositionData.notePositions
             .firstWhere((i) => i.id == sortedNotes[j].id)
             .height,
-        // *Obnoxious, inefficient
+        // NoteWidget data for this note
         child: NoteWidget(
           noteWidgetData: NoteWidgetData(
             sortedNotes[j],
@@ -316,7 +323,7 @@ class DynamicGridNoteWidgetList {
     );
 
     // Conversion from List<Positioned> to List<Widget>
-    // *Jank, find out better way
+    // (I feel like there should be a better way)
     List<Widget> allWidgets = <Widget>[];
     for (int i = 0; i < noteWidgets.length; i++) {
       allWidgets.add(
@@ -327,7 +334,7 @@ class DynamicGridNoteWidgetList {
     // Adds a container to specify the total height of the stack (Positioned
     // widgets don't count toward dimensions)
     allWidgets.add(
-      Container(height: notePositionData.gridHeight),
+      SizedBox(height: notePositionData.gridHeight),
     );
 
     return allWidgets;

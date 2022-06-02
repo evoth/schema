@@ -14,31 +14,27 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Initializes list of notes
-  // *Later will retrieve from storage
-  List<Note> _notes = noteData.notes;
+  List<Note> notes = noteData.notes;
 
   // Adds a new blank note
-  void _newNote() async {
+  void newNote() async {
     noteData.newNote();
     // Go to the edit screen for the new note
     // Waits to set state so the new note won't show mid-animation
-    int newIndex = _notes.last.index();
+    int newIndex = notes.last.index();
     await noteData.editNote(
       context,
       NoteWidgetData(
-        _notes[newIndex],
-        _editNote,
-        _deleteNote,
+        notes[newIndex],
+        editNote,
+        deleteNote,
       ),
     );
     // Removes note if empty
-    if (_notes.length == newIndex + 1) {
-      if (_notes.last.title == '' && _notes.last.text == '') {
-        _notes.removeLast();
-        ScaffoldMessenger.of(context)
-          ..removeCurrentSnackBar()
-          ..showSnackBar(SnackBar(content: Text(Constants.discardMessage)));
+    if (notes.length == newIndex + 1) {
+      if (notes.last.title == '' && notes.last.text == '') {
+        notes.removeLast();
+        showSnackbar(context, Constants.discardMessage);
         setState(() {});
         // TODO: delete note document
       }
@@ -46,18 +42,15 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Callback all the way from the NoteWidget to edit note
-  // *Not necessary because references?
-  // *Providers??
-  void _editNote(int index) {
+  // *See if there's a way to do this with Providers
+  void editNote(int index) {
     setState(() {});
   }
 
   // Removes note and displays message
-  void _deleteNote(int index) async {
+  void deleteNote(int index) async {
     await noteData.deleteNote(index);
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(Constants.deleteMessage)));
+    showSnackbar(context, Constants.deleteMessage);
     setState(() {});
   }
 
@@ -78,13 +71,13 @@ class _HomePageState extends State<HomePage> {
         body: Stack(
           children: <Widget>[
             // Grid with notes
-            DynamicGrid(edit: _editNote, delete: _deleteNote),
+            DynamicGrid(edit: editNote, delete: deleteNote),
             // Add note button
             Container(
               alignment: Alignment.bottomRight,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(Constants.homePadding),
               child: FloatingActionButton(
-                onPressed: _newNote,
+                onPressed: newNote,
                 tooltip: Constants.newNoteTip,
                 child: Icon(Icons.add),
               ),

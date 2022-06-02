@@ -18,11 +18,15 @@ class SignInPage extends StatelessWidget {
         ),
         // Container in center to contain content
         body: Center(
+          // Only centered vertically if not on mobile device
+          heightFactor: isMobileDevice() ? 1.0 : null,
+          // Vertical scroll if necessary
           child: SingleChildScrollView(
             child: Container(
               width: Constants.signInWidth,
               height: Constants.signInHeight,
               padding: EdgeInsets.all(Constants.signInPadding),
+              // If not on mobile, show rounded border
               decoration: BoxDecoration(
                 border: isMobileDevice()
                     ? null
@@ -32,21 +36,26 @@ class SignInPage extends StatelessWidget {
                       ),
                 borderRadius: BorderRadius.circular(Constants.signInPadding),
               ),
+              // Evenly spaced column
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Sign in title text
                   Text(
                     Constants.signInTitle,
                     style: TextStyle(
                       fontSize: Constants.signInTextSize * 2,
                     ),
                   ),
+                  // Sign in welcome text (explains sign in options)
                   Text(
                     Constants.welcomeText,
                     style: TextStyle(
                       fontSize: Constants.signInTextSize,
                     ),
                   ),
+                  // Google sign in button (roughly follows Google's guidelines:
+                  // https://developers.google.com/identity/branding-guidelines)
                   SignInButton(
                     icon: SvgPicture.asset(
                       Constants.googleG,
@@ -55,9 +64,11 @@ class SignInPage extends StatelessWidget {
                     text: Constants.googleButton,
                     onPressed: signInWithGoogle,
                   ),
+                  // Anonymous sign in button
                   SignInButton(
                     icon: Icon(
                       Icons.fast_forward,
+                      color: Theme.of(context).primaryColor,
                       size: Constants.signInButtonSize,
                     ),
                     text: Constants.anonButton,
@@ -73,8 +84,9 @@ class SignInPage extends StatelessWidget {
   }
 }
 
+// Rounded sign in button with circular white tile for an icon
 class SignInButton extends StatelessWidget {
-  SignInButton({
+  const SignInButton({
     required this.icon,
     required this.text,
     required this.onPressed,
@@ -86,17 +98,35 @@ class SignInButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Rounded button
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         primary: Theme.of(context).primaryColor,
         padding: const EdgeInsets.all(Constants.signInButtonPadding),
+        fixedSize: Size(Constants.signInWidth - Constants.signInPadding * 2,
+            Constants.signInTileSize + Constants.signInButtonPadding * 2),
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Constants.signInPadding),
-            side: BorderSide(color: Theme.of(context).primaryColor)),
+          borderRadius: BorderRadius.circular(
+              Constants.signInButtonSize + Constants.signInButtonPadding * 2),
+        ),
       ),
+      // Row to hold content horizontally
       child: Row(
         children: [
-          icon,
+          // Circular white tile
+          Container(
+            width: Constants.signInTileSize,
+            height: Constants.signInTileSize,
+            padding: EdgeInsets.all(
+                (Constants.signInTileSize - Constants.signInButtonSize) / 2),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(Constants.signInTileSize),
+            ),
+            // Icon at same size as text
+            child: icon,
+          ),
+          // Cenetered text that fills the remaining space
           Flexible(
             fit: FlexFit.tight,
             child: Text(

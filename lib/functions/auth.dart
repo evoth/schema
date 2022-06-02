@@ -8,7 +8,9 @@ import 'package:schema/functions/general.dart';
 
 // Sign in with Google account
 Future<void> signInWithGoogle(BuildContext context) async {
+  // Simple error catching (most likely error is user exiting sign in flow)
   try {
+    // Different flow based on whether platform is mobile or web
     if (isMobilePlatform()) {
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
@@ -23,38 +25,34 @@ Future<void> signInWithGoogle(BuildContext context) async {
         idToken: googleAuth?.idToken,
       );
 
-      // Once signed in, return the UserCredential
-      // return
+      // Sign in with the UserCredential
       await FirebaseAuth.instance.signInWithCredential(credential);
     } else {
       // Create a new provider
       GoogleAuthProvider googleProvider = GoogleAuthProvider();
 
-      // Once signed in, return the UserCredential
-      // return
+      // Sign in with the UserCredential
       await FirebaseAuth.instance.signInWithPopup(googleProvider);
     }
   } catch (e) {
-    if (FirebaseAuth.instance.currentUser != null) {
-      FirebaseAuth.instance.signOut();
-    }
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(Constants.signInErrorMessage)));
+    signInError(context);
   }
 }
 
-// Sign in with an anonymous account (specific to device)
+// Sign in with an anonymous account (persistent across reloads on the device)
 Future<void> signInAnonymously(BuildContext context) async {
+  // Simple error catching
   try {
-    // return
     await FirebaseAuth.instance.signInAnonymously();
   } catch (e) {
-    if (FirebaseAuth.instance.currentUser != null) {
-      FirebaseAuth.instance.signOut();
-    }
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(Constants.signInErrorMessage)));
+    signInError(context);
   }
+}
+
+// Signs out if necessary and shows snackbar with error message
+void signInError(BuildContext context) {
+  if (FirebaseAuth.instance.currentUser != null) {
+    FirebaseAuth.instance.signOut();
+  }
+  showSnackbar(context, Constants.signInErrorMessage);
 }

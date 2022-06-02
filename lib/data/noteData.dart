@@ -5,59 +5,74 @@ import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
 part 'noteData.g.dart';
 
-// Keeps track of notes and counts id
+// TODO: add confirmation for actions like deleting
+// Keeps track of notes and metadata
 @JsonSerializable()
 class NoteData {
   @JsonKey(ignore: true)
   List<Note> notes = [];
-  int idCounter = 0;
-  Map<int, Map> noteMeta = {};
-  DateTime timeRegistered = DateTime.now();
+  int noteIdCounter = 0;
+  int labelIdCounter = 0;
+  int numNotes = 0;
+  Map<int, Map<String, dynamic>> labels = {};
+  Map<int, Map<String, dynamic>> noteMeta = {};
+  @JsonKey(fromJson: _rawTimeStamp, toJson: _rawTimeStamp)
+  Timestamp timeRegistered = Timestamp.now();
   String? ownerId;
 
-  void incId() {
-    idCounter++;
-  }
+  static Timestamp _rawTimeStamp(t) => t as Timestamp;
 
   // Adds a specified note
   void addNote(Note note) {
     // Adds note object to notes list
     notes.add(note);
     notes.last.tempIndex = notes.last.index();
-    // Increases id counter by 1
-    incId();
   }
 
   // Adds a new (empty) note
   void newNote() {
     // Updates note metadata
-    noteMeta[noteData.idCounter] = {
+    noteMeta[noteIdCounter] = {
       'index': notes.length,
-      'timeUpdated': DateTime.now(),
-      'deleted': false,
+      'timeCreated': Timestamp.now(),
+      'timeUpdated': Timestamp.now(),
+      'isDeleted': false,
+      'labels': {},
     };
+    // Adds the note to the list
     addNote(
       Note(
-        noteData.idCounter,
+        noteIdCounter,
         '',
         '',
         isNew: true,
-        ownerId: noteData.ownerId,
+        ownerId: ownerId,
       ),
     );
+    // Update counters
+    noteIdCounter++;
+    numNotes++;
   }
 
   // Removes note and shifts indices
   Future<void> deleteNote(int index) async {
+    // Marks note as deleted
     notes[index].isDeleted = true;
-    noteMeta[notes[index].id]?['deleted'] = true;
-    await noteData.updateNote(notes[index]);
+    noteMeta[notes[index].id]?['isDeleted'] = true;
+    await updateNote(notes[index]);
+    // Decreases respective label counters
+    for (String labelId in noteMeta[notes[index].id]?['labels'].keys) {
+      labels[int.parse(labelId)]?['numNotes']--;
+    }
+    // Removes note and shifts other notes
     notes.removeAt(index);
     for (int i = index; i < notes.length; i++) {
       notes[i].setIndex(notes[i].index() - 1);
       notes[i].tempIndex--;
     }
-    await noteData.updateData();
+    // Updates metadata
+    numNotes--;
+    updateData();
   }
 
   // Pushes edit screen and calls note edit function
@@ -80,11 +95,50 @@ class NoteData {
     noteWidgetData.edit(note.index());
     // Updates note in database if anything has changed
     if (note.previousTitle != note.title || note.previousText != note.text) {
-      noteData.noteMeta[note.id]?['timeUpdated'] = DateTime.now();
-      noteData.updateNote(note);
+      noteMeta[note.id]?['timeUpdated'] = Timestamp.now();
+      updateNote(note);
     }
   }
 
+  // Adds new label with the specified name
+  int newLabel(String name) {
+    labels[labelIdCounter] = {
+      'name': name,
+      'numNotes': 0,
+      'isDeleted': false,
+    };
+    labelIdCounter++;
+    updateData();
+    return labelIdCounter - 1;
+  }
+
+  // Marks a label as deleted
+  void deleteLabel(int labelId) {
+    labels[labelId]?['isDeleted'] = true;
+    updateData();
+  }
+
+  // Adds a label to a note (we use a map instead of a list for access speed)
+  void addLabel(Note note, int labelId) {
+    // Convert label id to string because of strange error
+    noteMeta[note.id]?['labels'][labelId.toString()] = true;
+    labels[labelId]?['numNotes']++;
+    updateData();
+  }
+
+  // Removes a label from a note
+  void removeLabel(Note note, int labelId) {
+    noteMeta[note.id]?['labels'].remove(labelId.toString());
+    labels[labelId]?['numNotes']--;
+    updateData();
+  }
+
+  // Gets name of label
+  String labelName(int labelId) {
+    return labels[labelId]?['name'];
+  }
+
+  // TODO
   Future<void> downloadAllNotes() async {
     notes = [];
 
@@ -104,29 +158,51 @@ class NoteData {
     );
   }
 
+  // Gets list of all label ids
+  List<int> getLabels() {
+    return labels.keys
+        .where((labelId) => !labels[labelId]?['isDeleted'])
+        .toList();
+  }
+
+  // Returns whether a label with the given name exists and is not deleted
+  bool labelExists(String name) {
+    for (Map<String, dynamic> label in labels.values) {
+      if (label['name'].toLowerCase() == name.toLowerCase() &&
+          !label['isDeleted']) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /*
   Future<void> downloadNote(int id) async {
     DocumentSnapshot<Map<String, dynamic>> noteDoc = await FirebaseFirestore
         .instance
         .collection('notes')
-        .doc(noteData.ownerId! + '-' + id.toString())
+        .doc(ownerId! + '-' + id.toString())
         .get();
 
     addNote(Note.fromJson(noteDoc.data()!));
   }
+  */
 
+  // Overrides contents of note document with updated note
   Future<void> updateNote(Note note) async {
     await updateData();
     await FirebaseFirestore.instance
         .collection('notes')
-        .doc(noteData.ownerId! + '-' + note.id.toString())
+        .doc(ownerId! + '-' + note.id.toString())
         .set(note.toJson());
   }
 
+  // Updates note metadata document for the user
   Future<void> updateData() async {
     await FirebaseFirestore.instance
         .collection('notes-meta')
-        .doc(noteData.ownerId)
-        .set(noteData.toJson());
+        .doc(ownerId)
+        .set(toJson());
   }
 
   NoteData({required this.ownerId});

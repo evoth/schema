@@ -33,7 +33,7 @@ bool isMobilePlatform() {
   return mobile;
 }
 
-// Returns whether we are on a mobile device (includes mobile web browser)
+// Returns whether we are on a mobile device (includes web browser on mobile)
 bool isMobileDevice() {
   bool mobile = isMobilePlatform();
 
@@ -44,4 +44,11 @@ bool isMobileDevice() {
   }
 
   return mobile;
+}
+
+// Shows snackbar with given text
+void showSnackbar(BuildContext context, String text) {
+  ScaffoldMessenger.of(context)
+    ..removeCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(text)));
 }
