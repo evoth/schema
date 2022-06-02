@@ -7,11 +7,12 @@ Functional notes app with features like labels/categories and cloud storage.
 ## Current State
 
 A simple notes app with ability to access notes across separate devices.
-- Notes are now uploaded to and downloaded from Cloud Firestore.
+- Added some basic label functionality
 - Currently, all notes are downloaded on loading of the app. In the future, I would like to have it selectively download only the notes that have changed.
 
 ## Todo
 - Optimize initial note download
+- Think about ordering of notes and labels
 - Think more about how transfers will work (Cloud Functions)
 - Make widgets like Text() const
 - Old todo (need to look into these at some point)
