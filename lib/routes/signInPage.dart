@@ -90,24 +90,32 @@ class SignInButton extends StatelessWidget {
     required this.icon,
     required this.text,
     required this.onPressed,
+    this.scale,
   });
 
   final Widget icon;
   final String text;
   final void Function(BuildContext) onPressed;
+  final double? scale;
 
   @override
   Widget build(BuildContext context) {
+    // Scale set to 1 if scale is null
+    double s = scale ?? 1;
     // Rounded button
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         primary: Theme.of(context).primaryColor,
-        padding: const EdgeInsets.all(Constants.signInButtonPadding),
-        fixedSize: Size(Constants.signInWidth - Constants.signInPadding * 2,
-            Constants.signInTileSize + Constants.signInButtonPadding * 2),
+        padding: EdgeInsets.all(Constants.signInButtonPadding * s),
+        fixedSize: Size(
+          double.infinity,
+          (Constants.signInTileSize + Constants.signInButtonPadding * 2) * s,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(
-              Constants.signInButtonSize + Constants.signInButtonPadding * 2),
+            (Constants.signInButtonSize + Constants.signInButtonPadding * 2) *
+                s,
+          ),
         ),
       ),
       // Row to hold content horizontally
@@ -115,13 +123,14 @@ class SignInButton extends StatelessWidget {
         children: [
           // Circular white tile
           Container(
-            width: Constants.signInTileSize,
-            height: Constants.signInTileSize,
+            width: Constants.signInTileSize * s,
+            height: Constants.signInTileSize * s,
             padding: EdgeInsets.all(
-                (Constants.signInTileSize - Constants.signInButtonSize) / 2),
+              (Constants.signInTileSize - Constants.signInButtonSize) / 2 * s,
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(Constants.signInTileSize),
+              borderRadius: BorderRadius.circular(Constants.signInTileSize * s),
             ),
             // Icon at same size as text
             child: icon,
@@ -132,7 +141,7 @@ class SignInButton extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
-                fontSize: Constants.signInButtonSize,
+                fontSize: Constants.signInButtonSize * s,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,

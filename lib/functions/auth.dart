@@ -54,5 +54,5 @@ void signInError(BuildContext context) {
   if (FirebaseAuth.instance.currentUser != null) {
     FirebaseAuth.instance.signOut();
   }
-  showSnackbar(context, Constants.signInErrorMessage);
+  showAlert(context, Constants.signInErrorMessage, useSnackbar: true);
 }

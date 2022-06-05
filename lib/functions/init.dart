@@ -2,17 +2,28 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:schema/data/noteData.dart';
+import 'package:schema/routes/homePage.dart';
+import 'package:schema/routes/signInPage.dart';
 
 // Ensures user is signed in, then refreshes notes before navigating to homepage
 void initApp(BuildContext context, User? user) async {
   // If user is not signed in, navigate to sign in page
   if (user == null) {
-    Navigator.of(context).pushNamed('/sign-in');
+    Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => SignInPage(),
+      ),
+    );
     return;
   }
 
-  // Attempt to get metadata document
+  // User data
   noteData.ownerId = user.uid;
+  noteData.isAnonymous = user.isAnonymous;
+  noteData.email = user.email;
+
+  // Attempt to get metadata document
   bool failed = false;
   DocumentSnapshot<Map<String, dynamic>>? dataDoc;
   try {
@@ -38,5 +49,10 @@ void initApp(BuildContext context, User? user) async {
   }
 
   // Go to homepage
-  Navigator.of(context).pushNamed('/home');
+  Navigator.push<void>(
+    context,
+    MaterialPageRoute<void>(
+      builder: (BuildContext context) => HomePage(),
+    ),
+  );
 }

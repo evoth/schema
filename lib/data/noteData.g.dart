@@ -18,7 +18,9 @@ NoteData _$NoteDataFromJson(Map<String, dynamic> json) => NoteData(
       ..noteMeta = (json['noteMeta'] as Map<String, dynamic>).map(
         (k, e) => MapEntry(int.parse(k), e as Map<String, dynamic>),
       )
-      ..timeRegistered = NoteData._rawTimeStamp(json['timeRegistered']);
+      ..timeRegistered = NoteData._rawTimeStamp(json['timeRegistered'])
+      ..isAnonymous = json['isAnonymous'] as bool
+      ..email = json['email'] as String?;
 
 Map<String, dynamic> _$NoteDataToJson(NoteData instance) => <String, dynamic>{
       'noteIdCounter': instance.noteIdCounter,
@@ -28,4 +30,6 @@ Map<String, dynamic> _$NoteDataToJson(NoteData instance) => <String, dynamic>{
       'noteMeta': instance.noteMeta.map((k, e) => MapEntry(k.toString(), e)),
       'timeRegistered': NoteData._rawTimeStamp(instance.timeRegistered),
       'ownerId': instance.ownerId,
+      'isAnonymous': instance.isAnonymous,
+      'email': instance.email,
     };

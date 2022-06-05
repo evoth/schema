@@ -26,6 +26,12 @@ class Constants {
 
   // Home page
   static const double homePadding = 30;
+  static const double drawerTitleSize = 24;
+  static const double drawerSubtitleSize = 16;
+  static const double drawerHeaderHeight = 120;
+  static const double drawerPadding = 16;
+  static const double drawerSignInScale = 0.8;
+  static const double drawerLabelSplashRadius = 24;
 
   // Edit page
   static const double editPadding = 30;
@@ -34,7 +40,8 @@ class Constants {
   static const double addLabelTitleSize = 22;
   static const double addLabelOptionSize = 18;
   static const double labelChipSpacing = 10;
-  static const double removeLabelIconSize = 20;
+  static const double labelChipIconSize = 20;
+  static const double labelChipPadding = 5;
 
   // Sign in page
   static const double signInWidth = 400;
@@ -59,20 +66,37 @@ class Constants {
   static const String labelExistsMessage =
       'A label with this name already exists.';
   static const String labelNameEmptyMessage = 'Label name cannot be empty.';
+  static const String deleteNoteMessageTitle = 'Delete note?';
+  static const String deleteNoteMessage =
+      'This will permanently delete this note and its contents.';
+  static const String deleteLabelMessageTitle = 'Delete label?';
+  static const String deleteLabelMessage =
+      'This will permanently delete this label and remove it from all notes.';
 
   // Tooltips and hint texts
-  static const String newNoteTip = 'New Note';
-  static const String deleteNoteTip = 'Delete Note';
+  static const String newNoteTip = 'New note';
+  static const String deleteNoteTip = 'Delete note';
   static const String titleHint = 'Title';
   static const String textHint = 'Note';
   static const String addLabelText = 'Add label';
   static const String newLabelText = 'Create new label';
-  static const String newLabelHint = 'Label name';
+  static const String labelNameHint = 'Label name';
   static const String removeLabelTip = 'Remove label';
+  static const String deleteLabelTip = 'Delete label';
+  static const String editLabelsTip = 'Edit labels';
+  static const String doneLabelsTip = 'Done';
+  static const String editLabelNameTip = 'Edit label name';
+  static const String doneLabelNameTip = 'Done';
 
   // Button texts
   static const String googleButton = 'Sign in with Google';
   static const String anonButton = 'Skip sign in for now';
+  static const String signOutButton = 'Sign out of Google account';
+  static const String settingsButton = 'Settings';
+
+  // Misc
+  static const String labelsText = 'Labels';
+  static const String editLabelsText = 'Edit labels';
 
   // Loading texts
   static const String defaultLoading = 'Loading...';
@@ -83,6 +107,8 @@ class Constants {
       'Welcome to Schema! Sign in with your Google account to access your notes ' +
           'across multiple devices. Alternatively, you can start making notes ' +
           'without signing in, and sign in later if you change your mind.';
+  static const String drawerSignedInText = 'Signed in as %s';
+  static const String drawerSignedOutText = 'Sign in to sync notes.';
 
   /* Asset constants */
 

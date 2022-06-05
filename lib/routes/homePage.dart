@@ -5,6 +5,7 @@ import 'package:schema/functions/general.dart';
 import 'package:schema/layout/grid.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
+import 'package:schema/widgets/homeDrawerWidget.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
@@ -15,6 +16,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Note> notes = noteData.notes;
+  DrawerLabelsEditData labelsEditData = DrawerLabelsEditData();
 
   // Adds a new blank note
   void newNote() async {
@@ -26,65 +28,79 @@ class _HomePageState extends State<HomePage> {
       context,
       NoteWidgetData(
         notes[newIndex],
-        editNote,
-        deleteNote,
+        () => setState(() {}),
       ),
+      () => setState(() {}),
     );
     // Removes note if empty
     if (notes.length == newIndex + 1) {
       if (notes.last.title == '' && notes.last.text == '') {
         notes.removeLast();
-        showSnackbar(context, Constants.discardMessage);
+        showAlert(context, Constants.discardMessage, useSnackbar: true);
         setState(() {});
         // TODO: delete note document
       }
     }
   }
 
-  // Callback all the way from the NoteWidget to edit note
-  // *See if there's a way to do this with Providers
-  void editNote(int index) {
-    setState(() {});
-  }
-
-  // Removes note and displays message
-  void deleteNote(int index) async {
-    await noteData.deleteNote(index);
-    showSnackbar(context, Constants.deleteMessage);
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     // If user taps outside of text fields, unfocus (and dismiss keyboard)
-    return GestureDetector(
-      onTap: () => unfocus(context),
-      // App scaffold
-      child: Scaffold(
-        // App bar with title
-        appBar: AppBar(
-          title: Text(Constants.appTitle),
-          elevation: 0,
-          automaticallyImplyLeading: false,
-        ),
-        // Stack so that buttons can go over the grid
-        body: Stack(
-          children: <Widget>[
-            // Grid with notes
-            DynamicGrid(edit: editNote, delete: deleteNote),
-            // Add note button
-            Container(
-              alignment: Alignment.bottomRight,
-              padding: const EdgeInsets.all(Constants.homePadding),
-              child: FloatingActionButton(
-                onPressed: newNote,
-                tooltip: Constants.newNoteTip,
-                child: Icon(Icons.add),
-              ),
+    return Scaffold(
+      // App bar with title
+      appBar: AppBar(
+        title: Text(Constants.appTitle),
+        elevation: 0,
+        //automaticallyImplyLeading: false,
+      ),
+      // Drawer with settings, labels, etc
+      drawer: HomeDrawer(labelsEditData, () => setState(() {})),
+      // Saves label name when drawer is closed
+      onDrawerChanged: (isOpen) {
+        if (!isOpen) {
+          // Saves label name if one was being edited
+          if (labelsEditData.labelsEditMode &&
+              labelsEditData.labelEditing != -1 &&
+              labelsEditData.labelName != null &&
+              labelsEditData.labelName !=
+                  noteData.labelName(labelsEditData.labelEditing)) {
+            noteData.editLabelName(context, labelsEditData.labelEditing,
+                labelsEditData.labelName!);
+          }
+          // Resets data
+          labelsEditData = DrawerLabelsEditData();
+          setState(() {});
+        }
+      },
+      // Stack so that buttons can go over the grid
+      body: Stack(
+        children: <Widget>[
+          // Grid with notes
+          DynamicGrid(refreshNotes: () => setState(() {})),
+          // Add note button
+          Container(
+            alignment: Alignment.bottomRight,
+            padding: const EdgeInsets.all(Constants.homePadding),
+            child: FloatingActionButton(
+              onPressed: newNote,
+              tooltip: Constants.newNoteTip,
+              child: Icon(Icons.add),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+}
+
+// This is necessary (as opposed to keeping a state in the drawer widget)
+// solely because we need to access and update this when the drawer widget
+// doesn't exist, such as right after it is closed
+class DrawerLabelsEditData {
+  // Whether the labels section is in edit mode
+  bool labelsEditMode = false;
+  // Which label is in name edit mode (-1 for none)
+  int labelEditing = -1;
+  // Current edited label name
+  String? labelName;
 }

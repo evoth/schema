@@ -6,11 +6,11 @@ import 'package:schema/functions/general.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
 
-// Returns a note widget base, used to draw the actual widget
+// Returns the button to add a new label to a note
 class NoteAddLabelButton extends StatelessWidget {
   const NoteAddLabelButton(this.noteWidgetData, this.refreshLabels);
 
-  // Note widget data
+  // Note widget data and function to update labels in drawer
   final NoteWidgetData noteWidgetData;
   final Function refreshLabels;
 
@@ -91,34 +91,8 @@ class NoteAddLabelButton extends StatelessWidget {
           // Dialog was dismissed
           return;
         } else if (labelId == -1) {
-          // Prompt user for new label name
-          String? newLabelName = await prompt(
-            context,
-            title: Text(
-              Constants.newLabelText,
-              style: TextStyle(fontSize: Constants.addLabelTitleSize),
-            ),
-            hintText: Constants.newLabelHint,
-          );
-          // Trim whitespace
-          newLabelName = newLabelName?.trim();
-          if (newLabelName == null) {
-            // User dismissed prompt or pressed cancel
-            return;
-          }
-          if (newLabelName.isEmpty) {
-            // Label name was empty or only consisted of whitespace
-            showSnackbar(context, Constants.labelNameEmptyMessage);
-            return;
-          }
-          if (noteData.labelExists(newLabelName)) {
-            // A label with a similar name already exists
-            showSnackbar(context, Constants.labelExistsMessage);
-            return;
-          }
-          // Creates the new label and adds it to the current note
-          noteData.addLabel(note, noteData.newLabel(newLabelName));
-          refreshLabels();
+          // Prompt user for name and attempt to create new label
+          addNewLabel(context, note, refreshLabels);
         } else {
           // Adds the selected label to the current note
           noteData.addLabel(note, labelId);
@@ -128,11 +102,60 @@ class NoteAddLabelButton extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.add),
+          Icon(Icons.add, size: Constants.labelChipIconSize),
           SizedBox(width: Constants.addNewGap),
           Text(Constants.addLabelText),
         ],
       ),
     );
   }
+}
+
+// Prompt user for new label name and either create it or display error message
+void addNewLabel(
+    BuildContext context, Note? note, Function refreshLabels) async {
+  // Prompt user for new label name
+  String? newLabelName = await prompt(
+    context,
+    title: Text(
+      Constants.newLabelText,
+      style: TextStyle(fontSize: Constants.addLabelTitleSize),
+    ),
+    hintText: Constants.labelNameHint,
+  );
+  // Checks label name to make sure it's valid
+  newLabelName = await checkLabelName(context, newLabelName);
+  if (newLabelName == null) {
+    return;
+  }
+  // Creates new label with the given name
+  int newLabelId = noteData.newLabel(newLabelName);
+  // Adds the new label to the current note if note is
+  // not null; if it is null then don't do anything (note will be null when
+  // called from the drawer on home page)
+  if (note != null) {
+    noteData.addLabel(note, newLabelId);
+  }
+  refreshLabels();
+}
+
+// Checks label name and displays error message if name is invalid
+Future<String?> checkLabelName(BuildContext context, String? newName) async {
+  // Trim whitespace
+  newName = newName?.trim();
+  if (newName == null) {
+    // User dismissed prompt or pressed cancel
+    return null;
+  }
+  if (newName.isEmpty) {
+    // Label name was empty or only consisted of whitespace
+    showAlert(context, Constants.labelNameEmptyMessage);
+    return null;
+  }
+  if (noteData.labelExists(newName)) {
+    // A label with a similar name already exists
+    showAlert(context, Constants.labelExistsMessage);
+    return null;
+  }
+  return newName;
 }

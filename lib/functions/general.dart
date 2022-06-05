@@ -1,4 +1,5 @@
 import 'dart:io' show Platform;
+import 'package:alert_dialog/alert_dialog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:schema/models/noteModel.dart';
@@ -47,8 +48,31 @@ bool isMobileDevice() {
 }
 
 // Shows snackbar with given text
-void showSnackbar(BuildContext context, String text) {
-  ScaffoldMessenger.of(context)
-    ..removeCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(text)));
+void showAlert(BuildContext context, String text, {bool useSnackbar = false}) {
+  if (useSnackbar) {
+    ScaffoldMessenger.of(context)
+      ..removeCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(text)));
+  } else {
+    alert(context, title: Text(text));
+  }
+}
+
+// Removes border from textfield
+InputDecoration noBorder({
+  EdgeInsetsGeometry? contentPadding,
+  String? hintText,
+}) {
+  return InputDecoration(
+    // Removes border
+    isDense: true,
+    contentPadding: contentPadding,
+    border: InputBorder.none,
+    focusedBorder: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    errorBorder: InputBorder.none,
+    disabledBorder: InputBorder.none,
+    // Text label
+    hintText: hintText,
+  );
 }

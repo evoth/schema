@@ -9,12 +9,10 @@ import 'package:schema/widgets/noteWidget.dart';
 
 // Dynamic, animated grid
 class DynamicGrid extends StatefulWidget {
-  DynamicGrid({Key? key, required this.edit, required this.delete})
-      : super(key: key);
+  DynamicGrid({Key? key, required this.refreshNotes}) : super(key: key);
 
   // Gets note functions to pass down
-  final Function edit;
-  final Function delete;
+  final Function refreshNotes;
 
   @override
   _DynamicGridState createState() => _DynamicGridState();
@@ -246,8 +244,7 @@ class _DynamicGridState extends State<DynamicGrid> {
               child: Stack(
                 children: DynamicGridNoteWidgetList().all(
                   notes,
-                  widget.edit,
-                  widget.delete,
+                  widget.refreshNotes,
                   calcNotePositions(
                       notes,
                       calcWidth(constraints.maxWidth),
@@ -273,7 +270,7 @@ class _DynamicGridState extends State<DynamicGrid> {
 
 // Returns a list of positioned note widgets to put in a stack
 class DynamicGridNoteWidgetList {
-  List<Widget> all(List<Note> notes, Function edit, Function delete,
+  List<Widget> all(List<Note> notes, Function refreshNotes,
       NotePositionData notePositionData, Function drag1, Function drag2) {
     // Sorts by id so that each NoteWidget will stay with the same note
     List<Note> sortedNotes = [];
@@ -307,8 +304,7 @@ class DynamicGridNoteWidgetList {
         child: NoteWidget(
           noteWidgetData: NoteWidgetData(
             sortedNotes[j],
-            edit,
-            delete,
+            refreshNotes,
             drag1: drag1,
             drag2: drag2,
             originalX: notePositionData.notePositions

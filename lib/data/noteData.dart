@@ -1,11 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:schema/functions/constants.dart';
+import 'package:schema/functions/general.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
+import 'package:schema/routes/noteEditPage.dart';
+import 'package:schema/widgets/noteAddLabelWidget.dart';
 part 'noteData.g.dart';
 
-// TODO: add confirmation for actions like deleting
 // Keeps track of notes and metadata
 @JsonSerializable()
 class NoteData {
@@ -19,6 +22,8 @@ class NoteData {
   @JsonKey(fromJson: _rawTimeStamp, toJson: _rawTimeStamp)
   Timestamp timeRegistered = Timestamp.now();
   String? ownerId;
+  bool isAnonymous = true;
+  String? email;
 
   static Timestamp _rawTimeStamp(t) => t as Timestamp;
 
@@ -55,7 +60,8 @@ class NoteData {
   }
 
   // Removes note and shifts indices
-  Future<void> deleteNote(int index) async {
+  Future<void> deleteNote(
+      BuildContext context, int index, Function refreshNotes) async {
     // Marks note as deleted
     notes[index].isDeleted = true;
     noteMeta[notes[index].id]?['isDeleted'] = true;
@@ -73,26 +79,30 @@ class NoteData {
     // Updates metadata
     numNotes--;
     updateData();
+    showAlert(context, Constants.deleteMessage, useSnackbar: true);
+    refreshNotes();
   }
 
   // Pushes edit screen and calls note edit function
   Future<void> editNote(
     BuildContext context,
     NoteWidgetData noteWidgetData,
+    Function refreshNotes,
   ) async {
     Note note = noteWidgetData.note;
     // Store text and title before editing
     note.previousTitle = note.title;
     note.previousText = note.text;
     // Navigate to the second screen using a named route.
-    await Navigator.pushNamed(
+    await Navigator.push<void>(
       context,
-      '/edit',
-      arguments: noteWidgetData,
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => NoteEditPage(noteWidgetData),
+      ),
     );
     note.isNew = false;
     // Updates notes on home screen
-    noteWidgetData.edit(note.index());
+    refreshNotes();
     // Updates note in database if anything has changed
     if (note.previousTitle != note.title || note.previousText != note.text) {
       noteMeta[note.id]?['timeUpdated'] = Timestamp.now();
@@ -130,6 +140,16 @@ class NoteData {
   void removeLabel(Note note, int labelId) {
     noteMeta[note.id]?['labels'].remove(labelId.toString());
     labels[labelId]?['numNotes']--;
+    updateData();
+  }
+
+  // Edit label name
+  void editLabelName(BuildContext context, int labelId, String name) async {
+    String? checkedName = await checkLabelName(context, name);
+    if (checkedName == null || checkedName == labels[labelId]?['name']) {
+      return;
+    }
+    labels[labelId]?['name'] = checkedName;
     updateData();
   }
 

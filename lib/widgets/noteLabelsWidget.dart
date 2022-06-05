@@ -5,7 +5,7 @@ import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
 import 'package:schema/widgets/noteAddLabelWidget.dart';
 
-// Returns a note widget base, used to draw the actual widget
+// Returns the labels section at the bottom of a note
 class NoteLabels extends StatefulWidget {
   const NoteLabels(this.noteWidgetData);
 
@@ -30,9 +30,12 @@ class _NoteLabelsState extends State<NoteLabels> {
           Theme.of(context).backgroundColor.withOpacity(Constants.noteOpacity),
           setState,
           true);
-      chips.add(NoteAddLabelButton(widget.noteWidgetData, () {
-        setState(() {});
-      }));
+      chips.add(
+        NoteAddLabelButton(
+          widget.noteWidgetData,
+          () => setState(() {}),
+        ),
+      );
       return chips;
     }
 
@@ -68,7 +71,7 @@ List<Widget> labelChips(
                     }
                   : null,
               deleteIcon: showDelete
-                  ? Icon(Icons.close, size: Constants.removeLabelIconSize)
+                  ? Icon(Icons.close, size: Constants.labelChipIconSize)
                   : null,
               deleteButtonTooltipMessage:
                   showDelete ? Constants.removeLabelTip : null,

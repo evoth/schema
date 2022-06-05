@@ -38,8 +38,9 @@ class Note {
 
   // Gets list of label ids
   List<int> getLabels() {
-    List<int> labelIds =
-        noteData.noteMeta[id]?['labels'].keys.map<int>(int.parse).toList();
+    List<int> labelIds = noteData.noteMeta[id]?['labels'].keys
+        .map<int>((labelId) => int.parse(labelId))
+        .toList();
     return labelIds
         .where((int labelId) => !noteData.labels[labelId]?['isDeleted'])
         .toList();

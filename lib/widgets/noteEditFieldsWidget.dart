@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:schema/functions/constants.dart';
+import 'package:schema/functions/general.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
 import 'package:schema/widgets/noteLabelsWidget.dart';
 
-// Returns a note widget base, used to draw the actual widget
+// Returns the content of the note edit screen
 class NoteEditFields extends StatelessWidget {
   const NoteEditFields(this.noteWidgetData);
 
@@ -19,25 +20,6 @@ class NoteEditFields extends StatelessWidget {
     // Text controllers to be used while editing
     final customTextController0 = TextEditingController(text: note.title);
     final customTextController1 = TextEditingController(text: note.text);
-
-    // Removes border from textfield
-    InputDecoration noBorder({
-      EdgeInsetsGeometry? contentPadding,
-      String? hintText,
-    }) {
-      return InputDecoration(
-        // Removes border
-        isDense: true,
-        contentPadding: contentPadding,
-        border: InputBorder.none,
-        focusedBorder: InputBorder.none,
-        enabledBorder: InputBorder.none,
-        errorBorder: InputBorder.none,
-        disabledBorder: InputBorder.none,
-        // Text label
-        hintText: hintText,
-      );
-    }
 
     // Column that holds text fields and labels section
     return Column(

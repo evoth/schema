@@ -4,8 +4,7 @@ import 'package:schema/models/noteModel.dart';
 // levels
 class NoteWidgetData {
   Note note;
-  final Function edit;
-  final Function delete;
+  final Function refreshNotes;
   final Function? drag1;
   final Function? drag2;
   final double originalX;
@@ -13,8 +12,7 @@ class NoteWidgetData {
 
   NoteWidgetData(
     this.note,
-    this.edit,
-    this.delete, {
+    this.refreshNotes, {
     this.drag1,
     this.drag2,
     this.originalX = 0,
