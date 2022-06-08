@@ -116,10 +116,12 @@ class NoteData {
       BuildContext context, int index, Function refreshNotes,
       {String? message}) async {
     // Deletes from database
-    FirebaseFirestore.instance
-        .collection('notes')
-        .doc(ownerId! + '-' + notes[index].id.toString())
-        .delete();
+    tryQuery(
+      () => FirebaseFirestore.instance
+          .collection('notes')
+          .doc(ownerId! + '-' + notes[index].id.toString())
+          .delete(),
+    );
     // Decreases respective label counters
     for (String labelId in noteMeta[notes[index].id]?['labels'].keys) {
       labels[int.parse(labelId)]?['numNotes']--;

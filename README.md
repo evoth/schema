@@ -1,12 +1,5 @@
 # Schema
-
-## (Revised) Plan
-
 Functional notes app with features like labels/categories and cloud storage.
-
-## Current State
-
-A simple notes app with ability to access notes across separate devices.
 
 ## Todo
 - Lazy loading

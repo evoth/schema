@@ -45,6 +45,7 @@ class _HomePageState extends State<HomePage> {
   // Filters by the given label (if null, stops filtering and shows all notes)
   void filterLabel(int? labelId) async {
     labelsData.filterLabelId = labelId;
+    Navigator.of(context).pop();
     setState(() {});
     await noteData.updateNotes(context, labelId);
     setState(() {});
@@ -56,7 +57,9 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       // App bar with title
       appBar: AppBar(
-        title: Text(Constants.appTitle),
+        title: this.mounted && labelsData.filterLabelId != null
+            ? Text(noteData.labelName(labelsData.filterLabelId!))
+            : Text(Constants.appTitle),
         elevation: 0,
         //automaticallyImplyLeading: false,
       ),
