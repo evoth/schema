@@ -34,7 +34,7 @@ class NoteEditPage extends StatelessWidget {
                 title: Text(Constants.deleteNoteMessageTitle),
                 content: Text(Constants.deleteNoteMessage),
               )) {
-                await noteData.deleteNote(
+                noteData.deleteNote(
                   context,
                   note.index(),
                   noteWidgetData.refreshNotes,

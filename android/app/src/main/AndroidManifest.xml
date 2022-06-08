@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.schema">
+    package="com.evoth.schema">
    <application
-        android:label="schema"
+        android:label="Schema"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

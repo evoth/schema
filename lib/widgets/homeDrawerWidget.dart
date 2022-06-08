@@ -34,7 +34,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
       ),
       // Column to hold both the button and text
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Shows sign in button if anonymous; otherwise shows sign out button
@@ -222,9 +222,9 @@ class _HomeDrawerState extends State<HomeDrawer> {
           Divider(),
           TextButton(
             onPressed: () async {
-              await launchUrl(Uri.parse('https://evoth.cf/privacy/#privacy'));
+              await launchUrl(Uri.parse(Constants.privacyPolicyLink));
             },
-            child: Text('Privacy Policy'),
+            child: Text(Constants.privacyPolicyButton),
           ),
           SizedBox(height: Constants.drawerPadding / 2),
         ];

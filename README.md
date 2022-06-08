@@ -3,6 +3,7 @@ Functional notes app with features like labels/categories and cloud storage.
 
 ## Todo
 - Lazy loading
+- Label ordering
 - Mobile optimizations (remove scroll for labels?)
 - Transfers
 - Make widgets like Text() const
@@ -14,3 +15,4 @@ Functional notes app with features like labels/categories and cloud storage.
    - Tutorial / about
    - Smaller note edit window on bugger screens
    - Publish (web and possibly Google Play, not sure if worth $25 though)
+   - Update web descriptions

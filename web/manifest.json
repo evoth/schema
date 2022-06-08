@@ -1,6 +1,6 @@
 {
-    "name": "schema",
-    "short_name": "schema",
+    "name": "Schema",
+    "short_name": "Schema",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

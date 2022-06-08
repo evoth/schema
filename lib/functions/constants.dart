@@ -28,7 +28,7 @@ class Constants {
   static const double homePadding = 30;
   static const double drawerTitleSize = 24;
   static const double drawerSubtitleSize = 16;
-  static const double drawerHeaderHeight = 120;
+  static const double drawerHeaderHeight = 150;
   static const double drawerPadding = 16;
   static const double drawerSignInScale = 0.8;
   static const double drawerLabelSplashRadius = 24;
@@ -97,6 +97,7 @@ class Constants {
   static const String anonButton = 'Skip sign in for now';
   static const String signOutButton = 'Sign out of Google account';
   static const String settingsButton = 'Settings';
+  static const String privacyPolicyButton = 'Privacy Policy';
 
   // Misc
   static const String labelsText = 'Labels';
@@ -114,6 +115,9 @@ class Constants {
           'without signing in, and sign in later if you change your mind.';
   static const String drawerSignedInText = 'Signed in as %s';
   static const String drawerSignedOutText = 'Sign in to sync notes.';
+
+  // Links
+  static const String privacyPolicyLink = 'https://evoth.cf/privacy/#privacy';
 
   /* Asset constants */
 

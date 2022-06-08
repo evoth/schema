@@ -1,4 +1,4 @@
-package com.example.schema
+package com.evoth.schema
 
 import io.flutter.embedding.android.FlutterActivity
 

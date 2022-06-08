@@ -112,9 +112,8 @@ class NoteData {
   }
 
   // Deletes note and shifts indices
-  Future<void> deleteNote(
-      BuildContext context, int index, Function refreshNotes,
-      {String? message}) async {
+  void deleteNote(BuildContext context, int index, Function refreshNotes,
+      {String? message}) {
     // Deletes from database
     tryQuery(
       () => FirebaseFirestore.instance
@@ -424,7 +423,7 @@ class NoteData {
   }
 
   // Updates note metadata document for the user
-  Future<void> updateData({bool resetNums = false}) async {
+  void updateData({bool resetNums = false}) {
     // Resets note counts (in case of desync)
     if (resetNums) {
       numNotes = 0;
@@ -438,7 +437,7 @@ class NoteData {
         }
       }
     }
-    await FirebaseFirestore.instance
+    FirebaseFirestore.instance
         .collection('notes-meta')
         .doc(ownerId)
         .set(toJson());
