@@ -277,6 +277,7 @@ class NoteWidgetList {
           noteWidgetData.refreshNotes,
           drag1: noteWidgetData.drag1,
           drag2: noteWidgetData.drag2,
+          filterLabelId: noteWidgetData.filterLabelId,
         ),
       ),
     );

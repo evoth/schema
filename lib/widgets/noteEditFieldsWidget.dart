@@ -40,9 +40,11 @@ class NoteEditFields extends StatelessWidget {
           controller: customTextController0,
           // Capitalization
           textCapitalization: TextCapitalization.sentences,
-          // Edits the note when text is changed
+          // Next button for mobile keyboards
+          textInputAction: TextInputAction.next,
+          // Edits the note when text is changed (trims whitespace)
           onChanged: (newText) {
-            note.title = newText;
+            note.title = newText.trim();
             //noteWidgetData.edit();
           },
         ),
@@ -68,9 +70,9 @@ class NoteEditFields extends StatelessWidget {
             controller: customTextController1,
             // Capitalization
             textCapitalization: TextCapitalization.sentences,
-            // Edits the note when text is changed
+            // Edits the note when text is changed (trims whitespace)
             onChanged: (newText) {
-              note.text = newText;
+              note.text = newText.trim();
               //noteWidgetData.edit();
             },
           ),

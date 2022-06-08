@@ -23,30 +23,8 @@ void initApp(BuildContext context, User? user) async {
   noteData.isAnonymous = user.isAnonymous;
   noteData.email = user.email;
 
-  // Attempt to get metadata document
-  bool failed = false;
-  DocumentSnapshot<Map<String, dynamic>>? dataDoc;
-  try {
-    dataDoc = await FirebaseFirestore.instance
-        .collection('notes-meta')
-        .doc(noteData.ownerId)
-        .get();
-  } on FirebaseException catch (e) {
-    // My security rules block attempts to get a document that doesn't exist
-    failed = e.code == 'permission-denied';
-  }
-
-  // If the document doesn't exist create a new one with the empty NoteData
-  if (failed || !dataDoc!.exists) {
-    await FirebaseFirestore.instance
-        .collection('notes-meta')
-        .doc(noteData.ownerId)
-        .set(noteData.toJson());
-  } else {
-    // Import metadata and download notes
-    noteData = NoteData.fromJson(dataDoc.data()!);
-    await noteData.downloadAllNotes();
-  }
+  // Get notes, creating new user data if need be
+  await noteData.updateNotes(context, null);
 
   // Go to homepage
   Navigator.push<void>(

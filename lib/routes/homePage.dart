@@ -15,32 +15,39 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Note> notes = noteData.notes;
-  DrawerLabelsEditData labelsEditData = DrawerLabelsEditData();
+  // Data used to edit and filter labels
+  late LabelsData labelsData =
+      LabelsData(null, () => setState(() {}), filterLabel);
 
   // Adds a new blank note
   void newNote() async {
-    noteData.newNote();
+    int newId = noteData.newNote(labelsData.filterLabelId).id;
     // Go to the edit screen for the new note
     // Waits to set state so the new note won't show mid-animation
-    int newIndex = notes.last.index();
     await noteData.editNote(
       context,
       NoteWidgetData(
-        notes[newIndex],
+        noteData.notes[0],
         () => setState(() {}),
+        filterLabelId: labelsData.filterLabelId,
       ),
       () => setState(() {}),
     );
     // Removes note if empty
-    if (notes.length == newIndex + 1) {
-      if (notes.last.title == '' && notes.last.text == '') {
-        notes.removeLast();
-        showAlert(context, Constants.discardMessage, useSnackbar: true);
-        setState(() {});
-        // TODO: delete note document
+    if (noteData.notes[0].id == newId) {
+      if (noteData.notes[0].title == '' && noteData.notes[0].text == '') {
+        noteData.deleteNote(context, 0, () => setState(() {}),
+            message: Constants.discardMessage);
       }
     }
+  }
+
+  // Filters by the given label (if null, stops filtering and shows all notes)
+  void filterLabel(int? labelId) async {
+    labelsData.filterLabelId = labelId;
+    setState(() {});
+    await noteData.updateNotes(context, labelId);
+    setState(() {});
   }
 
   @override
@@ -54,21 +61,21 @@ class _HomePageState extends State<HomePage> {
         //automaticallyImplyLeading: false,
       ),
       // Drawer with settings, labels, etc
-      drawer: HomeDrawer(labelsEditData, () => setState(() {})),
+      drawer: HomeDrawer(labelsData),
       // Saves label name when drawer is closed
       onDrawerChanged: (isOpen) {
         if (!isOpen) {
           // Saves label name if one was being edited
-          if (labelsEditData.labelsEditMode &&
-              labelsEditData.labelEditing != -1 &&
-              labelsEditData.labelName != null &&
-              labelsEditData.labelName !=
-                  noteData.labelName(labelsEditData.labelEditing)) {
-            noteData.editLabelName(context, labelsEditData.labelEditing,
-                labelsEditData.labelName!);
+          if (labelsData.labelsEditMode &&
+              labelsData.labelEditing != -1 &&
+              labelsData.labelName != null &&
+              labelsData.labelName !=
+                  noteData.labelName(labelsData.labelEditing)) {
+            noteData.editLabelName(
+                context, labelsData.labelEditing, labelsData.labelName!);
           }
           // Resets data
-          labelsEditData = DrawerLabelsEditData();
+          labelsData.resetEditing();
           setState(() {});
         }
       },
@@ -76,7 +83,11 @@ class _HomePageState extends State<HomePage> {
       body: Stack(
         children: <Widget>[
           // Grid with notes
-          DynamicGrid(refreshNotes: () => setState(() {})),
+          DynamicGrid(
+            refreshNotes: () => setState(() {}),
+            filterLabelId: labelsData.filterLabelId,
+            key: ValueKey(labelsData.filterLabelId),
+          ),
           // Add note button
           Container(
             alignment: Alignment.bottomRight,
@@ -96,11 +107,26 @@ class _HomePageState extends State<HomePage> {
 // This is necessary (as opposed to keeping a state in the drawer widget)
 // solely because we need to access and update this when the drawer widget
 // doesn't exist, such as right after it is closed
-class DrawerLabelsEditData {
+class LabelsData {
   // Whether the labels section is in edit mode
   bool labelsEditMode = false;
   // Which label is in name edit mode (-1 for none)
   int labelEditing = -1;
   // Current edited label name
   String? labelName;
+  // Filtering label
+  int? filterLabelId;
+  // Function for refreshing the home page
+  final Function refreshNotes;
+  // Function to filter by a label
+  final Function filterLabel;
+
+  // Resets variables related to label editing
+  void resetEditing() {
+    labelsEditMode = false;
+    labelEditing = -1;
+    labelName = null;
+  }
+
+  LabelsData(this.filterLabelId, this.refreshNotes, this.filterLabel);
 }

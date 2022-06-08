@@ -35,7 +35,7 @@ class Schema extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: Constants.appTitle,
-      // Defaut route
+      // Default route
       initialRoute: '/',
       routes: {
         // Default

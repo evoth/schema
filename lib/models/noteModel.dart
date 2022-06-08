@@ -10,7 +10,6 @@ class Note {
   String title;
   String text;
   String? ownerId;
-  bool isDeleted;
   @JsonKey(ignore: true)
   int tempIndex = -1;
   @JsonKey(ignore: true)
@@ -27,7 +26,12 @@ class Note {
   String? previousText;
 
   // Gets index from NoteData
-  int index() {
+  int index({bool filter = false}) {
+    // If filtering by a label, return tempIndex, which is used when filtering
+    if (filter) {
+      return tempIndex;
+    }
+    // Otherwise, return index from metadata
     return noteData.noteMeta[id]?['index'];
   }
 
@@ -41,15 +45,20 @@ class Note {
     List<int> labelIds = noteData.noteMeta[id]?['labels'].keys
         .map<int>((labelId) => int.parse(labelId))
         .toList();
-    return labelIds
-        .where((int labelId) => !noteData.labels[labelId]?['isDeleted'])
-        .toList();
+    // Excludes and removes deleted labels in case of desync
+    for (int i = 0; i < labelIds.length; i++) {
+      if (!noteData.labels.containsKey(labelIds[i])) {
+        noteData.noteMeta[id]?['labels'].remove(labelIds[i].toString());
+        labelIds.removeAt(i);
+        i--;
+      }
+    }
+    return labelIds.toList();
   }
 
   // Returns whether the given label is possesed by the note
   bool hasLabel(int labelId) {
-    return noteData.noteMeta[id]?['labels'].containsKey(labelId.toString()) &&
-        !noteData.labels[labelId]?['isDeleted'];
+    return noteData.noteMeta[id]?['labels'].containsKey(labelId.toString());
   }
 
   Note(
@@ -58,7 +67,6 @@ class Note {
     this.text, {
     required this.ownerId,
     this.drag = false,
-    this.isDeleted = false,
     this.isNew = false,
   });
 

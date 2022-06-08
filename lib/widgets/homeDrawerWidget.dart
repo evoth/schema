@@ -10,15 +10,15 @@ import 'package:schema/routes/signInPage.dart';
 import 'package:schema/widgets/homeDrawerLabelWidget.dart';
 import 'package:schema/widgets/noteAddLabelWidget.dart';
 import 'package:sprintf/sprintf.dart';
+import 'package:url_launcher/link.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // Returns the drawer used on the home screen
 class HomeDrawer extends StatefulWidget {
-  const HomeDrawer(this.data, this.refreshNotes);
+  const HomeDrawer(this.data);
 
-  // Data relateing to editing labels
-  final DrawerLabelsEditData data;
-  // Function for refreshing the home page
-  final Function refreshNotes;
+  // Data relating to editing labels
+  final LabelsData data;
 
   @override
   State<HomeDrawer> createState() => _HomeDrawerState();
@@ -83,60 +83,80 @@ class _HomeDrawerState extends State<HomeDrawer> {
   }
 
   // Returns labels section title tile based on whether it's in edit mode
-  ListTile labelsTitle(BuildContext context, bool editMode) {
+  ListTile labelsTitle(
+      BuildContext context, bool editMode, int? filterLabelId) {
     return ListTile(
       // Title
       title: Text(
         widget.data.labelsEditMode
             ? Constants.editLabelsText
-            : Constants.labelsText,
+            : (filterLabelId != null
+                ? Constants.filterLabelsText
+                : Constants.labelsText),
         style: TextStyle(
           fontWeight: FontWeight.bold,
         ),
       ),
-      // Add icon and edit icon
+      // If filtering, stop filtering icon; otherwise, add icon and edit icon
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          // Add label icon
-          IconButton(
-            splashRadius: Constants.drawerLabelSplashRadius,
-            tooltip: Constants.newLabelText,
-            icon: Icon(
-              Icons.add,
-              color:
-                  Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
-            ),
-            // Create new label
-            onPressed: () {
-              addNewLabel(context, null, () => setState(() {}));
-            },
-          ),
-          // Edit label icon
-          IconButton(
-            splashRadius: Constants.drawerLabelSplashRadius,
-            // Tooltip based on edit mode
-            tooltip: widget.data.labelsEditMode
-                ? Constants.doneLabelsTip
-                : Constants.editLabelsTip,
-            // Shows checkmark icon if in edit mode; otherwise shows edit icon
-            icon: Icon(
-              widget.data.labelsEditMode ? Icons.check : Icons.edit,
-              color:
-                  Theme.of(context).textTheme.bodyMedium?.color ?? Colors.black,
-            ),
-            // Toggle edit mode
-            onPressed: () {
-              setState(() {
-                if (widget.data.labelsEditMode) {
-                  // Saves label name if one was being edited
-                  doneLabelName();
-                }
-                widget.data.labelsEditMode = !widget.data.labelsEditMode;
-              });
-            },
-          ),
-        ],
+        children: filterLabelId != null
+            ? [
+                // Stop filtering icon
+                IconButton(
+                  splashRadius: Constants.drawerLabelSplashRadius,
+                  tooltip: Constants.stopFilterTip,
+                  icon: Icon(
+                    Icons.close,
+                    color: Theme.of(context).textTheme.bodyMedium?.color ??
+                        Colors.black,
+                  ),
+                  // Stop filtering
+                  onPressed: () {
+                    widget.data.filterLabel(null);
+                  },
+                ),
+              ]
+            : [
+                // Add label icon
+                IconButton(
+                  splashRadius: Constants.drawerLabelSplashRadius,
+                  tooltip: Constants.newLabelText,
+                  icon: Icon(
+                    Icons.add,
+                    color: Theme.of(context).textTheme.bodyMedium?.color ??
+                        Colors.black,
+                  ),
+                  // Create new label
+                  onPressed: () {
+                    addNewLabel(context, null, () => setState(() {}));
+                  },
+                ),
+                // Edit label icon
+                IconButton(
+                  splashRadius: Constants.drawerLabelSplashRadius,
+                  // Tooltip based on edit mode
+                  tooltip: widget.data.labelsEditMode
+                      ? Constants.doneLabelsTip
+                      : Constants.editLabelsTip,
+                  // Shows checkmark icon if in edit mode; otherwise shows edit icon
+                  icon: Icon(
+                    widget.data.labelsEditMode ? Icons.check : Icons.edit,
+                    color: Theme.of(context).textTheme.bodyMedium?.color ??
+                        Colors.black,
+                  ),
+                  // Toggle edit mode
+                  onPressed: () {
+                    setState(() {
+                      if (widget.data.labelsEditMode) {
+                        // Saves label name if one was being edited
+                        doneLabelName();
+                      }
+                      widget.data.labelsEditMode = !widget.data.labelsEditMode;
+                    });
+                  },
+                ),
+              ],
       ),
     );
   }
@@ -153,7 +173,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
         widget.data.labelName != noteData.labelName(widget.data.labelEditing)) {
       noteData.editLabelName(
           context, widget.data.labelEditing, widget.data.labelName!);
-      widget.refreshNotes();
+      widget.data.refreshNotes();
     }
     widget.data.labelEditing = -1;
     widget.data.labelName = null;
@@ -171,29 +191,43 @@ class _HomeDrawerState extends State<HomeDrawer> {
 
   // Returns a list of widgets that make up the drawer
   List<Widget> homeDrawerContent(BuildContext context) {
-    List<Widget> drawer = [
-      // Drawer header
-      SizedBox(
-        height: Constants.drawerHeaderHeight,
-        child: homeDrawerHeader(context),
-      ),
-      // Labels title
-      labelsTitle(context, widget.data.labelsEditMode),
-    ];
     // Individual list tiles for each label
+    List<Widget> labelTiles = [];
     for (int labelId in noteData.getLabels()) {
-      drawer.add(
+      labelTiles.add(
         HomeDrawerLabel(
           labelId,
-          widget.data.labelsEditMode,
-          widget.data.labelEditing == labelId,
-          widget.refreshNotes,
+          updateLabelName,
           editLabelName,
           doneLabelName,
-          updateLabelName,
+          widget.data,
         ),
       );
     }
+
+    // List of widgets for the drawer column
+    List<Widget> drawer = [
+          // Drawer header
+          SizedBox(
+            height: Constants.drawerHeaderHeight,
+            child: homeDrawerHeader(context),
+          ),
+          // Labels title
+          labelsTitle(
+              context, widget.data.labelsEditMode, widget.data.filterLabelId),
+        ] +
+        labelTiles +
+        [
+          Expanded(child: Container()),
+          Divider(),
+          TextButton(
+            onPressed: () async {
+              await launchUrl(Uri.parse('https://evoth.cf/privacy/#privacy'));
+            },
+            child: Text('Privacy Policy'),
+          ),
+          SizedBox(height: Constants.drawerPadding / 2),
+        ];
     return drawer;
   }
 
@@ -206,11 +240,18 @@ class _HomeDrawerState extends State<HomeDrawer> {
         doneLabelName();
         unfocus(context);
       },
-      // Saves label name before popping drawer
+      // Scrollable drawer
       child: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: homeDrawerContent(context),
+        child: CustomScrollView(
+          controller: ScrollController(),
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Column(
+                children: homeDrawerContent(context),
+              ),
+            ),
+          ],
         ),
       ),
     );

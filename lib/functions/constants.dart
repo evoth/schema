@@ -72,6 +72,9 @@ class Constants {
   static const String deleteLabelMessageTitle = 'Delete label?';
   static const String deleteLabelMessage =
       'This will permanently delete this label and remove it from all notes.';
+  static const String cantDragMessage =
+      'Cannot rearrange notes while filtering by a label.';
+  static const String updateNotesErrorMessage = 'Error getting notes.';
 
   // Tooltips and hint texts
   static const String newNoteTip = 'New note';
@@ -87,6 +90,7 @@ class Constants {
   static const String doneLabelsTip = 'Done';
   static const String editLabelNameTip = 'Edit label name';
   static const String doneLabelNameTip = 'Done';
+  static const String stopFilterTip = 'Stop filtering';
 
   // Button texts
   static const String googleButton = 'Sign in with Google';
@@ -97,6 +101,7 @@ class Constants {
   // Misc
   static const String labelsText = 'Labels';
   static const String editLabelsText = 'Edit labels';
+  static const String filterLabelsText = 'Filter by label';
 
   // Loading texts
   static const String defaultLoading = 'Loading...';

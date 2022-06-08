@@ -9,6 +9,7 @@ class NoteWidgetData {
   final Function? drag2;
   final double originalX;
   final double originalY;
+  final int? filterLabelId;
 
   NoteWidgetData(
     this.note,
@@ -17,5 +18,6 @@ class NoteWidgetData {
     this.drag2,
     this.originalX = 0,
     this.originalY = 0,
+    this.filterLabelId,
   });
 }
