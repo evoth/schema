@@ -8,6 +8,8 @@ part of 'noteData.dart';
 
 NoteData _$NoteDataFromJson(Map<String, dynamic> json) => NoteData(
       ownerId: json['ownerId'] as String?,
+      isAnonymous: json['isAnonymous'] as bool? ?? true,
+      email: json['email'] as String?,
     )
       ..noteIdCounter = json['noteIdCounter'] as int
       ..labelIdCounter = json['labelIdCounter'] as int
@@ -19,8 +21,10 @@ NoteData _$NoteDataFromJson(Map<String, dynamic> json) => NoteData(
         (k, e) => MapEntry(int.parse(k), e as Map<String, dynamic>),
       )
       ..timeRegistered = NoteData._rawTimeStamp(json['timeRegistered'])
-      ..isAnonymous = json['isAnonymous'] as bool
-      ..email = json['email'] as String?;
+      ..transferred = json['transferred'] as bool
+      ..themeColorId = json['themeColorId'] as int
+      ..themeIsDark = json['themeIsDark'] as bool
+      ..themeIsMonochrome = json['themeIsMonochrome'] as bool;
 
 Map<String, dynamic> _$NoteDataToJson(NoteData instance) => <String, dynamic>{
       'noteIdCounter': instance.noteIdCounter,
@@ -32,4 +36,8 @@ Map<String, dynamic> _$NoteDataToJson(NoteData instance) => <String, dynamic>{
       'ownerId': instance.ownerId,
       'isAnonymous': instance.isAnonymous,
       'email': instance.email,
+      'transferred': instance.transferred,
+      'themeColorId': instance.themeColorId,
+      'themeIsDark': instance.themeIsDark,
+      'themeIsMonochrome': instance.themeIsMonochrome,
     };

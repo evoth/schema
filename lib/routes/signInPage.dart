@@ -4,6 +4,7 @@ import 'package:schema/functions/auth.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
 
+// Page displayed when user needs to sign in
 class SignInPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -141,6 +142,8 @@ class SignInButton extends StatelessWidget {
             child: Text(
               text,
               style: TextStyle(
+                color: Theme.of(context).primaryTextTheme.bodyMedium?.color ??
+                    Colors.white,
                 fontSize: Constants.signInButtonSize * s,
                 fontWeight: FontWeight.bold,
               ),

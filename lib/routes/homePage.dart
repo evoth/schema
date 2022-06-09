@@ -1,12 +1,16 @@
+import 'dart:math';
+
+import 'package:alert_dialog/alert_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:schema/data/noteData.dart';
+import 'package:schema/data/themeData.dart';
 import 'package:schema/functions/constants.dart';
-import 'package:schema/functions/general.dart';
 import 'package:schema/layout/grid.dart';
-import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
+import 'package:schema/widgets/themeEditWidget.dart';
 import 'package:schema/widgets/homeDrawerWidget.dart';
 
+// Home page to view notes and drawer to edit labels
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
 
@@ -18,6 +22,9 @@ class _HomePageState extends State<HomePage> {
   // Data used to edit and filter labels
   late LabelsData labelsData =
       LabelsData(null, () => setState(() {}), filterLabel);
+
+  // Whether the app is loading
+  bool loading = false;
 
   // Adds a new blank note
   void newNote() async {
@@ -46,8 +53,10 @@ class _HomePageState extends State<HomePage> {
   void filterLabel(int? labelId) async {
     labelsData.filterLabelId = labelId;
     Navigator.of(context).pop();
+    loading = true;
     setState(() {});
     await noteData.updateNotes(context, labelId);
+    loading = false;
     setState(() {});
   }
 
@@ -57,11 +66,40 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       // App bar with title
       appBar: AppBar(
-        title: this.mounted && labelsData.filterLabelId != null
-            ? Text(noteData.labelName(labelsData.filterLabelId!))
-            : Text(Constants.appTitle),
+        // Row to conditionally display loading indicator
+        title: Row(
+          children: [
+            this.mounted && labelsData.filterLabelId != null
+                ? Text(noteData.labelName(labelsData.filterLabelId!))
+                : Text(Constants.appTitle),
+            SizedBox(width: Constants.appBarPadding),
+            SizedBox(
+              height: Constants.appBarSize,
+              width: Constants.appBarSize,
+              child: Center(
+                child: loading ? CircularProgressIndicator() : null,
+              ),
+            ),
+          ],
+        ),
         elevation: 0,
         //automaticallyImplyLeading: false,
+        // App bar actions
+        actions: [
+          IconButton(
+            onPressed: () {
+              alert(
+                context,
+                title: Text(Constants.themeEditTitle),
+                content: ThemeEditContent(),
+                textOK: Text(Constants.themeEditOK),
+              );
+            },
+            icon: Icon(Icons.color_lens),
+            tooltip: Constants.themeTip,
+          ),
+          SizedBox(width: Constants.appBarPadding),
+        ],
       ),
       // Drawer with settings, labels, etc
       drawer: HomeDrawer(labelsData),

@@ -26,15 +26,14 @@ class HomeDrawer extends StatefulWidget {
 
 class _HomeDrawerState extends State<HomeDrawer> {
   // Returns drawer header containing sign in / out button and text
-  DrawerHeader homeDrawerHeader(BuildContext context) {
-    return DrawerHeader(
+  Container homeDrawerHeader(BuildContext context) {
+    return Container(
       padding: EdgeInsets.all(Constants.drawerPadding),
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor,
+        color: Theme.of(context).appBarTheme.backgroundColor,
       ),
       // Column to hold both the button and text
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Shows sign in button if anonymous; otherwise shows sign out button
@@ -48,21 +47,26 @@ class _HomeDrawerState extends State<HomeDrawer> {
                         Constants.drawerSignInScale,
                   ),
                   text: Constants.googleButton,
-                  onPressed: signInWithGoogle,
+                  onPressed: noteData.transferNotes,
                   scale: Constants.drawerSignInScale,
                 )
               // Sign out button
               : SignInButton(
                   icon: Icon(
                     Icons.logout,
-                    color: Theme.of(context).primaryColor,
+                    color: Theme.of(context).backgroundColor,
                     size: Constants.signInButtonSize *
                         Constants.drawerSignInScale,
                   ),
                   text: Constants.signOutButton,
-                  onPressed: (context) => FirebaseAuth.instance.signOut(),
+                  onPressed: (context) {
+                    // Signs out and resets data
+                    FirebaseAuth.instance.signOut();
+                    noteData = NoteData(ownerId: null);
+                  },
                   scale: Constants.drawerSignInScale,
                 ),
+          SizedBox(height: Constants.drawerPadding),
           // If anonymous, shows text either prompting to sign in; otherwise
           // displays email of signed in account
           Text(
@@ -73,7 +77,10 @@ class _HomeDrawerState extends State<HomeDrawer> {
                     [noteData.email ?? ''],
                   ),
             style: TextStyle(
-              color: Colors.white,
+              color: noteData.themeIsDark
+                  ? null
+                  : (Theme.of(context).primaryTextTheme.bodyMedium?.color ??
+                      Colors.white),
               fontSize: Constants.drawerSubtitleSize,
             ),
           ),
@@ -206,18 +213,16 @@ class _HomeDrawerState extends State<HomeDrawer> {
     }
 
     // List of widgets for the drawer column
-    List<Widget> drawer = [
+    List<Widget> drawer = <Widget>[
           // Drawer header
-          SizedBox(
-            height: Constants.drawerHeaderHeight,
-            child: homeDrawerHeader(context),
-          ),
+          homeDrawerHeader(context),
+          noteData.themeIsDark ? Divider() : Container(),
           // Labels title
           labelsTitle(
               context, widget.data.labelsEditMode, widget.data.filterLabelId),
         ] +
         labelTiles +
-        [
+        <Widget>[
           Expanded(child: Container()),
           Divider(),
           TextButton(

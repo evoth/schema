@@ -8,34 +8,36 @@ import 'package:schema/functions/general.dart';
 
 // Sign in with Google account
 Future<void> signInWithGoogle(BuildContext context) async {
-  // Simple error catching (most likely error is user exiting sign in flow)
-  try {
-    // Different flow based on whether platform is mobile or web
-    if (isMobilePlatform()) {
-      // Trigger the authentication flow
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication? googleAuth =
-          await googleUser?.authentication;
-
-      // Create a new credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth?.accessToken,
-        idToken: googleAuth?.idToken,
-      );
-
+  final AuthCredential? credential = await getGoogleCredential(context);
+  if (credential != null) {
+    // Simple error catching (most likely error is user exiting sign in flow)
+    try {
       // Sign in with the UserCredential
       await FirebaseAuth.instance.signInWithCredential(credential);
-    } else {
-      // Create a new provider
-      GoogleAuthProvider googleProvider = GoogleAuthProvider();
-
-      // Sign in with the UserCredential
-      await FirebaseAuth.instance.signInWithPopup(googleProvider);
+    } catch (e) {
+      signInError(context);
     }
+  }
+}
+
+Future<AuthCredential?> getGoogleCredential(BuildContext context) async {
+  // Simple error catching (most likely error is user exiting sign in flow)
+  try {
+    // Trigger the authentication flow
+    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+    // Obtain the auth details from the request
+    final GoogleSignInAuthentication? googleAuth =
+        await googleUser?.authentication;
+
+    // Create and return a new credential
+    return GoogleAuthProvider.credential(
+      accessToken: googleAuth?.accessToken,
+      idToken: googleAuth?.idToken,
+    );
   } catch (e) {
     signInError(context);
+    return null;
   }
 }
 
@@ -43,6 +45,7 @@ Future<void> signInWithGoogle(BuildContext context) async {
 Future<void> signInAnonymously(BuildContext context) async {
   // Simple error catching
   try {
+    await FirebaseAuth.instance.signOut();
     await FirebaseAuth.instance.signInAnonymously();
   } catch (e) {
     signInError(context);
@@ -52,7 +55,7 @@ Future<void> signInAnonymously(BuildContext context) async {
 // Signs out if necessary and shows snackbar with error message
 void signInError(BuildContext context) {
   if (FirebaseAuth.instance.currentUser != null) {
-    FirebaseAuth.instance.signOut();
+    //FirebaseAuth.instance.signOut();
   }
   showAlert(context, Constants.signInErrorMessage, useSnackbar: true);
 }

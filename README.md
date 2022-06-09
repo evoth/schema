@@ -2,17 +2,19 @@
 Functional notes app with features like labels/categories and cloud storage.
 
 ## Todo
+- Fix "error getting notes" that happens sometimes when signing into new account
 - Lazy loading
-- Label ordering
 - Mobile optimizations (remove scroll for labels?)
-- Transfers
 - Make widgets like Text() const
 - Make it so you can't go back to loading screen
 - Make public variables that should be private private
+- Make variables that are only set once final or const
+- Optimize grid.dart?
 - Finishing touches
-   - Theme
    - Note shapes
    - Tutorial / about
-   - Smaller note edit window on bugger screens
+   - Placeholder for when there are no notes
+   - Smaller note edit window on bigger screens
    - Publish (web and possibly Google Play, not sure if worth $25 though)
    - Update web descriptions
+- Check back in around March 2023 to see if I need to migrate to new authentication provider

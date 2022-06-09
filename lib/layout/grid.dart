@@ -27,7 +27,7 @@ class _DynamicGridState extends State<DynamicGrid> {
   // calcNotePositions function) so that it can be used elsewhere
   double globalGridWidth = 0;
 
-  // Fill mode (if true, fills up entire width; if false, adds margins toshiftNotes
+  // Fill mode (if true, fills up entire width; if false, adds margins to
   // maintain preferred note size)
   final bool fillMode = isMobileDevice();
 
@@ -90,7 +90,7 @@ class _DynamicGridState extends State<DynamicGrid> {
       if (useTemp) {
         noteIndex = noteData.notes[i].tempIndex;
       } else {
-        noteIndex = noteData.notes[i].index(filter: filter);
+        noteIndex = noteData.notes[i].index(noteData, filter: filter);
       }
       notePositions.add(
         NotePosition(
@@ -98,7 +98,7 @@ class _DynamicGridState extends State<DynamicGrid> {
           height,
           padding + (width + padding) * (noteIndex % nColumns),
           padding + (height + padding) * (noteIndex ~/ nColumns),
-          noteData.notes[i].index(filter: filter),
+          noteData.notes[i].index(noteData, filter: filter),
           noteData.notes[i].id,
         ),
       );
@@ -139,13 +139,15 @@ class _DynamicGridState extends State<DynamicGrid> {
     } else {
       // Reassigns indices
       for (int i = 0; i < noteData.notes.length; i++) {
-        noteData.notes[i].setIndex(noteData.notes[i].tempIndex);
+        noteData.notes[i].setIndex(noteData, noteData.notes[i].tempIndex);
         noteData.noteMeta[noteData.notes[i].id]?['index'] =
             noteData.notes[i].tempIndex;
       }
       noteData.updateData();
       noteData.notes.sort(
-        (a, b) => a.index(filter: filter).compareTo(b.index(filter: filter)),
+        (a, b) => a
+            .index(noteData, filter: filter)
+            .compareTo(b.index(noteData, filter: filter)),
       );
     }
 
@@ -237,7 +239,7 @@ class _DynamicGridState extends State<DynamicGrid> {
           noteData.notes[i].dragY += scrollDelta;
           // Runs function to update dragging note
           dragUpdateNotePositions(
-            noteData.notes[i].index(filter: filter),
+            noteData.notes[i].index(noteData, filter: filter),
             DragUpdateDetails(globalPosition: Offset.zero),
           );
         }

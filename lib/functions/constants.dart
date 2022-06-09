@@ -1,4 +1,6 @@
 // App constants
+import 'package:flutter/material.dart';
+
 class Constants {
   /* Note and grid constants */
 
@@ -28,10 +30,11 @@ class Constants {
   static const double homePadding = 30;
   static const double drawerTitleSize = 24;
   static const double drawerSubtitleSize = 16;
-  static const double drawerHeaderHeight = 150;
   static const double drawerPadding = 16;
   static const double drawerSignInScale = 0.8;
   static const double drawerLabelSplashRadius = 24;
+  static const double appBarPadding = 15;
+  static const double appBarSize = 20;
 
   // Edit page
   static const double editPadding = 30;
@@ -52,6 +55,12 @@ class Constants {
   static const double signInTextSize = 20;
   static const double signInTileSize = 30 + signInButtonSize;
 
+  // Theme edit dialog
+  static const int themeEditCount = 6;
+  static const double themeEditSpacing = 10;
+  static const double themeEditRadius = 8;
+  static const double themeEditSize = 40;
+
   /* String constants */
 
   // Page titles
@@ -59,7 +68,7 @@ class Constants {
   static const String editTitle = 'Edit note';
   static const String signInTitle = 'Sign in';
 
-  // Snackbar messages
+  // Alert/snackbar messages
   static const String discardMessage = 'Empty note discarded';
   static const String deleteMessage = 'Note deleted';
   static const String signInErrorMessage = 'Sign in error. Please try again.';
@@ -75,6 +84,21 @@ class Constants {
   static const String cantDragMessage =
       'Cannot rearrange notes while filtering by a label.';
   static const String updateNotesErrorMessage = 'Error getting notes.';
+  static const String transferTitle = 'Transfer data?';
+  static const String transferMessage =
+      'This will transfer your notes and labels to your Google account. ' +
+          'Otherwise, the notes you made while signed out will be permanently ' +
+          'deleted.';
+  static const String transferCancel = 'Delete data';
+  static const String transferOK = 'Transfer data';
+  static const String transferDeleteTitle = 'Delete data?';
+  static const String transferDeleteMessage =
+      'This will delete all notes and labels you made while signed out. Any ' +
+          'notes already saved on your Google account will remain.';
+  static const String transferDeleteOK = 'Delete data';
+  static const String transferCompleteMessage = 'Transfer complete';
+  static const String themeEditTitle = 'Edit theme';
+  static const String themeEditOK = 'Done';
 
   // Tooltips and hint texts
   static const String newNoteTip = 'New note';
@@ -91,6 +115,7 @@ class Constants {
   static const String editLabelNameTip = 'Edit label name';
   static const String doneLabelNameTip = 'Done';
   static const String stopFilterTip = 'Stop filtering';
+  static const String themeTip = 'Theme';
 
   // Button texts
   static const String googleButton = 'Sign in with Google';
@@ -98,6 +123,9 @@ class Constants {
   static const String signOutButton = 'Sign out of Google account';
   static const String settingsButton = 'Settings';
   static const String privacyPolicyButton = 'Privacy Policy';
+  static const String themeLightButton = 'Light mode';
+  static const String themeDarkButton = 'Dark mode';
+  static const String themeIntenseButton = 'Intense mode';
 
   // Misc
   static const String labelsText = 'Labels';
@@ -107,6 +135,7 @@ class Constants {
   // Loading texts
   static const String defaultLoading = 'Loading...';
   static const String initLoading = 'Initializing...';
+  static const String transferLoading = 'Transferring notes...';
 
   // Messages and descriptions
   static const String welcomeText =
@@ -122,5 +151,58 @@ class Constants {
   /* Asset constants */
 
   // Asset paths
-  static String googleG = 'assets/google_g_logo.svg';
+  static const String googleG = 'assets/google_g_logo.svg';
+
+  /* Theme constants */
+
+  // Color options
+  static const List<MaterialColor> themeColorOptions = [
+    Colors.grey,
+    Colors.blueGrey,
+    Colors.red,
+    Colors.deepOrange,
+    Colors.orange,
+    Colors.amber,
+    Colors.yellow,
+    Colors.lime,
+    Colors.lightGreen,
+    Colors.green,
+    Colors.teal,
+    Colors.cyan,
+    Colors.lightBlue,
+    Colors.blue,
+    Colors.indigo,
+    Colors.deepPurple,
+    Colors.purple,
+    Colors.pink,
+  ];
+  static const List<String> themeColorNames = [
+    'Grey',
+    'Blue Grey',
+    'Red',
+    'Deep Orange',
+    'Orange',
+    'Amber',
+    'Yellow',
+    'Lime',
+    'Lime Green',
+    'Green',
+    'Teal',
+    'Cyan',
+    'Light Blue',
+    'Blue',
+    'Indigo',
+    'Deep Purple',
+    'Purple',
+    'Pink',
+  ];
+  static const List<MaterialColor> themeMonochromeColors = [
+    Colors.grey,
+    Colors.blueGrey,
+  ];
+
+  // Defaults
+  static const int themeDefaultColorId = 13;
+  static const bool themeDefaultIsDark = false;
+  static const bool themeDefaultIsMonochrome = false;
 }

@@ -56,7 +56,7 @@ List<Widget> labelChips(
   Function? setState,
   bool showDelete,
 ) {
-  List<int> labelIds = note.getLabels();
+  List<int> labelIds = note.getLabels(noteData);
   List<Widget> chips = labelIds.isEmpty
       ? []
       : labelIds

@@ -24,13 +24,13 @@ class NoteAddLabelButton extends StatelessWidget {
       // Gets list of label ids that note doesn't already have
       List<int> labelIds = noteData
           .getLabels()
-          .where((int labelId) => !note.hasLabel(labelId))
+          .where((int labelId) => !note.hasLabel(noteData, labelId))
           .toList();
       // Makes list of dialog options from label ids
       List<SimpleDialogOption> options = labelIds.map((labelId) {
         return SimpleDialogOption(
           onPressed: () {
-            Navigator.pop(context, labelId);
+            Navigator.of(context).pop(labelId);
           },
           child: Text(
             noteData.labelName(labelId),
@@ -43,20 +43,20 @@ class NoteAddLabelButton extends StatelessWidget {
         0,
         SimpleDialogOption(
           onPressed: () {
-            Navigator.pop(context, -1);
+            Navigator.of(context).pop(-1);
           },
           child: Row(
             children: [
               Icon(
                 Icons.add,
-                color: Theme.of(context).primaryColor,
+                color: Theme.of(context).accentColor,
               ),
               SizedBox(width: Constants.addNewGap),
               Text(
                 Constants.newLabelText,
                 style: TextStyle(
                   fontSize: Constants.addLabelOptionSize,
-                  color: Theme.of(context).primaryColor,
+                  color: Theme.of(context).accentColor,
                 ),
               ),
             ],

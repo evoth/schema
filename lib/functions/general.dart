@@ -86,7 +86,6 @@ Future<TryData> tryQuery(Function func) async {
   try {
     returnValue = await func();
   } on FirebaseException catch (e) {
-    // My security rules block attempts to get a document that doesn't exist
     status = (e.code == 'permission-denied') ? 2 : 1;
   } catch (e) {
     status = 1;
@@ -94,6 +93,7 @@ Future<TryData> tryQuery(Function func) async {
   return TryData(returnValue, status);
 }
 
+// Stores return value and status of tryQuery
 class TryData {
   dynamic returnValue;
   int status;

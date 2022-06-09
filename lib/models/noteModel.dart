@@ -26,39 +26,44 @@ class Note {
   String? previousText;
 
   // Gets index from NoteData
-  int index({bool filter = false}) {
+  int index(NoteData data, {bool filter = false}) {
     // If filtering by a label, return tempIndex, which is used when filtering
     if (filter) {
       return tempIndex;
     }
     // Otherwise, return index from metadata
-    return noteData.noteMeta[id]?['index'];
+    return data.noteMeta[id]?['index'];
   }
 
   // Sets index in NoteData
-  void setIndex(index) {
-    noteData.noteMeta[id]?['index'] = index;
+  void setIndex(NoteData data, index) {
+    data.noteMeta[id]?['index'] = index;
   }
 
   // Gets list of label ids
-  List<int> getLabels() {
-    List<int> labelIds = noteData.noteMeta[id]?['labels'].keys
-        .map<int>((labelId) => int.parse(labelId))
-        .toList();
+  List<int> getLabels(NoteData data) {
+    List<int> labelIds = data.noteMeta[id]?['labels'].keys
+            .map<int>((labelId) => int.parse(labelId))
+            .toList() ??
+        [];
     // Excludes and removes deleted labels in case of desync
     for (int i = 0; i < labelIds.length; i++) {
-      if (!noteData.labels.containsKey(labelIds[i])) {
-        noteData.noteMeta[id]?['labels'].remove(labelIds[i].toString());
+      if (!data.labels.containsKey(labelIds[i])) {
+        data.noteMeta[id]?['labels'].remove(labelIds[i].toString());
         labelIds.removeAt(i);
         i--;
       }
     }
-    return labelIds.toList();
+    // Sorts labels alphabetically
+    labelIds.sort(
+      (a, b) => data.labels[a]?['name'].compareTo(data.labels[b]?['name']),
+    );
+    return labelIds;
   }
 
   // Returns whether the given label is possesed by the note
-  bool hasLabel(int labelId) {
-    return noteData.noteMeta[id]?['labels'].containsKey(labelId.toString());
+  bool hasLabel(NoteData data, int labelId) {
+    return data.noteMeta[id]?['labels'].containsKey(labelId.toString());
   }
 
   Note(

@@ -6,6 +6,7 @@ import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
 import 'package:schema/widgets/noteEditFieldsWidget.dart';
 
+// Page that allows user to edit note and add/remove labels
 class NoteEditPage extends StatelessWidget {
   const NoteEditPage(this.noteWidgetData);
 
@@ -36,13 +37,14 @@ class NoteEditPage extends StatelessWidget {
               )) {
                 noteData.deleteNote(
                   context,
-                  note.index(),
+                  note.index(noteData),
                   noteWidgetData.refreshNotes,
                 );
-                Navigator.pop(context);
+                Navigator.of(context).pop(context);
               }
             },
           ),
+          SizedBox(width: Constants.appBarPadding),
         ],
       ),
       // Text fields for title and text
