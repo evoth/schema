@@ -28,8 +28,11 @@ void initApp(BuildContext context, User? user) async {
     return;
   }
 
-  // Get notes, creating new user data if need be
-  await noteData.updateNotes(context, null);
+  // Only update if we're signed in
+  if (noteData.ownerId != null) {
+    // Get notes, creating new user data if need be
+    await noteData.updateNotes(context, null);
+  }
 
   // Updates theme
   themeData.updateTheme();

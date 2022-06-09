@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:schema/data/noteData.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
 
@@ -45,7 +46,10 @@ Future<AuthCredential?> getGoogleCredential(BuildContext context) async {
 Future<void> signInAnonymously(BuildContext context) async {
   // Simple error catching
   try {
-    await FirebaseAuth.instance.signOut();
+    // Only sign out if we're signed in
+    if (noteData.ownerId != null) {
+      await FirebaseAuth.instance.signOut();
+    }
     await FirebaseAuth.instance.signInAnonymously();
   } catch (e) {
     signInError(context);

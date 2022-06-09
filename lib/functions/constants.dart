@@ -203,6 +203,6 @@ class Constants {
 
   // Defaults
   static const int themeDefaultColorId = 13;
-  static const bool themeDefaultIsDark = false;
-  static const bool themeDefaultIsMonochrome = false;
+  static const bool themeDefaultIsDark = true;
+  static const bool themeDefaultIsMonochrome = true;
 }

@@ -83,20 +83,24 @@ InputDecoration noBorder({
 Future<TryData> tryQuery(Function func) async {
   int status = 0;
   dynamic returnValue;
+  dynamic error;
   try {
     returnValue = await func();
   } on FirebaseException catch (e) {
     status = (e.code == 'permission-denied') ? 2 : 1;
+    error = e;
   } catch (e) {
     status = 1;
+    error = e;
   }
-  return TryData(returnValue, status);
+  return TryData(returnValue, status, error);
 }
 
 // Stores return value and status of tryQuery
 class TryData {
   dynamic returnValue;
   int status;
+  dynamic error;
 
-  TryData(this.returnValue, this.status);
+  TryData(this.returnValue, this.status, this.error);
 }

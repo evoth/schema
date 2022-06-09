@@ -2,7 +2,6 @@
 Functional notes app with features like labels/categories and cloud storage.
 
 ## Todo
-- Fix "error getting notes" that happens sometimes when signing into new account
 - Lazy loading
 - Mobile optimizations (remove scroll for labels?)
 - Make widgets like Text() const
