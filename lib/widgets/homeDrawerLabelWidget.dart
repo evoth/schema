@@ -38,8 +38,8 @@ class HomeDrawerLabel extends StatelessWidget {
           // Delete label button
           leading: IconButton(
             splashRadius: Constants.drawerLabelSplashRadius,
-            tooltip: Constants.deleteLabelTip,
             icon: Icon(Icons.delete),
+            tooltip: Constants.deleteLabelTip,
             onPressed: () async {
               // Confirms with user before deleting
               if (await confirm(
@@ -76,8 +76,8 @@ class HomeDrawerLabel extends StatelessWidget {
           // Done button
           trailing: IconButton(
             splashRadius: Constants.drawerLabelSplashRadius,
-            tooltip: Constants.doneLabelNameTip,
             icon: Icon(Icons.check),
+            tooltip: Constants.doneLabelNameTip,
             // Tells drawer to update label name
             onPressed: () {
               doneLabelName();
@@ -90,8 +90,8 @@ class HomeDrawerLabel extends StatelessWidget {
           // Delete label button
           leading: IconButton(
             splashRadius: Constants.drawerLabelSplashRadius,
-            tooltip: Constants.deleteLabelTip,
             icon: Icon(Icons.delete),
+            tooltip: Constants.deleteLabelTip,
             onPressed: () async {
               // Confirms with user before deleting
               if (await confirm(
@@ -108,8 +108,8 @@ class HomeDrawerLabel extends StatelessWidget {
           // Edit name button
           trailing: IconButton(
             splashRadius: Constants.drawerLabelSplashRadius,
-            tooltip: Constants.editLabelNameTip,
             icon: Icon(Icons.edit),
+            tooltip: Constants.editLabelNameTip,
             // Tells drawer to update to name edit mode
             onPressed: () {
               editLabelName(labelId);
@@ -132,8 +132,8 @@ class HomeDrawerLabel extends StatelessWidget {
         trailing: data.filterLabelId == labelId
             ? IconButton(
                 splashRadius: Constants.drawerLabelSplashRadius,
-                tooltip: Constants.stopFilterTip,
                 icon: Icon(Icons.close),
+                tooltip: Constants.stopFilterTip,
                 // Tells HomePage to stop filtering
                 onPressed: () {
                   data.filterLabel(null);

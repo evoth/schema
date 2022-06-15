@@ -129,7 +129,7 @@ void addNewLabel(
     return;
   }
   // Creates new label with the given name
-  int newLabelId = noteData.newLabel(newLabelName);
+  int newLabelId = noteData.newLabel(newLabelName, update: note == null);
   // Adds the new label to the current note if note is
   // not null; if it is null then don't do anything (note will be null when
   // called from the drawer on home page)

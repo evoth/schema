@@ -43,8 +43,8 @@ class _ThemeEditContentState extends State<ThemeEditContent> {
           // Both isDark and isMonochrome are false (isMonochrome has no effect)
           noteData.themeIsDark = false;
           noteData.themeIsMonochrome = false;
-          noteData.updateData();
           themeData.updateTheme();
+          noteData.updateData();
           setState(() {});
         }),
       );
@@ -60,8 +60,8 @@ class _ThemeEditContentState extends State<ThemeEditContent> {
           noteData.themeIsDark = true;
           noteData.themeIsMonochrome =
               themeData.isMonochromeColor(noteData.themeColorId);
-          noteData.updateData();
           themeData.updateTheme();
+          noteData.updateData();
           setState(() {});
         }),
       );
@@ -76,8 +76,8 @@ class _ThemeEditContentState extends State<ThemeEditContent> {
           // Both isDark and isMonochrome are true for intense mode
           noteData.themeIsDark = true;
           noteData.themeIsMonochrome = true;
-          noteData.updateData();
           themeData.updateTheme();
+          noteData.updateData();
           setState(() {});
         }),
       );
@@ -110,8 +110,8 @@ class _ThemeEditContentState extends State<ThemeEditContent> {
               noteData.themeColorId = colorId;
               noteData.themeIsMonochrome =
                   themeData.isMonochromeColor(colorId) || intenseMode;
-              noteData.updateData();
               themeData.updateTheme();
+              noteData.updateData();
               setState(() {});
             },
             // Actual colored container

@@ -11,8 +11,6 @@ NoteData _$NoteDataFromJson(Map<String, dynamic> json) => NoteData(
       isAnonymous: json['isAnonymous'] as bool? ?? true,
       email: json['email'] as String?,
     )
-      ..noteIdCounter = json['noteIdCounter'] as int
-      ..labelIdCounter = json['labelIdCounter'] as int
       ..numNotes = json['numNotes'] as int
       ..labels = (json['labels'] as Map<String, dynamic>).map(
         (k, e) => MapEntry(int.parse(k), e as Map<String, dynamic>),
@@ -27,8 +25,6 @@ NoteData _$NoteDataFromJson(Map<String, dynamic> json) => NoteData(
       ..themeIsMonochrome = json['themeIsMonochrome'] as bool;
 
 Map<String, dynamic> _$NoteDataToJson(NoteData instance) => <String, dynamic>{
-      'noteIdCounter': instance.noteIdCounter,
-      'labelIdCounter': instance.labelIdCounter,
       'numNotes': instance.numNotes,
       'labels': instance.labels.map((k, e) => MapEntry(k.toString(), e)),
       'noteMeta': instance.noteMeta.map((k, e) => MapEntry(k.toString(), e)),

@@ -1,10 +1,14 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:confirm_dialog/confirm_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:schema/data/noteData.dart';
 import 'package:schema/functions/constants.dart';
+import 'package:schema/functions/general.dart';
+import 'package:intl/intl.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
 import 'package:schema/widgets/noteEditFieldsWidget.dart';
+import 'package:sprintf/sprintf.dart';
 
 // Page that allows user to edit note and add/remove labels
 class NoteEditPage extends StatelessWidget {
@@ -13,6 +17,88 @@ class NoteEditPage extends StatelessWidget {
   // Note widget data
   final NoteWidgetData noteWidgetData;
 
+  // Returns app bar title based on the edit/save state of the note
+  Row noteEditAppBarTitle(BuildContext context, Note note) {
+    // Initialize the Row with title text
+    List<Widget> content = [
+      Text(Constants.editTitle),
+      SizedBox(width: Constants.appBarPadding),
+    ];
+    // Color to be used by icon and time ago text
+    Color editStatusColor = HSVColor.fromColor(Theme.of(context).canvasColor)
+        .withValue(1.0)
+        .toColor()
+        .withOpacity(0.5);
+    // DateTime when note was last updated
+    DateTime timeUpdated = noteData.noteMeta[note.id]?['timeUpdated'].toDate();
+    // Note has been saved
+    if (note.isSavedNotifier.value) {
+      if (note.hasOfflineChanges) {
+        // Note has changes that have only been saved to the device
+        content.add(
+          IconButton(
+            icon: Icon(Icons.cloud_off, color: editStatusColor),
+            tooltip: Constants.savedOfflineTip,
+            onPressed: () {
+              // Alert explains how note is saved and the time it was last saved
+              showAlert(
+                context,
+                sprintf(
+                  Constants.savedOfflineMessage,
+                  [
+                    DateFormat.yMMMMd().format(timeUpdated),
+                    DateFormat.jm().format(timeUpdated),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      } else {
+        // Note has been saved to the cloud
+        content.add(
+          IconButton(
+            icon: Icon(Icons.cloud_done, color: editStatusColor),
+            tooltip: Constants.savedCloudTip,
+            onPressed: () {
+              // Alert explains how note is saved and the time it was last saved
+              showAlert(
+                context,
+                sprintf(
+                  Constants.savedCloudMessage,
+                  [
+                    DateFormat.yMMMMd().format(timeUpdated),
+                    DateFormat.jm().format(timeUpdated),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      }
+    } else {
+      // New changes haven't been saved yet
+      content.add(
+        IconButton(
+          icon: Icon(Icons.cloud_upload, color: editStatusColor),
+          tooltip: Constants.savingTip,
+          onPressed: () {},
+        ),
+      );
+    }
+    content.add(SizedBox(width: Constants.appBarPadding));
+    // Time ago text
+    content.add(
+      Text(
+        customTimeAgo(timeUpdated),
+        style: TextStyle(color: editStatusColor),
+      ),
+    );
+    return Row(
+      children: content,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Sets note variable for convenience
@@ -20,7 +106,12 @@ class NoteEditPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(Constants.editTitle),
+        title: ValueListenableBuilder(
+          valueListenable: note.isSavedNotifier,
+          builder: (BuildContext context, bool isSaved, Widget? child) {
+            return noteEditAppBarTitle(context, note);
+          },
+        ),
         elevation: 0,
         automaticallyImplyLeading: true,
         actions: <Widget>[
@@ -48,7 +139,9 @@ class NoteEditPage extends StatelessWidget {
         ],
       ),
       // Text fields for title and text
-      body: NoteEditFields(noteWidgetData),
+      body: SingleChildScrollView(
+        child: NoteEditFields(noteWidgetData),
+      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:schema/data/noteData.dart';
 part 'noteModel.g.dart';
@@ -6,10 +7,12 @@ part 'noteModel.g.dart';
 // efficient). JsonSerializable so that we can go to and from Firebase
 @JsonSerializable()
 class Note {
+  // Basic note properties
   int id;
   String title;
   String text;
   String? ownerId;
+  // Used for rearranging notes on home page
   @JsonKey(ignore: true)
   int tempIndex = -1;
   @JsonKey(ignore: true)
@@ -18,12 +21,22 @@ class Note {
   double dragX = 0;
   @JsonKey(ignore: true)
   double dragY = 0;
+  // Whether the note has just been created (false after first edit)
   @JsonKey(ignore: true)
   bool isNew;
+  // Variables to store the current edit state of the note
   @JsonKey(ignore: true)
   String? previousTitle;
   @JsonKey(ignore: true)
   String? previousText;
+  // (ValueNotifier used to update app bar in edit page)
+  @JsonKey(ignore: true)
+  ValueNotifier<bool> isSavedNotifier = ValueNotifier(true);
+  @JsonKey(ignore: true)
+  int editTicker = 0;
+  // Whether the note has pending writes, meaning it has been edited offline
+  @JsonKey(ignore: true)
+  bool hasOfflineChanges;
 
   // Gets index from NoteData
   int index(NoteData data, {bool filter = false}) {
@@ -63,7 +76,8 @@ class Note {
 
   // Returns whether the given label is possesed by the note
   bool hasLabel(NoteData data, int labelId) {
-    return data.noteMeta[id]?['labels'].containsKey(labelId.toString());
+    return data.noteMeta[id]?['labels'].containsKey(labelId.toString()) ??
+        false;
   }
 
   Note(
@@ -73,6 +87,7 @@ class Note {
     required this.ownerId,
     this.drag = false,
     this.isNew = false,
+    this.hasOfflineChanges = false,
   });
 
   factory Note.fromJson(Map<String, dynamic> json) => _$NoteFromJson(json);

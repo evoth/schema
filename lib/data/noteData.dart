@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:alert_dialog/alert_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:confirm_dialog/confirm_dialog.dart';
@@ -8,7 +10,6 @@ import 'package:schema/data/themeData.dart';
 import 'package:schema/functions/auth.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
-import 'package:schema/functions/init.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
 import 'package:schema/routes/homePage.dart';
@@ -23,9 +24,7 @@ class NoteData {
   // List of Note objects used to display and edit
   @JsonKey(ignore: true)
   List<Note> notes = [];
-  // Various counters
-  int noteIdCounter = 0;
-  int labelIdCounter = 0;
+  // Total number of notes
   int numNotes = 0;
   // Map of label ids and their details
   Map<int, Map<String, dynamic>> labels = {};
@@ -42,6 +41,9 @@ class NoteData {
   int themeColorId = Constants.themeDefaultColorId;
   bool themeIsDark = Constants.themeDefaultIsDark;
   bool themeIsMonochrome = Constants.themeDefaultIsMonochrome;
+  // Whether we are online
+  @JsonKey(ignore: true)
+  bool isOnline = true;
 
   static Timestamp _rawTimeStamp(t) => t as Timestamp;
 
@@ -49,8 +51,6 @@ class NoteData {
   // TODO: find a better way
   void setNoteData(NoteData data) {
     NoteData copyData = NoteData.fromJson(data.toJson());
-    this.noteIdCounter = copyData.noteIdCounter;
-    this.labelIdCounter = copyData.labelIdCounter;
     this.numNotes = copyData.numNotes;
     this.labels = copyData.labels;
     this.noteMeta = copyData.noteMeta;
@@ -83,56 +83,62 @@ class NoteData {
 
   // Adds a specified note at a certain index, or at the end by default
   // (returns new note)
-  Note addNote(Note note, {int? index}) {
+  Note addNote(Note note, bool hasOfflineChanges, {int? index}) {
     // Adds note object to notes list
     index = index ?? notes.length;
+    // Updates hasOfflineChanges
+    note.hasOfflineChanges = hasOfflineChanges;
+    // Actually insert note and populate tempIndex
     notes.insert(index, note);
     notes[index].tempIndex = notes[index].index(this);
     return note;
   }
 
   // Adds a new (empty) note and inserts at index 0 (returns new note)
-  Note newNote(int? filterLabelId, {Note? note}) {
+  Note newNote(int? filterLabelId, {Note? note, bool update = true}) {
     // Shifts other notes forward
     shiftNoteIndices(1);
+    // New note id is the current time in milliseconds
+    Timestamp timeCreated = Timestamp.now();
+    int newNoteId = getUniqueId();
     // Updates note metadata
-    noteMeta[noteIdCounter] = {
+    noteMeta[newNoteId] = {
       'index': 0,
-      'timeCreated': Timestamp.now(),
-      'timeUpdated': Timestamp.now(),
+      'timeCreated': timeCreated,
+      'timeUpdated': timeCreated,
       'labels': {},
     };
 
     // Adds the note to the list
     Note newNote = addNote(
       Note(
-        noteIdCounter,
+        newNoteId,
         note != null ? note.title : '',
         note != null ? note.text : '',
         isNew: note == null,
         ownerId: ownerId,
       ),
+      false,
       index: 0,
     );
 
-    // Update counters
-    noteIdCounter++;
+    // Update counter
     numNotes++;
     // Updates note data and returns new note. If filtering by label, add this
-    // label to new note (which will update data). Otherwise, only update data.
+    // label to new note. Don't update because we already update on next line.
     if (filterLabelId != null) {
-      addLabel(newNote, filterLabelId);
-    } else {
-      updateData();
+      addLabel(newNote, filterLabelId, update: false);
     }
-    updateNote(newNote);
+    updateNote(newNote, update: update);
     return newNote;
   }
 
-  // Remove note from current view
-  void removeNote(int tempIndex) {
-    notes.removeAt(tempIndex);
-    shiftNoteIndices(-1, index: tempIndex, onlyTemp: true);
+  // Remove note from current view if it still exists there
+  void removeNote(Note note) {
+    if (notes[note.tempIndex].id == note.id) {
+      notes.removeAt(note.tempIndex);
+      shiftNoteIndices(-1, index: note.tempIndex, onlyTemp: true);
+    }
   }
 
   // Deletes note and shifts indices
@@ -161,6 +167,32 @@ class NoteData {
     refreshNotes();
   }
 
+  // Saves note after 3 seconds of inactivity. Set wait to false to save
+  // immediately.
+  Future<void> saveNote(Note note, {bool wait = true}) async {
+    note.editTicker++;
+    note.isSavedNotifier.value = false;
+    int currentTicker = note.editTicker;
+
+    if (wait) {
+      await Future.delayed(Duration(seconds: Constants.saveInactivityDuration));
+    }
+
+    // If this function has not run in the last 3 seconds, update note
+    if (note.editTicker == currentTicker) {
+      // Updates note in database if anything has changed
+      if (note.previousTitle != note.title || note.previousText != note.text) {
+        noteMeta[note.id]?['timeUpdated'] = Timestamp.now();
+        updateNote(note);
+      }
+      // Updates edit state
+      note.previousTitle = note.title;
+      note.previousText = note.text;
+      note.isSavedNotifier.value = true;
+      note.editTicker = 0;
+    }
+  }
+
   // Pushes edit screen and calls note edit function
   Future<void> editNote(
     BuildContext context,
@@ -171,39 +203,47 @@ class NoteData {
     // Store text and title before editing
     note.previousTitle = note.title;
     note.previousText = note.text;
+    // Reset edit state
+    note.isSavedNotifier.value = true;
+    note.editTicker = 0;
 
-    // Navigate to the second screen.
+    // Navigate to the second screen and wait until it is popped.
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (BuildContext context) => NoteEditPage(noteWidgetData),
       ),
     );
 
-    // Note is now done being edited
+    // Removes note if new and empty
+    if (note.isNew && note.title == '' && note.text == '') {
+      deleteNote(context, note.tempIndex, refreshNotes,
+          message: Constants.discardMessage);
+    }
     note.isNew = false;
+
     // If note does not have label currently being filtered, remove from view
     if (noteWidgetData.filterLabelId != null &&
         !note.hasLabel(this, noteWidgetData.filterLabelId!)) {
-      removeNote(note.tempIndex);
+      removeNote(note);
     }
     // Updates notes on home screen
     refreshNotes();
-    // Updates note in database if anything has changed
-    if (note.previousTitle != note.title || note.previousText != note.text) {
-      noteMeta[note.id]?['timeUpdated'] = Timestamp.now();
-      updateNote(note);
-    }
+    // Saves note
+    saveNote(note, wait: false);
   }
 
   // Adds new label with the specified name
-  int newLabel(String name) {
-    labels[labelIdCounter] = {
+  int newLabel(String name, {bool update = true}) {
+    // New label id is the current time in milliseconds
+    int newLabelId = getUniqueId();
+    labels[newLabelId] = {
       'name': name,
       'numNotes': 0,
     };
-    labelIdCounter++;
-    updateData();
-    return labelIdCounter - 1;
+    if (update) {
+      updateData();
+    }
+    return newLabelId;
   }
 
   // Deletes label
@@ -217,18 +257,32 @@ class NoteData {
   }
 
   // Adds a label to a note (we use a map instead of a list for access speed)
-  void addLabel(Note note, int labelId) {
+  void addLabel(Note note, int labelId, {bool update = true}) {
+    // Mark note as unsaved
+    note.isSavedNotifier.value = false;
     // Convert label id to string because of strange error
     noteMeta[note.id]?['labels'][labelId.toString()] = true;
     labels[labelId]?['numNotes']++;
-    updateData();
+    noteMeta[note.id]?['timeUpdated'] = Timestamp.now();
+    note.hasOfflineChanges = !isOnline;
+    if (update) {
+      updateData();
+    }
+    // Mark note as saved if other content is already saved
+    note.isSavedNotifier.value = note.editTicker == 0;
   }
 
   // Removes a label from a note
   void removeLabel(Note note, int labelId) {
+    // Mark note as unsaved
+    note.isSavedNotifier.value = false;
     noteMeta[note.id]?['labels'].remove(labelId.toString());
     labels[labelId]?['numNotes']--;
+    noteMeta[note.id]?['timeUpdated'] = Timestamp.now();
+    note.hasOfflineChanges = !isOnline;
     updateData();
+    // Mark note as saved if other content is already saved
+    note.isSavedNotifier.value = note.editTicker == 0;
   }
 
   // Edit label name
@@ -257,7 +311,7 @@ class NoteData {
         .get();
 
     for (var element in noteDocs.docs) {
-      addNote(Note.fromJson(element.data()));
+      addNote(Note.fromJson(element.data()), element.metadata.hasPendingWrites);
     }
 
     notes.sort(
@@ -269,29 +323,35 @@ class NoteData {
   // the query and have been newly updated, keeping any already up-to-date notes
   // TODO: create variables for each type of query
   Future<void> updateNotes(BuildContext context, int? filterLabelId) async {
+    // Variables used to update data
     NoteData? newNoteData;
+    TryData tryData;
+    bool failed;
+    DocumentSnapshot<Map<String, dynamic>>? dataDoc;
 
-    // Attempts to get user data already stored in cache
-    await FirebaseFirestore.instance.disableNetwork();
+    // Attempts to get user data already stored in cache if metadata is empty
+    if (noteMeta.isEmpty) {
+      await FirebaseFirestore.instance.disableNetwork();
 
-    TryData tryData = await tryQuery(
-      () async => await FirebaseFirestore.instance
-          .collection('notes-meta')
-          .doc(ownerId)
-          .get(),
-    );
-    bool failed = tryData.status != 0;
-    DocumentSnapshot<Map<String, dynamic>>? dataDoc = tryData.returnValue;
+      tryData = await tryQuery(
+        () async => await FirebaseFirestore.instance
+            .collection('notes-meta')
+            .doc(ownerId)
+            .get(),
+      );
+      failed = tryData.status != 0;
+      dataDoc = tryData.returnValue;
 
-    // Update local noteData from cache
-    if (!failed && dataDoc!.exists) {
-      newNoteData = NoteData.fromJson(dataDoc.data()!);
-      if (newNoteData.ownerId == ownerId) {
-        setNoteData(newNoteData);
+      // Update local noteData from cache
+      if (!failed && dataDoc!.exists) {
+        NoteData newLocalNoteData = NoteData.fromJson(dataDoc.data()!);
+        if (newLocalNoteData.ownerId == ownerId) {
+          setNoteData(newLocalNoteData);
+        }
       }
-    }
 
-    await FirebaseFirestore.instance.enableNetwork();
+      await FirebaseFirestore.instance.enableNetwork();
+    }
 
     // Attempts to get user data
     tryData = await tryQuery(
@@ -380,6 +440,8 @@ class NoteData {
             // Note was in our Firestore cache
             if (!failed && noteDoc!.exists) {
               newNotes.add(Note.fromJson(noteDoc.data()!));
+              newNotes.last.hasOfflineChanges =
+                  noteDoc.metadata.hasPendingWrites;
               newNoteIds.removeAt(i);
               i--;
             }
@@ -406,10 +468,10 @@ class NoteData {
       // Removes note that doesn't exist in database
       if (!failed && !noteDoc!.exists) {
         noteMeta.remove(noteId);
-        updateData();
       } else if (!failed && noteDoc!.exists) {
         // Adds note from database
         newNotes.add(Note.fromJson(noteDoc.data()!));
+        newNotes.last.hasOfflineChanges = noteDoc.metadata.hasPendingWrites;
       } else if (failed) {
         error = true;
       }
@@ -433,8 +495,9 @@ class NoteData {
     }
 
     // Updates data
-    updateData(resetNums: true);
     setNoteData(newNoteData);
+    themeData.updateTheme();
+    updateData(resetNums: true);
     notes = newNotes;
   }
 
@@ -490,7 +553,7 @@ class NoteData {
     transferred = true;
     await updateData();
 
-    // Attemps to sign in with the new AuthCredential
+    // Attempts to sign in with the new AuthCredential
     User? newUser;
     try {
       newUser =
@@ -520,7 +583,7 @@ class NoteData {
       if (newNoteData.labelExists(labelName(labelId))) {
         newLabelId = newNoteData.getLabelId(labelName(labelId));
       } else {
-        newLabelId = newNoteData.newLabel(labelName(labelId));
+        newLabelId = newNoteData.newLabel(labelName(labelId), update: false);
       }
       labels[labelId]?['newId'] = newLabelId;
     }
@@ -530,9 +593,9 @@ class NoteData {
     // inserted at the beginning)
     Note newNote;
     for (Note note in notes.reversed) {
-      newNote = newNoteData.newNote(null, note: note);
+      newNote = newNoteData.newNote(null, note: note, update: false);
       for (int labelId in note.getLabels(this)) {
-        newNoteData.addLabel(newNote, labels[labelId]?['newId']);
+        newNoteData.addLabel(newNote, labels[labelId]?['newId'], update: false);
       }
     }
 
@@ -586,9 +649,12 @@ class NoteData {
   }
 
   // Overrides contents of note document with updated note
-  void updateNote(Note note) {
+  void updateNote(Note note, {bool update = true}) {
     Map<String, dynamic> noteJson = note.toJson();
-    updateData();
+    if (update) {
+      updateData();
+    }
+    note.hasOfflineChanges = !isOnline;
     FirebaseFirestore.instance
         .collection('notes')
         .doc(ownerId! + '-' + note.id.toString())

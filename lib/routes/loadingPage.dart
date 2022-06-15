@@ -1,7 +1,10 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:schema/data/noteData.dart';
 import 'package:schema/functions/constants.dart';
+import 'package:schema/functions/general.dart';
 import 'package:schema/functions/init.dart';
 
 class LoadingPage extends StatefulWidget {
@@ -24,6 +27,18 @@ class _LoadingPageState extends State<LoadingPage> {
       // Reinitializes app whenever user signs in or out
       FirebaseAuth.instance.authStateChanges().listen((User? user) {
         initApp(widget.mainContext!, user);
+      });
+      // Listens to and updates connection state, notifying user of changes
+      Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+        bool isOnline = isConnectivityResultOnline(result);
+        if (isOnline && !noteData.isOnline) {
+          showAlert(widget.mainContext!, Constants.isOnlineMessage,
+              useSnackbar: true);
+        } else if (!isOnline && noteData.isOnline) {
+          showAlert(widget.mainContext!, Constants.isOfflineMessage,
+              useSnackbar: true);
+        }
+        noteData.isOnline = isOnline;
       });
     }
 

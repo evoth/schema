@@ -27,64 +27,68 @@ class HomeDrawer extends StatefulWidget {
 class _HomeDrawerState extends State<HomeDrawer> {
   // Returns drawer header containing sign in / out button and text
   Container homeDrawerHeader(BuildContext context) {
+    // Padding and decoration for header
     return Container(
       padding: EdgeInsets.all(Constants.drawerPadding),
       decoration: BoxDecoration(
         color: Theme.of(context).appBarTheme.backgroundColor,
       ),
-      // Column to hold both the button and text
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Shows sign in button if anonymous; otherwise shows sign out button
-          noteData.isAnonymous
-              // Google sign in button (roughly follows Google's guidelines:
-              // https://developers.google.com/identity/branding-guidelines)
-              ? SignInButton(
-                  icon: SvgPicture.asset(
-                    Constants.googleG,
-                    height: Constants.signInButtonSize *
-                        Constants.drawerSignInScale,
-                  ),
-                  text: Constants.googleButton,
-                  onPressed: noteData.transferNotes,
-                  scale: Constants.drawerSignInScale,
-                )
-              // Sign out button
-              : SignInButton(
-                  icon: Icon(
-                    Icons.logout,
-                    color: Theme.of(context).backgroundColor,
-                    size: Constants.signInButtonSize *
-                        Constants.drawerSignInScale,
-                  ),
-                  text: Constants.signOutButton,
-                  onPressed: (context) {
-                    // Signs out and resets data
-                    FirebaseAuth.instance.signOut();
-                    noteData = NoteData(ownerId: null);
-                  },
-                  scale: Constants.drawerSignInScale,
-                ),
-          SizedBox(height: Constants.drawerPadding),
-          // If anonymous, shows text either prompting to sign in; otherwise
-          // displays email of signed in account
-          Text(
+      // Prevent overflow behind notification bar
+      child: SafeArea(
+        // Column to hold both the button and text
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Shows sign in button if anonymous; sign out button otherwise
             noteData.isAnonymous
-                ? Constants.drawerSignedOutText
-                : sprintf(
-                    Constants.drawerSignedInText,
-                    [noteData.email ?? ''],
+                // Google sign in button (roughly follows Google's guidelines:
+                // https://developers.google.com/identity/branding-guidelines)
+                ? SignInButton(
+                    icon: SvgPicture.asset(
+                      Constants.googleG,
+                      height: Constants.signInButtonSize *
+                          Constants.drawerSignInScale,
+                    ),
+                    text: Constants.googleButton,
+                    onPressed: noteData.transferNotes,
+                    scale: Constants.drawerSignInScale,
+                  )
+                // Sign out button
+                : SignInButton(
+                    icon: Icon(
+                      Icons.logout,
+                      color: Theme.of(context).backgroundColor,
+                      size: Constants.signInButtonSize *
+                          Constants.drawerSignInScale,
+                    ),
+                    text: Constants.signOutButton,
+                    onPressed: (context) {
+                      // Signs out and resets data
+                      FirebaseAuth.instance.signOut();
+                      noteData = NoteData(ownerId: null);
+                    },
+                    scale: Constants.drawerSignInScale,
                   ),
-            style: TextStyle(
-              color: noteData.themeIsDark
-                  ? null
-                  : (Theme.of(context).primaryTextTheme.bodyMedium?.color ??
-                      Colors.white),
-              fontSize: Constants.drawerSubtitleSize,
+            SizedBox(height: Constants.drawerPadding),
+            // If anonymous, shows text either prompting to sign in; otherwise
+            // displays email of signed in account
+            Text(
+              noteData.isAnonymous
+                  ? Constants.drawerSignedOutText
+                  : sprintf(
+                      Constants.drawerSignedInText,
+                      [noteData.email ?? ''],
+                    ),
+              style: TextStyle(
+                color: noteData.themeIsDark
+                    ? null
+                    : (Theme.of(context).primaryTextTheme.bodyMedium?.color ??
+                        Colors.white),
+                fontSize: Constants.drawerSubtitleSize,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -112,12 +116,12 @@ class _HomeDrawerState extends State<HomeDrawer> {
                 // Stop filtering icon
                 IconButton(
                   splashRadius: Constants.drawerLabelSplashRadius,
-                  tooltip: Constants.stopFilterTip,
                   icon: Icon(
                     Icons.close,
                     color: Theme.of(context).textTheme.bodyMedium?.color ??
                         Colors.black,
                   ),
+                  tooltip: Constants.stopFilterTip,
                   // Stop filtering
                   onPressed: () {
                     widget.data.filterLabel(null);
@@ -128,12 +132,12 @@ class _HomeDrawerState extends State<HomeDrawer> {
                 // Add label icon
                 IconButton(
                   splashRadius: Constants.drawerLabelSplashRadius,
-                  tooltip: Constants.newLabelText,
                   icon: Icon(
                     Icons.add,
                     color: Theme.of(context).textTheme.bodyMedium?.color ??
                         Colors.black,
                   ),
+                  tooltip: Constants.newLabelText,
                   // Create new label
                   onPressed: () {
                     addNewLabel(context, null, () => setState(() {}));
@@ -142,16 +146,16 @@ class _HomeDrawerState extends State<HomeDrawer> {
                 // Edit label icon
                 IconButton(
                   splashRadius: Constants.drawerLabelSplashRadius,
-                  // Tooltip based on edit mode
-                  tooltip: widget.data.labelsEditMode
-                      ? Constants.doneLabelsTip
-                      : Constants.editLabelsTip,
-                  // Shows checkmark icon if in edit mode; otherwise shows edit icon
+                  // Shows check mark if in edit mode; otherwise shows edit icon
                   icon: Icon(
                     widget.data.labelsEditMode ? Icons.check : Icons.edit,
                     color: Theme.of(context).textTheme.bodyMedium?.color ??
                         Colors.black,
                   ),
+                  // Tooltip based on edit mode
+                  tooltip: widget.data.labelsEditMode
+                      ? Constants.doneLabelsTip
+                      : Constants.editLabelsTip,
                   // Toggle edit mode
                   onPressed: () {
                     setState(() {

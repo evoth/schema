@@ -1,13 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:schema/data/noteData.dart';
 import 'package:schema/data/themeData.dart';
+import 'package:schema/functions/general.dart';
 import 'package:schema/routes/homePage.dart';
 import 'package:schema/routes/signInPage.dart';
 
 // Ensures user is signed in, then refreshes notes before navigating to homepage
 void initApp(BuildContext context, User? user) async {
+  // Updates whether we are online or not
+  ConnectivityResult connectivityResult =
+      await (Connectivity().checkConnectivity());
+  noteData.isOnline = isConnectivityResultOnline(connectivityResult);
+
   // If user is not signed in, navigate to sign in page
   if (user == null) {
     Navigator.of(context).push<void>(

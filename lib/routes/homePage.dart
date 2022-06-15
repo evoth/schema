@@ -1,11 +1,13 @@
-import 'dart:math';
+import 'dart:async';
 
 import 'package:alert_dialog/alert_dialog.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:schema/data/noteData.dart';
-import 'package:schema/data/themeData.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/layout/grid.dart';
+import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
 import 'package:schema/widgets/themeEditWidget.dart';
 import 'package:schema/widgets/homeDrawerWidget.dart';
@@ -28,36 +30,63 @@ class _HomePageState extends State<HomePage> {
 
   // Adds a new blank note
   void newNote() async {
-    int newId = noteData.newNote(labelsData.filterLabelId).id;
+    Note newNote = noteData.newNote(labelsData.filterLabelId);
     // Go to the edit screen for the new note
-    // Waits to set state so the new note won't show mid-animation
     await noteData.editNote(
       context,
       NoteWidgetData(
-        noteData.notes[0],
+        newNote,
         () => setState(() {}),
         filterLabelId: labelsData.filterLabelId,
       ),
       () => setState(() {}),
     );
-    // Removes note if empty
-    if (noteData.notes[0].id == newId) {
-      if (noteData.notes[0].title == '' && noteData.notes[0].text == '') {
-        noteData.deleteNote(context, 0, () => setState(() {}),
-            message: Constants.discardMessage);
-      }
-    }
+  }
+
+  void updateNotesAndShowLoading(BuildContext context, int? labelId) async {
+    loading = true;
+    setState(() {});
+    await noteData.updateNotes(context, labelId);
+    loading = false;
+    setState(() {});
   }
 
   // Filters by the given label (if null, stops filtering and shows all notes)
   void filterLabel(int? labelId) async {
     labelsData.filterLabelId = labelId;
     Navigator.of(context).pop();
-    loading = true;
-    setState(() {});
-    await noteData.updateNotes(context, labelId);
-    loading = false;
-    setState(() {});
+    updateNotesAndShowLoading(context, labelId);
+  }
+
+  // Subscription to metadata document
+  late StreamSubscription subscription;
+
+  // Subscribes to document
+  @override
+  void initState() {
+    super.initState();
+
+    DocumentReference dataDoc = FirebaseFirestore.instance
+        .collection('notes-meta')
+        .doc(noteData.ownerId);
+    // Updates notes whenever the metadata document is updated from a different
+    // device and the new data is different from the current data
+    subscription = dataDoc.snapshots().listen(
+      (event) async {
+        if (event.data() != null &&
+            !event.metadata.hasPendingWrites &&
+            !DeepCollectionEquality().equals(event.data(), noteData.toJson())) {
+          updateNotesAndShowLoading(context, labelsData.filterLabelId);
+        }
+      },
+    );
+  }
+
+  // Unsubscribes when widget is disposed
+  @override
+  void dispose() {
+    subscription.cancel();
+    super.dispose();
   }
 
   @override
@@ -95,8 +124,8 @@ class _HomePageState extends State<HomePage> {
                 textOK: Text(Constants.themeEditOK),
               );
             },
-            icon: Icon(Icons.color_lens),
             tooltip: Constants.themeTip,
+            icon: Icon(Icons.color_lens),
           ),
           SizedBox(width: Constants.appBarPadding),
         ],

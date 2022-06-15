@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:schema/data/noteData.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
 import 'package:schema/models/noteModel.dart';
@@ -45,7 +46,7 @@ class NoteEditFields extends StatelessWidget {
           // Edits the note when text is changed (trims whitespace)
           onChanged: (newText) {
             note.title = newText.trim();
-            //noteWidgetData.edit();
+            noteData.saveNote(note);
           },
         ),
         SizedBox(height: Constants.editPadding),
@@ -73,7 +74,7 @@ class NoteEditFields extends StatelessWidget {
             // Edits the note when text is changed (trims whitespace)
             onChanged: (newText) {
               note.text = newText.trim();
-              //noteWidgetData.edit();
+              noteData.saveNote(note);
             },
           ),
         ),
@@ -85,6 +86,7 @@ class NoteEditFields extends StatelessWidget {
           ),
           child: NoteLabels(noteWidgetData),
         ),
+        SizedBox(height: Constants.editPadding),
       ],
     );
   }

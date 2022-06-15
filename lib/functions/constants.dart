@@ -17,10 +17,6 @@ class Constants {
   static const double gridPadding = 10;
   static const double noteTitleSpace = 10;
 
-  // Delay and animation durations
-  static const int noteDragDelay = 500;
-  static const int noteShiftDuration = 300;
-
   // Note opacity
   static const double noteOpacity = 0.8;
 
@@ -33,7 +29,7 @@ class Constants {
   static const double drawerPadding = 16;
   static const double drawerSignInScale = 0.8;
   static const double drawerLabelSplashRadius = 24;
-  static const double appBarPadding = 15;
+  static const double appBarPadding = 10;
   static const double appBarSize = 20;
 
   // Edit page
@@ -60,6 +56,15 @@ class Constants {
   static const double themeEditSpacing = 10;
   static const double themeEditRadius = 8;
   static const double themeEditSize = 40;
+
+  /* Durations */
+
+  // Delay and animation durations (in milliseconds)
+  static const int noteDragDelay = 500;
+  static const int noteShiftDuration = 300;
+
+  // Length of inactivity before note is saved (in seconds)
+  static const int saveInactivityDuration = 3;
 
   /* String constants */
 
@@ -99,6 +104,15 @@ class Constants {
   static const String transferCompleteMessage = 'Transfer complete';
   static const String themeEditTitle = 'Edit theme';
   static const String themeEditOK = 'Done';
+  static const String savedCloudMessage = 'This note is saved to the cloud. ' +
+      'The most recent edit was on %s at %s.';
+  static const String savedOfflineMessage = 'This note is saved on this ' +
+      'device, but hasn\'t been synced to the cloud yet. The most recent ' +
+      'edit was on %s at %s.';
+  static const String isOnlineMessage =
+      'Device back online. Connecting to cloud...';
+  static const String isOfflineMessage =
+      'Connection has been lost. Saving notes locally while offline.';
 
   // Tooltips and hint texts
   static const String newNoteTip = 'New note';
@@ -115,7 +129,10 @@ class Constants {
   static const String editLabelNameTip = 'Edit label name';
   static const String doneLabelNameTip = 'Done';
   static const String stopFilterTip = 'Stop filtering';
-  static const String themeTip = 'Theme';
+  static const String themeTip = 'Edit theme';
+  static const String savingTip = 'Saving...';
+  static const String savedCloudTip = 'Saved to cloud';
+  static const String savedOfflineTip = 'Saved offline';
 
   // Button texts
   static const String googleButton = 'Sign in with Google';
@@ -136,6 +153,7 @@ class Constants {
   static const String defaultLoading = 'Loading...';
   static const String initLoading = 'Initializing...';
   static const String transferLoading = 'Transferring notes...';
+  static const String signInLoading = 'Signing in...';
 
   // Messages and descriptions
   static const String welcomeText =
@@ -201,7 +219,7 @@ class Constants {
     Colors.blueGrey,
   ];
 
-  // Defaults
+  // Theme defaults
   static const int themeDefaultColorId = 13;
   static const bool themeDefaultIsDark = true;
   static const bool themeDefaultIsMonochrome = true;

@@ -4,12 +4,22 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:schema/data/noteData.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
+import 'package:schema/routes/loadingPage.dart';
 
 /* Authentication methods must be enabled in Firebase project */
 
 // Sign in with Google account
 Future<void> signInWithGoogle(BuildContext context) async {
+  // Get credential to sign in
   final AuthCredential? credential = await getGoogleCredential(context);
+  // Push loading screen with signing in text
+  Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      builder: (BuildContext context) => LoadingPage(
+        text: Constants.signInLoading,
+      ),
+    ),
+  );
   if (credential != null) {
     // Simple error catching (most likely error is user exiting sign in flow)
     try {
@@ -44,12 +54,17 @@ Future<AuthCredential?> getGoogleCredential(BuildContext context) async {
 
 // Sign in with an anonymous account (persistent across reloads on the device)
 Future<void> signInAnonymously(BuildContext context) async {
+  // Push loading screen with signing in text
+  Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      builder: (BuildContext context) => LoadingPage(
+        text: Constants.signInLoading,
+      ),
+    ),
+  );
   // Simple error catching
   try {
-    // Only sign out if we're signed in
-    if (noteData.ownerId != null) {
-      await FirebaseAuth.instance.signOut();
-    }
+    // Sign in anonymously
     await FirebaseAuth.instance.signInAnonymously();
   } catch (e) {
     signInError(context);

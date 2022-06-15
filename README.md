@@ -1,5 +1,5 @@
 # Schema
-Functional notes app with features like labels/categories and cloud storage.
+Functional notes app with features like labels, cloud storage, and realtime syncing across devices.
 
 ## Todo
 - Lazy loading

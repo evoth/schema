@@ -1,9 +1,12 @@
 import 'dart:io' show Platform;
+import 'dart:math';
 import 'package:alert_dialog/alert_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:schema/models/noteModel.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 // Unfocuses text fields and dismisses keyboard
 void unfocus(BuildContext context) {
@@ -103,4 +106,30 @@ class TryData {
   dynamic error;
 
   TryData(this.returnValue, this.status, this.error);
+}
+
+// Get unique id
+int getUniqueId() {
+  return int.parse(Timestamp.now().millisecondsSinceEpoch.toString() +
+      Random().nextInt(1000).toString());
+}
+
+// Capitalize string
+String capitalize(String str) {
+  return str[0].toUpperCase() + str.substring(1);
+}
+
+// Returns true if this ConnectivityResult represents an online state
+bool isConnectivityResultOnline(ConnectivityResult result) {
+  return (result == ConnectivityResult.mobile ||
+      result == ConnectivityResult.wifi);
+}
+
+// Customized time ago text (capitalized and sans the word "about")
+String customTimeAgo(DateTime dateTime) {
+  String timeAgoText = timeago.format(dateTime);
+  if (timeAgoText.substring(0, 6) == 'about ') {
+    timeAgoText = timeAgoText.substring(6);
+  }
+  return capitalize(timeAgoText);
 }
