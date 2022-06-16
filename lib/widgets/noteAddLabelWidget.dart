@@ -22,8 +22,9 @@ class NoteAddLabelButton extends StatelessWidget {
     // Gets list of dialog options for adding a new label
     List<SimpleDialogOption> addLabelDialogOptions() {
       // Gets list of label ids that note doesn't already have
-      List<int> labelIds = noteData.labelIds
-          .where((int labelId) => !note.hasLabel(labelId))
+      List<int> labelIds = noteData
+          .getLabels()
+          .where((int labelId) => !note.hasLabel(noteData, labelId))
           .toList();
       // Makes list of dialog options from label ids
       List<SimpleDialogOption> options = labelIds.map((labelId) {
@@ -94,7 +95,7 @@ class NoteAddLabelButton extends StatelessWidget {
           addNewLabel(context, note, refreshLabels);
         } else {
           // Adds the selected label to the current note
-          note.addLabel(labelId);
+          noteData.addLabel(note, labelId);
           refreshLabels();
         }
       },
@@ -133,7 +134,7 @@ void addNewLabel(
   // not null; if it is null then don't do anything (note will be null when
   // called from the drawer on home page)
   if (note != null) {
-    note.addLabel(newLabelId);
+    noteData.addLabel(note, newLabelId);
   }
   refreshLabels();
 }

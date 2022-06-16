@@ -72,8 +72,8 @@ class _DynamicGridState extends State<DynamicGrid> {
 
   // Creates a list of note positions based off of tempIndex, used when building
   // and arranging
-  NotePositionData calcNotePositions(
-      List<Note> notes, double gridWidth, int nColumns, double padding) {
+  NotePositionData calcNotePositions(List<Note> notes, double gridWidth,
+      int nColumns, double padding, bool useTemp) {
     // Stores grid width so that it can be used elsewhere
     //globalGridWidth = gridWidth;
 
@@ -86,21 +86,26 @@ class _DynamicGridState extends State<DynamicGrid> {
     List<NotePosition> notePositions = [];
     for (int i = 0; i < noteData.notes.length; i++) {
       // Shouldn't use tempIndex when using this to find index from position
-      int noteIndex = noteData.notes[i].tempIndex;
+      int noteIndex;
+      if (useTemp) {
+        noteIndex = noteData.notes[i].tempIndex;
+      } else {
+        noteIndex = noteData.notes[i].index(noteData, filter: filter);
+      }
       notePositions.add(
         NotePosition(
           width,
           height,
           padding + (width + padding) * (noteIndex % nColumns),
           padding + (height + padding) * (noteIndex ~/ nColumns),
-          noteData.notes[i].getFilterIndex(filter),
+          noteData.notes[i].index(noteData, filter: filter),
           noteData.notes[i].id,
         ),
       );
     }
 
     notePositions.sort(
-      (a, b) => a.index.compareTo(b.index),
+      (a, b) => a.id.compareTo(b.id),
     );
 
     NotePositionData positions = NotePositionData(
@@ -134,12 +139,15 @@ class _DynamicGridState extends State<DynamicGrid> {
     } else {
       // Reassigns indices
       for (int i = 0; i < noteData.notes.length; i++) {
-        noteData.notes[i].index = noteData.notes[i].tempIndex;
-        noteData.notes[i].index = noteData.notes[i].tempIndex;
+        noteData.notes[i].setIndex(noteData, noteData.notes[i].tempIndex);
+        noteData.noteMeta[noteData.notes[i].id]?['index'] =
+            noteData.notes[i].tempIndex;
       }
       noteData.updateData();
       noteData.notes.sort(
-        (a, b) => a.tempIndex.compareTo(b.tempIndex),
+        (a, b) => a
+            .index(noteData, filter: filter)
+            .compareTo(b.index(noteData, filter: filter)),
       );
     }
 
@@ -188,7 +196,7 @@ class _DynamicGridState extends State<DynamicGrid> {
     noteData.notes[index].dragX += dragUpdateDetails.delta.dx;
     noteData.notes[index].dragY += dragUpdateDetails.delta.dy;
 
-    // Gets dimensions of notes
+    // Gets dimensinos of notes
     List<double> noteDim = calcNoteDimensions(
         globalGridWidth, nColumns(globalGridWidth), Constants.gridPadding);
     double width = noteDim[0];
@@ -231,7 +239,7 @@ class _DynamicGridState extends State<DynamicGrid> {
           noteData.notes[i].dragY += scrollDelta;
           // Runs function to update dragging note
           dragUpdateNotePositions(
-            noteData.notes[i].getFilterIndex(filter),
+            noteData.notes[i].index(noteData, filter: filter),
             DragUpdateDetails(globalPosition: Offset.zero),
           );
         }
@@ -260,11 +268,11 @@ class _DynamicGridState extends State<DynamicGrid> {
                   noteData.notes,
                   widget.refreshNotes,
                   calcNotePositions(
-                    noteData.notes,
-                    calcWidth(constraints.maxWidth),
-                    nColumns(constraints.maxWidth),
-                    Constants.gridPadding,
-                  ),
+                      noteData.notes,
+                      calcWidth(constraints.maxWidth),
+                      nColumns(constraints.maxWidth),
+                      Constants.gridPadding,
+                      true),
                   dragUpdateNote,
                   dragUpdateNotePositions,
                   widget.filterLabelId,

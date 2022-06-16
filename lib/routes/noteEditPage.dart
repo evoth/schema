@@ -30,7 +30,7 @@ class NoteEditPage extends StatelessWidget {
         .toColor()
         .withOpacity(0.5);
     // DateTime when note was last updated
-    DateTime timeUpdated = note.timeUpdated.toDate();
+    DateTime timeUpdated = noteData.noteMeta[note.id]?['timeUpdated'].toDate();
     // Note has been saved
     if (note.isSavedNotifier.value) {
       if (note.hasOfflineChanges) {
@@ -128,7 +128,7 @@ class NoteEditPage extends StatelessWidget {
               )) {
                 noteData.deleteNote(
                   context,
-                  note.index,
+                  note.index(noteData),
                   noteWidgetData.refreshNotes,
                 );
                 Navigator.of(context).pop(context);
@@ -138,16 +138,9 @@ class NoteEditPage extends StatelessWidget {
           SizedBox(width: Constants.appBarPadding),
         ],
       ),
-      // If user taps outside of text fields, unfocus (and dismiss keyboard)
-      body: GestureDetector(
-        onTap: () {
-          unfocus(context);
-        },
-        // Content is scrollable
-        child: SingleChildScrollView(
-          // Text fields for title and text
-          child: NoteEditFields(noteWidgetData),
-        ),
+      // Text fields for title and text
+      body: SingleChildScrollView(
+        child: NoteEditFields(noteWidgetData),
       ),
     );
   }

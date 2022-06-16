@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:alert_dialog/alert_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:confirm_dialog/confirm_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -65,7 +68,7 @@ class NoteData {
   // If onlyTemp is true, only change temp indices
   void shiftNoteIndices(int amount, {int index = 0, bool onlyTemp = false}) {
     for (Note note in notes) {
-      if (note.index >= index) {
+      if (note.index(this) >= index) {
         note.tempIndex += amount;
       }
     }
@@ -85,25 +88,35 @@ class NoteData {
     index = index ?? notes.length;
     // Updates hasOfflineChanges
     note.hasOfflineChanges = hasOfflineChanges;
-    // Actually insert note
+    // Actually insert note and populate tempIndex
     notes.insert(index, note);
+    notes[index].tempIndex = notes[index].index(this);
     return note;
   }
 
   // Adds a new (empty) note and inserts at index 0 (returns new note)
   Note newNote(int? filterLabelId, {Note? note, bool update = true}) {
-    // Shifts notes forward that will come after this note
+    // Shifts other notes forward
     shiftNoteIndices(1);
+    // New note id is the current time in milliseconds
+    Timestamp timeCreated = Timestamp.now();
+    int newNoteId = getUniqueId();
+    // Updates note metadata
+    noteMeta[newNoteId] = {
+      'index': 0,
+      'timeCreated': timeCreated,
+      'timeUpdated': timeCreated,
+      'labels': {},
+    };
+
     // Adds the note to the list
     Note newNote = addNote(
       Note(
-        getUniqueId(),
+        newNoteId,
         note != null ? note.title : '',
         note != null ? note.text : '',
-        index: 0,
         isNew: note == null,
         ownerId: ownerId,
-        data: this,
       ),
       false,
       index: 0,
@@ -114,7 +127,7 @@ class NoteData {
     // Updates note data and returns new note. If filtering by label, add this
     // label to new note. Don't update because we already update on next line.
     if (filterLabelId != null) {
-      newNote.addLabel(filterLabelId, update: false);
+      addLabel(newNote, filterLabelId, update: false);
     }
     updateNote(newNote, update: update);
     return newNote;
@@ -169,7 +182,7 @@ class NoteData {
     if (note.editTicker == currentTicker) {
       // Updates note in database if anything has changed
       if (note.previousTitle != note.title || note.previousText != note.text) {
-        note.timeUpdated = Timestamp.now();
+        noteMeta[note.id]?['timeUpdated'] = Timestamp.now();
         updateNote(note);
       }
       // Updates edit state
@@ -210,7 +223,7 @@ class NoteData {
 
     // If note does not have label currently being filtered, remove from view
     if (noteWidgetData.filterLabelId != null &&
-        !note.hasLabel(noteWidgetData.filterLabelId!)) {
+        !note.hasLabel(this, noteWidgetData.filterLabelId!)) {
       removeNote(note);
     }
     // Updates notes on home screen
@@ -243,6 +256,35 @@ class NoteData {
     updateData();
   }
 
+  // Adds a label to a note (we use a map instead of a list for access speed)
+  void addLabel(Note note, int labelId, {bool update = true}) {
+    // Mark note as unsaved
+    note.isSavedNotifier.value = false;
+    // Convert label id to string because of strange error
+    noteMeta[note.id]?['labels'][labelId.toString()] = true;
+    labels[labelId]?['numNotes']++;
+    noteMeta[note.id]?['timeUpdated'] = Timestamp.now();
+    note.hasOfflineChanges = !isOnline;
+    if (update) {
+      updateData();
+    }
+    // Mark note as saved if other content is already saved
+    note.isSavedNotifier.value = note.editTicker == 0;
+  }
+
+  // Removes a label from a note
+  void removeLabel(Note note, int labelId) {
+    // Mark note as unsaved
+    note.isSavedNotifier.value = false;
+    noteMeta[note.id]?['labels'].remove(labelId.toString());
+    labels[labelId]?['numNotes']--;
+    noteMeta[note.id]?['timeUpdated'] = Timestamp.now();
+    note.hasOfflineChanges = !isOnline;
+    updateData();
+    // Mark note as saved if other content is already saved
+    note.isSavedNotifier.value = note.editTicker == 0;
+  }
+
   // Edit label name
   void editLabelName(BuildContext context, int labelId, String name) async {
     String? checkedName = await checkLabelName(context, name);
@@ -269,12 +311,11 @@ class NoteData {
         .get();
 
     for (var element in noteDocs.docs) {
-      addNote(Note.fromJson(element.data(), this),
-          element.metadata.hasPendingWrites);
+      addNote(Note.fromJson(element.data()), element.metadata.hasPendingWrites);
     }
 
     notes.sort(
-      (a, b) => a.index.compareTo(b.index),
+      (a, b) => a.index(this).compareTo(b.index(this)),
     );
   }
 
@@ -398,7 +439,7 @@ class NoteData {
 
             // Note was in our Firestore cache
             if (!failed && noteDoc!.exists) {
-              newNotes.add(Note.fromJson(noteDoc.data()!, newNoteData));
+              newNotes.add(Note.fromJson(noteDoc.data()!));
               newNotes.last.hasOfflineChanges =
                   noteDoc.metadata.hasPendingWrites;
               newNoteIds.removeAt(i);
@@ -429,7 +470,7 @@ class NoteData {
         noteMeta.remove(noteId);
       } else if (!failed && noteDoc!.exists) {
         // Adds note from database
-        newNotes.add(Note.fromJson(noteDoc.data()!, newNoteData));
+        newNotes.add(Note.fromJson(noteDoc.data()!));
         newNotes.last.hasOfflineChanges = noteDoc.metadata.hasPendingWrites;
       } else if (failed) {
         error = true;
@@ -444,7 +485,8 @@ class NoteData {
 
     // Sorts notes according to index
     newNotes.sort(
-      (a, b) => a.index.compareTo(b.index),
+      (a, b) => newNoteData!.noteMeta[a.id]?['index']
+          .compareTo(newNoteData.noteMeta[b.id]?['index']),
     );
 
     // Sets tempIndex, which is used to order notes in the grid
@@ -539,7 +581,7 @@ class NoteData {
     int newLabelId;
     for (int labelId in labels.keys) {
       if (newNoteData.labelExists(labelName(labelId))) {
-        newLabelId = newNoteData.labelId(labelName(labelId));
+        newLabelId = newNoteData.getLabelId(labelName(labelId));
       } else {
         newLabelId = newNoteData.newLabel(labelName(labelId), update: false);
       }
@@ -552,8 +594,8 @@ class NoteData {
     Note newNote;
     for (Note note in notes.reversed) {
       newNote = newNoteData.newNote(null, note: note, update: false);
-      for (int labelId in note.labelIds) {
-        newNote.addLabel(labels[labelId]?['newId'], update: false);
+      for (int labelId in note.getLabels(this)) {
+        newNoteData.addLabel(newNote, labels[labelId]?['newId'], update: false);
       }
     }
 
@@ -577,8 +619,7 @@ class NoteData {
   }
 
   // Gets list of all label ids
-  @JsonKey(ignore: true)
-  List<int> get labelIds {
+  List<int> getLabels() {
     List<int> labelIds = labels.keys.toList();
     // Sorts labels alphabetically
     labelIds.sort(
@@ -598,7 +639,7 @@ class NoteData {
   }
 
   // Returns the id of the label with the given name
-  int labelId(String name) {
+  int getLabelId(String name) {
     for (int labelId in labels.keys) {
       if (labelName(labelId).toLowerCase() == name.toLowerCase()) {
         return labelId;
@@ -609,11 +650,11 @@ class NoteData {
 
   // Overrides contents of note document with updated note
   void updateNote(Note note, {bool update = true}) {
-    note.hasOfflineChanges = !isOnline;
     Map<String, dynamic> noteJson = note.toJson();
     if (update) {
       updateData();
     }
+    note.hasOfflineChanges = !isOnline;
     FirebaseFirestore.instance
         .collection('notes')
         .doc(ownerId! + '-' + note.id.toString())

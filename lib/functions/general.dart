@@ -17,6 +17,11 @@ void unfocus(BuildContext context) {
   }
 }
 
+// Gets a note
+Note getNote(List<Note> notes, int id) {
+  return notes.firstWhere((i) => i.id == id);
+}
+
 // Returns whether the platform is mobile or not
 bool isMobilePlatform() {
   bool mobile;
