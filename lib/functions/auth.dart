@@ -12,15 +12,15 @@ import 'package:schema/routes/loadingPage.dart';
 Future<void> signInWithGoogle(BuildContext context) async {
   // Get credential to sign in
   final AuthCredential? credential = await getGoogleCredential(context);
-  // Push loading screen with signing in text
-  Navigator.of(context).push<void>(
-    MaterialPageRoute<void>(
-      builder: (BuildContext context) => LoadingPage(
-        text: Constants.signInLoading,
-      ),
-    ),
-  );
   if (credential != null) {
+    // Push loading screen with signing in text
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => LoadingPage(
+          text: Constants.signInLoading,
+        ),
+      ),
+    );
     // Simple error catching (most likely error is user exiting sign in flow)
     try {
       // Sign in with the UserCredential

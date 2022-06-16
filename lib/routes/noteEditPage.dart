@@ -138,9 +138,16 @@ class NoteEditPage extends StatelessWidget {
           SizedBox(width: Constants.appBarPadding),
         ],
       ),
-      // Text fields for title and text
-      body: SingleChildScrollView(
-        child: NoteEditFields(noteWidgetData),
+      // If user taps outside of text fields, unfocus (and dismiss keyboard)
+      body: GestureDetector(
+        onTap: () {
+          unfocus(context);
+        },
+        // Content is scrollable
+        child: SingleChildScrollView(
+          // Text fields for title and text
+          child: NoteEditFields(noteWidgetData),
+        ),
       ),
     );
   }
