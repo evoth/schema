@@ -13,9 +13,21 @@ class ThemeEditContent extends StatefulWidget {
 
 class _ThemeEditContentState extends State<ThemeEditContent> {
   // Returns a button from the given text and function
-  ElevatedButton themeModeButton(String text, void Function()? onPressed) {
+  ElevatedButton themeModeButton(
+    String text,
+    bool isDark,
+    bool isMonochrome,
+    bool checkmark,
+  ) {
     return ElevatedButton(
-      onPressed: onPressed,
+      // Changes theme to given mode
+      onPressed: () {
+        noteData.themeIsDark = isDark;
+        noteData.themeIsMonochrome = isMonochrome;
+        themeData.updateTheme();
+        noteData.updateData();
+        setState(() {});
+      },
       // Style determined by constants
       style: ElevatedButton.styleFrom(
         padding: EdgeInsets.all(
@@ -27,59 +39,68 @@ class _ThemeEditContentState extends State<ThemeEditContent> {
           ),
         ),
       ),
-      child: Text(text),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: (checkmark
+                ? [
+                    Icon(
+                      Icons.check,
+                      color:
+                          Theme.of(context).accentTextTheme.bodyMedium?.color,
+                      size: Theme.of(context).textTheme.bodyText1?.fontSize,
+                    ),
+                    SizedBox(width: Constants.themeEditSpacing),
+                  ]
+                : <Widget>[]) +
+            [
+              Text(text),
+            ],
+      ),
     );
   }
 
-  // Returns list of exactly two buttons (for the other theme modes)
+  // Returns list of available theme modes for this color (checkmark beside
+  // currently selected mode)
   List<Widget> themeModeButtons() {
     List<Widget> content = [];
     bool intenseMode = !themeData.isMonochromeColor(noteData.themeColorId) &&
         noteData.themeIsMonochrome;
-    if (noteData.themeIsDark) {
-      // Light mode button
-      content.add(
-        themeModeButton(Constants.themeLightButton, () {
-          // Both isDark and isMonochrome are false (isMonochrome has no effect)
-          noteData.themeIsDark = false;
-          noteData.themeIsMonochrome = false;
-          themeData.updateTheme();
-          noteData.updateData();
-          setState(() {});
-        }),
-      );
-      content.add(
-        SizedBox(height: Constants.themeEditSpacing),
-      );
-    }
-    if (!noteData.themeIsDark || intenseMode) {
-      // Dark mode button
-      content.add(
-        themeModeButton(Constants.themeDarkButton, () {
-          // isDark is true, isMonochrome is dependent on color
-          noteData.themeIsDark = true;
-          noteData.themeIsMonochrome =
-              themeData.isMonochromeColor(noteData.themeColorId);
-          themeData.updateTheme();
-          noteData.updateData();
-          setState(() {});
-        }),
-      );
-      content.add(
-        SizedBox(height: Constants.themeEditSpacing),
-      );
-    }
-    if (!themeData.isMonochromeColor(noteData.themeColorId) && !intenseMode) {
+    // Light mode button
+    content.add(
+      // Both isDark and isMonochrome are false (isMonochrome has no effect)
+      themeModeButton(
+        Constants.themeLightButton,
+        false,
+        false,
+        !noteData.themeIsDark,
+      ),
+    );
+    content.add(
+      SizedBox(height: Constants.themeEditSpacing),
+    );
+    // Dark mode button
+    content.add(
+      // isDark is true, isMonochrome is dependent on color
+      themeModeButton(
+        Constants.themeDarkButton,
+        true,
+        themeData.isMonochromeColor(noteData.themeColorId),
+        noteData.themeIsDark && !intenseMode,
+      ),
+    );
+    content.add(
+      SizedBox(height: Constants.themeEditSpacing),
+    );
+    if (!themeData.isMonochromeColor(noteData.themeColorId)) {
       // Intense mode button
       content.add(
-        themeModeButton(Constants.themeIntenseButton, () {
-          // Both isDark and isMonochrome are true for intense mode
-          noteData.themeIsDark = true;
-          noteData.themeIsMonochrome = true;
-          themeData.updateTheme();
-          noteData.updateData();
-          setState(() {});
-        }),
+        // Both isDark and isMonochrome are true for intense mode
+        themeModeButton(
+          Constants.themeIntenseButton,
+          true,
+          true,
+          intenseMode,
+        ),
       );
       content.add(
         SizedBox(height: Constants.themeEditSpacing),
@@ -124,6 +145,14 @@ class _ThemeEditContentState extends State<ThemeEditContent> {
                   Constants.themeEditRadius,
                 ),
               ),
+              // If this is the currently selected color, show checkmark
+              child: noteData.themeColorId == colorId
+                  ? Icon(
+                      Icons.check,
+                      color:
+                          Theme.of(context).accentTextTheme.bodyMedium?.color,
+                    )
+                  : null,
             ),
           ),
         );

@@ -82,8 +82,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
               style: TextStyle(
                 color: noteData.themeIsDark
                     ? null
-                    : (Theme.of(context).primaryTextTheme.bodyMedium?.color ??
-                        Colors.white),
+                    : Theme.of(context).primaryTextTheme.bodyMedium?.color,
                 fontSize: Constants.drawerSubtitleSize,
               ),
             ),
@@ -118,8 +117,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                   splashRadius: Constants.drawerLabelSplashRadius,
                   icon: Icon(
                     Icons.close,
-                    color: Theme.of(context).textTheme.bodyMedium?.color ??
-                        Colors.black,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                   tooltip: Constants.stopFilterTip,
                   // Stop filtering
@@ -134,8 +132,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                   splashRadius: Constants.drawerLabelSplashRadius,
                   icon: Icon(
                     Icons.add,
-                    color: Theme.of(context).textTheme.bodyMedium?.color ??
-                        Colors.black,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                   tooltip: Constants.newLabelText,
                   // Create new label
@@ -149,8 +146,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                   // Shows check mark if in edit mode; otherwise shows edit icon
                   icon: Icon(
                     widget.data.labelsEditMode ? Icons.check : Icons.edit,
-                    color: Theme.of(context).textTheme.bodyMedium?.color ??
-                        Colors.black,
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                   ),
                   // Tooltip based on edit mode
                   tooltip: widget.data.labelsEditMode
@@ -204,7 +200,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
   List<Widget> homeDrawerContent(BuildContext context) {
     // Individual list tiles for each label
     List<Widget> labelTiles = [];
-    for (int labelId in noteData.getLabels()) {
+    for (int labelId in noteData.labelIds) {
       labelTiles.add(
         HomeDrawerLabel(
           labelId,

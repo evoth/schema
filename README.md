@@ -2,6 +2,7 @@
 Functional notes app with features like labels, cloud storage, and realtime syncing across devices.
 
 ## Todo
+- Merge offline changes once device goes back online (instead of overwriting data)
 - Lazy loading
 - Mobile optimizations (remove scroll for labels?)
 - Make widgets like Text() const
@@ -14,6 +15,6 @@ Functional notes app with features like labels, cloud storage, and realtime sync
    - Tutorial / about
    - Placeholder for when there are no notes
    - Smaller note edit window on bigger screens
-   - Publish (web and possibly Google Play, not sure if worth $25 though)
+   - Publish (web and possibly Google Play)
    - Update web descriptions
 - Check back in around March 2023 to see if I need to migrate to new authentication provider
