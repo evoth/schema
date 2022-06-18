@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:schema/data/noteData.dart';
@@ -34,12 +35,13 @@ class Note {
   ValueNotifier<bool> isSavedNotifier = ValueNotifier(true);
   @JsonKey(ignore: true)
   int editTicker = 0;
-  // Whether the note has pending writes, meaning it has been edited offline
+  // Stores which NoteData this note belongs to
   @JsonKey(ignore: true)
-  bool hasOfflineChanges;
+  NoteData data = noteData;
 
-  // Gets index from NoteData
-  int index(NoteData data, {bool filter = false}) {
+  // Gets index from NoteData depending on whether filtering (only tempIndex is
+  // used when filtering)
+  int indexFilterBased(bool filter) {
     // If filtering by a label, return tempIndex, which is used when filtering
     if (filter) {
       return tempIndex;
@@ -48,13 +50,39 @@ class Note {
     return data.noteMeta[id]?['index'];
   }
 
-  // Sets index in NoteData
-  void setIndex(NoteData data, index) {
+  // Index of note represented in metadata so that note document does not need
+  // to be updated when only move notes (same idea for other properties).
+  int get index {
+    return data.noteMeta[id]?['index'] ?? -1;
+  }
+
+  set index(int index) {
     data.noteMeta[id]?['index'] = index;
   }
 
+  // Whether the note has pending writes, meaning it has been edited offline
+  @JsonKey(ignore: true)
+  bool get hasOfflineChanges {
+    return data.noteMeta[id]?['hasOfflineChanges'] ?? false;
+  }
+
+  set hasOfflineChanges(bool hasOfflineChanges) {
+    data.noteMeta[id]?['hasOfflineChanges'] = hasOfflineChanges;
+  }
+
+  // When the note has last been updated (content or labels)
+  @JsonKey(ignore: true)
+  Timestamp get timeUpdated {
+    return data.noteMeta[id]?['timeUpdated'] ?? false;
+  }
+
+  set timeUpdated(Timestamp timeUpdated) {
+    data.noteMeta[id]?['timeUpdated'] = timeUpdated;
+  }
+
   // Gets list of label ids
-  List<int> getLabels(NoteData data) {
+  @JsonKey(ignore: true)
+  List<int> get labelIds {
     List<int> labelIds = data.noteMeta[id]?['labels'].keys
             .map<int>((labelId) => int.parse(labelId))
             .toList() ??
@@ -74,10 +102,39 @@ class Note {
     return labelIds;
   }
 
-  // Returns whether the given label is possesed by the note
+  // Returns whether the given label is possessed by the note
   bool hasLabel(NoteData data, int labelId) {
     return data.noteMeta[id]?['labels'].containsKey(labelId.toString()) ??
         false;
+  }
+
+  // Adds a label to a note (we use a map instead of a list for access speed)
+  void addLabel(int labelId, {bool update = true}) {
+    // Mark note as unsaved
+    isSavedNotifier.value = false;
+    // Convert label id to string because of strange error
+    data.noteMeta[id]?['labels'][labelId.toString()] = true;
+    data.labels[labelId]?['numNotes']++;
+    data.noteMeta[id]?['timeUpdated'] = Timestamp.now();
+    hasOfflineChanges = !data.isOnline;
+    if (update) {
+      data.updateData();
+    }
+    // Mark note as saved if other content is already saved
+    isSavedNotifier.value = editTicker == 0;
+  }
+
+  // Removes a label from a note
+  void removeLabel(int labelId) {
+    // Mark note as unsaved
+    isSavedNotifier.value = false;
+    data.noteMeta[id]?['labels'].remove(labelId.toString());
+    data.labels[labelId]?['numNotes']--;
+    timeUpdated = Timestamp.now();
+    hasOfflineChanges = !data.isOnline;
+    data.updateData();
+    // Mark note as saved if other content is already saved
+    isSavedNotifier.value = editTicker == 0;
   }
 
   Note(
@@ -87,8 +144,10 @@ class Note {
     required this.ownerId,
     this.drag = false,
     this.isNew = false,
-    this.hasOfflineChanges = false,
-  });
+    bool hasOfflineChanges = false,
+  }) {
+    this.hasOfflineChanges = hasOfflineChanges;
+  }
 
   factory Note.fromJson(Map<String, dynamic> json) => _$NoteFromJson(json);
   Map<String, dynamic> toJson() => _$NoteToJson(this);

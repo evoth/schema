@@ -99,7 +99,7 @@ class _HomePageState extends State<HomePage> {
         title: Row(
           children: [
             this.mounted && labelsData.filterLabelId != null
-                ? Text(noteData.labelName(labelsData.filterLabelId!))
+                ? Text(noteData.getLabelName(labelsData.filterLabelId!))
                 : Text(Constants.appTitle),
             SizedBox(width: Constants.appBarPadding),
             SizedBox(
@@ -140,7 +140,7 @@ class _HomePageState extends State<HomePage> {
               labelsData.labelEditing != -1 &&
               labelsData.labelName != null &&
               labelsData.labelName !=
-                  noteData.labelName(labelsData.labelEditing)) {
+                  noteData.getLabelName(labelsData.labelEditing)) {
             noteData.editLabelName(
                 context, labelsData.labelEditing, labelsData.labelName!);
           }

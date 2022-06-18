@@ -68,7 +68,7 @@ class NoteData {
   // If onlyTemp is true, only change temp indices
   void shiftNoteIndices(int amount, {int index = 0, bool onlyTemp = false}) {
     for (Note note in notes) {
-      if (note.index(this) >= index) {
+      if (note.index >= index) {
         note.tempIndex += amount;
       }
     }
@@ -90,7 +90,8 @@ class NoteData {
     note.hasOfflineChanges = hasOfflineChanges;
     // Actually insert note and populate tempIndex
     notes.insert(index, note);
-    notes[index].tempIndex = notes[index].index(this);
+    notes[index].tempIndex = notes[index].index;
+    notes[index].data = this;
     return note;
   }
 
@@ -127,7 +128,7 @@ class NoteData {
     // Updates note data and returns new note. If filtering by label, add this
     // label to new note. Don't update because we already update on next line.
     if (filterLabelId != null) {
-      addLabel(newNote, filterLabelId, update: false);
+      newNote.addLabel(filterLabelId, update: false);
     }
     updateNote(newNote, update: update);
     return newNote;
@@ -182,7 +183,7 @@ class NoteData {
     if (note.editTicker == currentTicker) {
       // Updates note in database if anything has changed
       if (note.previousTitle != note.title || note.previousText != note.text) {
-        noteMeta[note.id]?['timeUpdated'] = Timestamp.now();
+        note.timeUpdated = Timestamp.now();
         updateNote(note);
       }
       // Updates edit state
@@ -256,35 +257,6 @@ class NoteData {
     updateData();
   }
 
-  // Adds a label to a note (we use a map instead of a list for access speed)
-  void addLabel(Note note, int labelId, {bool update = true}) {
-    // Mark note as unsaved
-    note.isSavedNotifier.value = false;
-    // Convert label id to string because of strange error
-    noteMeta[note.id]?['labels'][labelId.toString()] = true;
-    labels[labelId]?['numNotes']++;
-    noteMeta[note.id]?['timeUpdated'] = Timestamp.now();
-    note.hasOfflineChanges = !isOnline;
-    if (update) {
-      updateData();
-    }
-    // Mark note as saved if other content is already saved
-    note.isSavedNotifier.value = note.editTicker == 0;
-  }
-
-  // Removes a label from a note
-  void removeLabel(Note note, int labelId) {
-    // Mark note as unsaved
-    note.isSavedNotifier.value = false;
-    noteMeta[note.id]?['labels'].remove(labelId.toString());
-    labels[labelId]?['numNotes']--;
-    noteMeta[note.id]?['timeUpdated'] = Timestamp.now();
-    note.hasOfflineChanges = !isOnline;
-    updateData();
-    // Mark note as saved if other content is already saved
-    note.isSavedNotifier.value = note.editTicker == 0;
-  }
-
   // Edit label name
   void editLabelName(BuildContext context, int labelId, String name) async {
     String? checkedName = await checkLabelName(context, name);
@@ -296,7 +268,7 @@ class NoteData {
   }
 
   // Gets name of label
-  String labelName(int labelId) {
+  String getLabelName(int labelId) {
     return labels[labelId]?['name'];
   }
 
@@ -315,7 +287,7 @@ class NoteData {
     }
 
     notes.sort(
-      (a, b) => a.index(this).compareTo(b.index(this)),
+      (a, b) => a.index.compareTo(b.index),
     );
   }
 
@@ -485,8 +457,7 @@ class NoteData {
 
     // Sorts notes according to index
     newNotes.sort(
-      (a, b) => newNoteData!.noteMeta[a.id]?['index']
-          .compareTo(newNoteData.noteMeta[b.id]?['index']),
+      (a, b) => a.index.compareTo(b.index),
     );
 
     // Sets tempIndex, which is used to order notes in the grid
@@ -580,10 +551,10 @@ class NoteData {
     // transferring notes)
     int newLabelId;
     for (int labelId in labels.keys) {
-      if (newNoteData.labelExists(labelName(labelId))) {
-        newLabelId = newNoteData.getLabelId(labelName(labelId));
+      if (newNoteData.labelExists(getLabelName(labelId))) {
+        newLabelId = newNoteData.getLabelId(getLabelName(labelId));
       } else {
-        newLabelId = newNoteData.newLabel(labelName(labelId), update: false);
+        newLabelId = newNoteData.newLabel(getLabelName(labelId), update: false);
       }
       labels[labelId]?['newId'] = newLabelId;
     }
@@ -594,8 +565,8 @@ class NoteData {
     Note newNote;
     for (Note note in notes.reversed) {
       newNote = newNoteData.newNote(null, note: note, update: false);
-      for (int labelId in note.getLabels(this)) {
-        newNoteData.addLabel(newNote, labels[labelId]?['newId'], update: false);
+      for (int labelId in note.labelIds) {
+        newNote.addLabel(labels[labelId]?['newId'], update: false);
       }
     }
 
@@ -619,11 +590,12 @@ class NoteData {
   }
 
   // Gets list of all label ids
-  List<int> getLabels() {
+  @JsonKey(ignore: true)
+  List<int> get labelIds {
     List<int> labelIds = labels.keys.toList();
     // Sorts labels alphabetically
     labelIds.sort(
-      (a, b) => labelName(a).compareTo(labelName(b)),
+      (a, b) => getLabelName(a).compareTo(getLabelName(b)),
     );
     return labelIds;
   }
@@ -641,7 +613,7 @@ class NoteData {
   // Returns the id of the label with the given name
   int getLabelId(String name) {
     for (int labelId in labels.keys) {
-      if (labelName(labelId).toLowerCase() == name.toLowerCase()) {
+      if (getLabelName(labelId).toLowerCase() == name.toLowerCase()) {
         return labelId;
       }
     }

@@ -30,7 +30,7 @@ class HomeDrawerLabel extends StatelessWidget {
       if (data.labelEditing == labelId) {
         // Text controller to populate and get text in text field
         final customTextController = TextEditingController(
-          text: noteData.labelName(labelId),
+          text: noteData.getLabelName(labelId),
         );
 
         // Tile in name edit mode
@@ -104,7 +104,7 @@ class HomeDrawerLabel extends StatelessWidget {
               }
             },
           ),
-          title: Text(noteData.labelName(labelId)),
+          title: Text(noteData.getLabelName(labelId)),
           // Edit name button
           trailing: IconButton(
             splashRadius: Constants.drawerLabelSplashRadius,
@@ -124,7 +124,7 @@ class HomeDrawerLabel extends StatelessWidget {
       // Normal tile
       return ListTile(
         leading: Icon(Icons.label),
-        title: Text(noteData.labelName(labelId)),
+        title: Text(noteData.getLabelName(labelId)),
         // Tells HomePage to filter by this label
         onTap: () async {
           data.filterLabel(labelId);

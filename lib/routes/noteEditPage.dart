@@ -30,7 +30,7 @@ class NoteEditPage extends StatelessWidget {
         .toColor()
         .withOpacity(0.5);
     // DateTime when note was last updated
-    DateTime timeUpdated = noteData.noteMeta[note.id]?['timeUpdated'].toDate();
+    DateTime timeUpdated = note.timeUpdated.toDate();
     // Note has been saved
     if (note.isSavedNotifier.value) {
       if (note.hasOfflineChanges) {
@@ -128,7 +128,7 @@ class NoteEditPage extends StatelessWidget {
               )) {
                 noteData.deleteNote(
                   context,
-                  note.index(noteData),
+                  note.index,
                   noteWidgetData.refreshNotes,
                 );
                 Navigator.of(context).pop(context);

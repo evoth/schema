@@ -181,7 +181,8 @@ class _HomeDrawerState extends State<HomeDrawer> {
   void doneLabelName() {
     if (widget.data.labelEditing != -1 &&
         widget.data.labelName != null &&
-        widget.data.labelName != noteData.labelName(widget.data.labelEditing)) {
+        widget.data.labelName !=
+            noteData.getLabelName(widget.data.labelEditing)) {
       noteData.editLabelName(
           context, widget.data.labelEditing, widget.data.labelName!);
       widget.data.refreshNotes();
@@ -196,7 +197,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
   void editLabelName(int labelId) {
     doneLabelName();
     widget.data.labelEditing = labelId;
-    widget.data.labelName = noteData.labelName(labelId);
+    widget.data.labelName = noteData.getLabelName(labelId);
     setState(() {});
   }
 
@@ -204,7 +205,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
   List<Widget> homeDrawerContent(BuildContext context) {
     // Individual list tiles for each label
     List<Widget> labelTiles = [];
-    for (int labelId in noteData.getLabels()) {
+    for (int labelId in noteData.labelIds) {
       labelTiles.add(
         HomeDrawerLabel(
           labelId,

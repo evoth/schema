@@ -30,7 +30,7 @@ class _NoteWidgetState extends State<NoteWidget> {
       unfocus(context);
       // Gives grid some info about dragging
       widget.noteWidgetData.drag1!(
-        note.index(noteData),
+        note.index,
         true,
         originalX: widget.noteWidgetData.originalX,
         originalY: widget.noteWidgetData.originalY,
@@ -40,14 +40,14 @@ class _NoteWidgetState extends State<NoteWidget> {
     void dragUpdateFunction(DragUpdateDetails dragDetails) {
       // Gives grid some info about dragging
       widget.noteWidgetData.drag2!(
-        note.index(noteData),
+        note.index,
         dragDetails,
       );
     }
 
     void dragEndFunction(DraggableDetails dragDetails) {
       // Gives grid some info about dragging
-      widget.noteWidgetData.drag1!(note.index(noteData), false);
+      widget.noteWidgetData.drag1!(note.index, false);
     }
 
     // Different draggable mode for different devices
@@ -201,7 +201,7 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
       ),
     );
     // Labels
-    if (note.getLabels(noteData).isNotEmpty) {
+    if (note.labelIds.isNotEmpty) {
       texts.add(
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,

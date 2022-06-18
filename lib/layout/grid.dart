@@ -90,7 +90,7 @@ class _DynamicGridState extends State<DynamicGrid> {
       if (useTemp) {
         noteIndex = noteData.notes[i].tempIndex;
       } else {
-        noteIndex = noteData.notes[i].index(noteData, filter: filter);
+        noteIndex = noteData.notes[i].indexFilterBased(filter);
       }
       notePositions.add(
         NotePosition(
@@ -98,7 +98,7 @@ class _DynamicGridState extends State<DynamicGrid> {
           height,
           padding + (width + padding) * (noteIndex % nColumns),
           padding + (height + padding) * (noteIndex ~/ nColumns),
-          noteData.notes[i].index(noteData, filter: filter),
+          noteData.notes[i].indexFilterBased(filter),
           noteData.notes[i].id,
         ),
       );
@@ -139,15 +139,12 @@ class _DynamicGridState extends State<DynamicGrid> {
     } else {
       // Reassigns indices
       for (int i = 0; i < noteData.notes.length; i++) {
-        noteData.notes[i].setIndex(noteData, noteData.notes[i].tempIndex);
-        noteData.noteMeta[noteData.notes[i].id]?['index'] =
-            noteData.notes[i].tempIndex;
+        noteData.notes[i].index = noteData.notes[i].tempIndex;
       }
       noteData.updateData();
       noteData.notes.sort(
-        (a, b) => a
-            .index(noteData, filter: filter)
-            .compareTo(b.index(noteData, filter: filter)),
+        (a, b) =>
+            a.indexFilterBased(filter).compareTo(b.indexFilterBased(filter)),
       );
     }
 
@@ -239,7 +236,7 @@ class _DynamicGridState extends State<DynamicGrid> {
           noteData.notes[i].dragY += scrollDelta;
           // Runs function to update dragging note
           dragUpdateNotePositions(
-            noteData.notes[i].index(noteData, filter: filter),
+            noteData.notes[i].indexFilterBased(filter),
             DragUpdateDetails(globalPosition: Offset.zero),
           );
         }
