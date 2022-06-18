@@ -66,6 +66,10 @@ class Constants {
   // Length of inactivity before note is saved (in seconds)
   static const int saveInactivityDuration = 3;
 
+  /* NoteData constants */
+  static const int deleteBatchSize = 100;
+  static const int lazyBatchSize = 100;
+
   /* String constants */
 
   // Page titles
@@ -152,7 +156,8 @@ class Constants {
   // Loading texts
   static const String defaultLoading = 'Loading...';
   static const String initLoading = 'Initializing...';
-  static const String transferLoading = 'Transferring notes...';
+  static const String transferLoading = 'Transferring data...';
+  static const String deleteLoading = 'Deleting data...';
   static const String signInLoading = 'Signing in...';
 
   // Messages and descriptions

@@ -19,10 +19,10 @@ NoteData _$NoteDataFromJson(Map<String, dynamic> json) => NoteData(
         (k, e) => MapEntry(int.parse(k), e as Map<String, dynamic>),
       )
       ..timeRegistered = NoteData._rawTimeStamp(json['timeRegistered'])
-      ..transferred = json['transferred'] as bool
       ..themeColorId = json['themeColorId'] as int
       ..themeIsDark = json['themeIsDark'] as bool
-      ..themeIsMonochrome = json['themeIsMonochrome'] as bool;
+      ..themeIsMonochrome = json['themeIsMonochrome'] as bool
+      ..timeOffline = NoteData._rawTimeStamp(json['timeOffline']);
 
 Map<String, dynamic> _$NoteDataToJson(NoteData instance) => <String, dynamic>{
       'numNotes': instance.numNotes,
@@ -32,8 +32,8 @@ Map<String, dynamic> _$NoteDataToJson(NoteData instance) => <String, dynamic>{
       'ownerId': instance.ownerId,
       'isAnonymous': instance.isAnonymous,
       'email': instance.email,
-      'transferred': instance.transferred,
       'themeColorId': instance.themeColorId,
       'themeIsDark': instance.themeIsDark,
       'themeIsMonochrome': instance.themeIsMonochrome,
+      'timeOffline': NoteData._rawTimeStamp(instance.timeOffline),
     };

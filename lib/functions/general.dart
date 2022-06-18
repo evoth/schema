@@ -111,7 +111,7 @@ class TryData {
 // Get unique id
 int getUniqueId() {
   return int.parse(Timestamp.now().millisecondsSinceEpoch.toString() +
-      Random().nextInt(1000).toString());
+      Random().nextInt(1000000000).toString());
 }
 
 // Capitalize string

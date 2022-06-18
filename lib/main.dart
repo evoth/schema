@@ -42,9 +42,6 @@ class Schema extends StatefulWidget {
 }
 
 class _SchemaState extends State<Schema> {
-  // Stores one HomePage so it doesn't update every time
-  HomePage homePage = HomePage();
-
   // Listen to changes in themeData so we can update the theme throughout app
   @override
   void initState() {
@@ -64,7 +61,7 @@ class _SchemaState extends State<Schema> {
         // If user is signed in, skip loading page
         '/': (context) => noteData.ownerId == null
             ? LoadingPage(mainContext: context)
-            : homePage,
+            : HomePage(),
       },
       // Theme data that we're listening to
       theme: themeData.getTheme(),

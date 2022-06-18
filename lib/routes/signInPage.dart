@@ -55,8 +55,7 @@ class SignInPage extends StatelessWidget {
                       fontSize: Constants.signInTextSize,
                     ),
                   ),
-                  // Google sign in button (roughly follows Google's guidelines:
-                  // https://developers.google.com/identity/branding-guidelines)
+                  // Google sign in button
                   SignInButton(
                     icon: SvgPicture.asset(
                       Constants.googleG,

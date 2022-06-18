@@ -6,6 +6,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:schema/data/noteData.dart';
 import 'package:schema/functions/constants.dart';
+import 'package:schema/functions/general.dart';
 import 'package:schema/layout/grid.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
@@ -26,7 +27,11 @@ class _HomePageState extends State<HomePage> {
       LabelsData(null, () => setState(() {}), filterLabel);
 
   // Whether the app is loading
-  bool loading = false;
+  bool isLoading = false;
+
+  // Whether this is the first time updating notes (don't update because it was
+  // already updated in init)
+  bool isFirstTime = true;
 
   // Adds a new blank note
   void newNote() async {
@@ -44,10 +49,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void updateNotesAndShowLoading(BuildContext context, int? labelId) async {
-    loading = true;
+    isLoading = true;
     setState(() {});
     await noteData.updateNotes(context, labelId);
-    loading = false;
+    isLoading = false;
     setState(() {});
   }
 
@@ -65,7 +70,18 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (noteData.isDeleting) {
+        noteData.isDeleting = false;
+        updateNotesAndShowLoading(context, labelsData.filterLabelId);
+        // Shows transfer complete message if applicable
+        if (noteData.isTransferring) {
+          noteData.isTransferring = false;
+          showAlert(context, Constants.transferCompleteMessage);
+        }
+      }
+    });
+    // Reference to metadata document
     DocumentReference dataDoc = FirebaseFirestore.instance
         .collection('notes-meta')
         .doc(noteData.ownerId);
@@ -73,10 +89,14 @@ class _HomePageState extends State<HomePage> {
     // device and the new data is different from the current data
     subscription = dataDoc.snapshots().listen(
       (event) async {
-        if (event.data() != null &&
+        if (!isFirstTime &&
+            !noteData.isDeleting &&
+            noteData.ownerId != null &&
+            event.data() != null &&
             !event.metadata.hasPendingWrites &&
             !DeepCollectionEquality().equals(event.data(), noteData.toJson())) {
           updateNotesAndShowLoading(context, labelsData.filterLabelId);
+          isFirstTime = false;
         }
       },
     );
@@ -106,7 +126,7 @@ class _HomePageState extends State<HomePage> {
               height: Constants.appBarSize,
               width: Constants.appBarSize,
               child: Center(
-                child: loading ? CircularProgressIndicator() : null,
+                child: isLoading ? CircularProgressIndicator() : null,
               ),
             ),
           ],

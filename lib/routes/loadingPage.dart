@@ -26,7 +26,9 @@ class _LoadingPageState extends State<LoadingPage> {
     if (widget.text == null) {
       // Reinitializes app whenever user signs in or out
       FirebaseAuth.instance.authStateChanges().listen((User? user) {
-        initApp(widget.mainContext!, user);
+        if (!noteData.isDeleting) {
+          initApp(widget.mainContext!, user);
+        }
       });
       // Listens to and updates connection state, notifying user of changes
       Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
@@ -38,7 +40,7 @@ class _LoadingPageState extends State<LoadingPage> {
           showAlert(widget.mainContext!, Constants.isOfflineMessage,
               useSnackbar: true);
         }
-        noteData.isOnline = isOnline;
+        noteData.setIsOnline(isOnline);
       });
     }
 

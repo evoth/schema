@@ -47,7 +47,7 @@ class Note {
       return tempIndex;
     }
     // Otherwise, return index from metadata
-    return data.noteMeta[id]?['index'];
+    return index;
   }
 
   // Index of note represented in metadata so that note document does not need

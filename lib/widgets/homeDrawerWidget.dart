@@ -41,8 +41,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
           children: [
             // Shows sign in button if anonymous; sign out button otherwise
             noteData.isAnonymous
-                // Google sign in button (roughly follows Google's guidelines:
-                // https://developers.google.com/identity/branding-guidelines)
+                // Google sign in button
                 ? SignInButton(
                     icon: SvgPicture.asset(
                       Constants.googleG,
@@ -62,10 +61,10 @@ class _HomeDrawerState extends State<HomeDrawer> {
                           Constants.drawerSignInScale,
                     ),
                     text: Constants.signOutButton,
-                    onPressed: (context) {
+                    onPressed: (context) async {
                       // Signs out and resets data
-                      FirebaseAuth.instance.signOut();
                       noteData = NoteData(ownerId: null);
+                      await FirebaseAuth.instance.signOut();
                     },
                     scale: Constants.drawerSignInScale,
                   ),

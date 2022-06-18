@@ -14,12 +14,13 @@ Future<void> signInWithGoogle(BuildContext context) async {
   final AuthCredential? credential = await getGoogleCredential(context);
   if (credential != null) {
     // Push loading screen with signing in text
-    Navigator.of(context).push<void>(
+    Navigator.of(context).pushAndRemoveUntil<void>(
       MaterialPageRoute<void>(
         builder: (BuildContext context) => LoadingPage(
           text: Constants.signInLoading,
         ),
       ),
+      (route) => route.isFirst,
     );
     // Simple error catching (most likely error is user exiting sign in flow)
     try {
@@ -55,12 +56,13 @@ Future<AuthCredential?> getGoogleCredential(BuildContext context) async {
 // Sign in with an anonymous account (persistent across reloads on the device)
 Future<void> signInAnonymously(BuildContext context) async {
   // Push loading screen with signing in text
-  Navigator.of(context).push<void>(
+  Navigator.of(context).pushAndRemoveUntil<void>(
     MaterialPageRoute<void>(
       builder: (BuildContext context) => LoadingPage(
         text: Constants.signInLoading,
       ),
     ),
+    (route) => route.isFirst,
   );
   // Simple error catching
   try {
@@ -73,8 +75,5 @@ Future<void> signInAnonymously(BuildContext context) async {
 
 // Signs out if necessary and shows snackbar with error message
 void signInError(BuildContext context) {
-  if (FirebaseAuth.instance.currentUser != null) {
-    //FirebaseAuth.instance.signOut();
-  }
   showAlert(context, Constants.signInErrorMessage, useSnackbar: true);
 }

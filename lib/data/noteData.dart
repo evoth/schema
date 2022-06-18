@@ -36,11 +36,19 @@ class NoteData {
   String? ownerId;
   bool isAnonymous = true;
   String? email;
-  bool transferred = false;
+  // Whether we are currently transferring notes
+  @JsonKey(ignore: true)
+  bool isTransferring = false;
+  // Whether we are currently deleting notes (and thus should not update)
+  @JsonKey(ignore: true)
+  bool isDeleting = false;
   // Theme data
   int themeColorId = Constants.themeDefaultColorId;
   bool themeIsDark = Constants.themeDefaultIsDark;
   bool themeIsMonochrome = Constants.themeDefaultIsMonochrome;
+  // Time that we most recently went offline
+  @JsonKey(fromJson: _rawTimeStamp, toJson: _rawTimeStamp)
+  Timestamp timeOffline = Timestamp.now();
   // Whether we are online
   @JsonKey(ignore: true)
   bool isOnline = true;
@@ -58,10 +66,10 @@ class NoteData {
     this.ownerId = copyData.ownerId;
     this.isAnonymous = copyData.isAnonymous;
     this.email = copyData.email;
-    this.transferred = copyData.transferred;
     this.themeColorId = copyData.themeColorId;
     this.themeIsDark = copyData.themeIsDark;
     this.themeIsMonochrome = copyData.themeIsMonochrome;
+    this.timeOffline = copyData.timeOffline;
   }
 
   // Shifts indices by the given amount, starting at a certain index (default 0)
@@ -107,6 +115,7 @@ class NoteData {
       'index': 0,
       'timeCreated': timeCreated,
       'timeUpdated': timeCreated,
+      'hasOfflineChanges': false,
       'labels': {},
     };
 
@@ -236,10 +245,14 @@ class NoteData {
   // Adds new label with the specified name
   int newLabel(String name, {bool update = true}) {
     // New label id is the current time in milliseconds
+    Timestamp timeCreated = Timestamp.now();
     int newLabelId = getUniqueId();
     labels[newLabelId] = {
       'name': name,
       'numNotes': 0,
+      'timeCreated': timeCreated,
+      'timeUpdated': timeCreated,
+      'hasOfflineChanges': false,
     };
     if (update) {
       updateData();
@@ -264,12 +277,14 @@ class NoteData {
       return;
     }
     labels[labelId]?['name'] = checkedName;
+    labels[labelId]?['timeUpdated'] = Timestamp.now();
+    labels[labelId]?['hasOfflineChanges'] = !isOnline;
     updateData();
   }
 
   // Gets name of label
   String getLabelName(int labelId) {
-    return labels[labelId]?['name'];
+    return labels[labelId]?['name'] ?? '';
   }
 
   // Downloads all notes as one query from database
@@ -505,8 +520,48 @@ class NoteData {
         textOK: Text(Constants.transferDeleteOK),
       ));
       if (!transfer) {
-        // Sign in with the new AuthCredential without transferring
-        FirebaseAuth.instance.signInWithCredential(credential);
+        // Push loading screen with deleting text
+        Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(
+            builder: (BuildContext context) => LoadingPage(
+              text: Constants.deleteLoading,
+            ),
+          ),
+        );
+
+        // Deletes anonymous user data
+        isDeleting = true;
+        await deleteUser();
+
+        // Attempts to sign in with the new AuthCredential
+        User? newUser;
+        try {
+          newUser =
+              (await FirebaseAuth.instance.signInWithCredential(credential))
+                  .user;
+          if (newUser == null) {
+            signInError(context);
+            return;
+          }
+        } catch (e) {
+          signInError(context);
+          return;
+        }
+
+        // Gets all of the note data for the new user
+        noteData = NoteData(
+          ownerId: newUser.uid,
+          isAnonymous: newUser.isAnonymous,
+          email: newUser.email,
+        );
+
+        // Go to homepage
+        Navigator.of(context).pushAndRemoveUntil<void>(
+          MaterialPageRoute<void>(
+            builder: (BuildContext context) => HomePage(),
+          ),
+          (route) => route.isFirst,
+        );
       }
       return;
     }
@@ -520,9 +575,10 @@ class NoteData {
       ),
     );
 
-    // Marks account as transferred and updates data one last time
-    transferred = true;
-    await updateData();
+    // Marks data as transferred and delete account data from database
+    isTransferring = true;
+    isDeleting = true;
+    await deleteUser();
 
     // Attempts to sign in with the new AuthCredential
     User? newUser;
@@ -579,14 +635,12 @@ class NoteData {
     themeData.updateTheme();
 
     // Go to homepage
-    Navigator.of(context).push<void>(
+    Navigator.of(context).pushAndRemoveUntil<void>(
       MaterialPageRoute<void>(
         builder: (BuildContext context) => HomePage(),
       ),
+      (route) => route.isFirst,
     );
-
-    // Shows transfer complete message
-    showAlert(context, Constants.transferCompleteMessage);
   }
 
   // Gets list of all label ids
@@ -652,6 +706,52 @@ class NoteData {
         .collection('notes-meta')
         .doc(ownerId)
         .set(toJson());
+  }
+
+  // Sets online status and time offline if necessary
+  void setIsOnline(bool newIsOnline) {
+    if (isOnline && !newIsOnline) {
+      timeOffline = Timestamp.now();
+    }
+    isOnline = newIsOnline;
+  }
+
+  // Deletes all online data for specified user (will only work if signed in)
+  Future<void> deleteUser() async {
+    // Creates local copy of ownerId in case it changes
+    String? deleteOwnerId = ownerId;
+    // Deletes all note documents in batches to avoid out of memory errors
+    QuerySnapshot<Map<String, dynamic>> noteDocs;
+    do {
+      noteDocs = await FirebaseFirestore.instance
+          .collection('notes')
+          .where('ownerId', isEqualTo: deleteOwnerId)
+          .limit(Constants.deleteBatchSize)
+          .get();
+
+      for (var element in noteDocs.docs) {
+        await element.reference.delete();
+      }
+    } while (noteDocs.docs.isNotEmpty);
+
+    // Deletes any metadata in offline collection
+    noteDocs = await FirebaseFirestore.instance
+        .collection('notes-meta-offline')
+        .where('ownerId', isEqualTo: deleteOwnerId)
+        .get();
+
+    for (var element in noteDocs.docs) {
+      await element.reference.delete();
+    }
+
+    // Deletes main metadata document
+    await FirebaseFirestore.instance
+        .collection('notes-meta')
+        .doc(deleteOwnerId)
+        .delete();
+
+    // Finally, deletes the actual user from the database
+    await FirebaseAuth.instance.currentUser?.delete();
   }
 
   NoteData({required this.ownerId, this.isAnonymous = true, this.email});
