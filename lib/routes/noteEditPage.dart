@@ -128,7 +128,7 @@ class NoteEditPage extends StatelessWidget {
               )) {
                 noteData.deleteNote(
                   context,
-                  note.index,
+                  note,
                   noteWidgetData.refreshNotes,
                 );
                 Navigator.of(context).pop(context);

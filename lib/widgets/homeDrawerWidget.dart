@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:schema/data/noteData.dart';
-import 'package:schema/functions/auth.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
 import 'package:schema/routes/homePage.dart';
@@ -10,7 +9,6 @@ import 'package:schema/routes/signInPage.dart';
 import 'package:schema/widgets/homeDrawerLabelWidget.dart';
 import 'package:schema/widgets/noteAddLabelWidget.dart';
 import 'package:sprintf/sprintf.dart';
-import 'package:url_launcher/link.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // Returns the drawer used on the home screen
@@ -94,7 +92,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
 
   // Returns labels section title tile based on whether it's in edit mode
   ListTile labelsTitle(
-      BuildContext context, bool editMode, int? filterLabelId) {
+      BuildContext context, bool editMode, String? filterLabelId) {
     return ListTile(
       // Title
       title: Text(
@@ -178,24 +176,24 @@ class _HomeDrawerState extends State<HomeDrawer> {
 
   // Saves label name
   void doneLabelName() {
-    if (widget.data.labelEditing != -1 &&
+    if (widget.data.editLabelId != '' &&
         widget.data.labelName != null &&
         widget.data.labelName !=
-            noteData.getLabelName(widget.data.labelEditing)) {
+            noteData.getLabelName(widget.data.editLabelId)) {
       noteData.editLabelName(
-          context, widget.data.labelEditing, widget.data.labelName!);
+          context, widget.data.editLabelId, widget.data.labelName!);
       widget.data.refreshNotes();
     }
-    widget.data.labelEditing = -1;
+    widget.data.editLabelId = '';
     widget.data.labelName = null;
     setState(() {});
   }
 
   // Puts label into name edit mode, and if another label's name was being
   // edited, save it
-  void editLabelName(int labelId) {
+  void editLabelName(String labelId) {
     doneLabelName();
-    widget.data.labelEditing = labelId;
+    widget.data.editLabelId = labelId;
     widget.data.labelName = noteData.getLabelName(labelId);
     setState(() {});
   }
@@ -204,7 +202,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
   List<Widget> homeDrawerContent(BuildContext context) {
     // Individual list tiles for each label
     List<Widget> labelTiles = [];
-    for (int labelId in noteData.labelIds) {
+    for (String labelId in noteData.labelIds) {
       labelTiles.add(
         HomeDrawerLabel(
           labelId,

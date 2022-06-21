@@ -4,7 +4,6 @@ import 'package:schema/data/noteData.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
 import 'package:schema/routes/homePage.dart';
-import 'package:schema/widgets/homeDrawerWidget.dart';
 
 // Returns a list tile representing a label in the home drawer
 class HomeDrawerLabel extends StatelessWidget {
@@ -17,7 +16,7 @@ class HomeDrawerLabel extends StatelessWidget {
   );
 
   // Label data and function callbacks
-  final int labelId;
+  final String labelId;
   final Function updateLabelName;
   final Function editLabelName;
   final Function doneLabelName;
@@ -27,7 +26,7 @@ class HomeDrawerLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     // Returns different tile depending on editMode and nameEditMode
     if (data.labelsEditMode) {
-      if (data.labelEditing == labelId) {
+      if (data.editLabelId == labelId) {
         // Text controller to populate and get text in text field
         final customTextController = TextEditingController(
           text: noteData.getLabelName(labelId),

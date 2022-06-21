@@ -9,7 +9,7 @@ class NoteWidgetData {
   final Function? drag2;
   final double originalX;
   final double originalY;
-  final int? filterLabelId;
+  final String? filterLabelId;
 
   NoteWidgetData(
     this.note,

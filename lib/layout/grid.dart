@@ -16,7 +16,7 @@ class DynamicGrid extends StatefulWidget {
   // Gets note functions to pass down
   final Function refreshNotes;
   // Label filter
-  final int? filterLabelId;
+  final String? filterLabelId;
 
   @override
   _DynamicGridState createState() => _DynamicGridState();
@@ -296,7 +296,7 @@ class DynamicGridNoteWidgetList {
     NotePositionData notePositionData,
     Function drag1,
     Function drag2,
-    int? filterLabelId,
+    String? filterLabelId,
   ) {
     // Sorts by id so that each NoteWidget will stay with the same note
     List<Note> sortedNotes = [];
@@ -371,7 +371,7 @@ class NotePosition {
   double left;
   double top;
   final int index;
-  final int id;
+  final String id;
 
   NotePosition(
     this.width,

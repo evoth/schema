@@ -29,9 +29,9 @@ class _HomePageState extends State<HomePage> {
   // Whether the app is loading
   bool isLoading = false;
 
-  // Whether this is the first time updating notes (don't update because it was
-  // already updated in init)
-  bool isFirstTime = true;
+  // Whether the widget is new (we shouldn't update if it is, since it was
+  // already updated earlier)
+  bool isNew = true;
 
   // Adds a new blank note
   void newNote() async {
@@ -48,7 +48,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void updateNotesAndShowLoading(BuildContext context, int? labelId) async {
+  // Updates notes while showing loading symbol
+  void updateNotesAndShowLoading(BuildContext context, String? labelId) async {
     isLoading = true;
     setState(() {});
     await noteData.updateNotes(context, labelId);
@@ -57,7 +58,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Filters by the given label (if null, stops filtering and shows all notes)
-  void filterLabel(int? labelId) async {
+  void filterLabel(String? labelId) async {
     labelsData.filterLabelId = labelId;
     Navigator.of(context).pop();
     updateNotesAndShowLoading(context, labelId);
@@ -70,6 +71,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+
+    // Deals with data if we were deleting/transferring
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (noteData.isDeleting) {
         noteData.isDeleting = false;
@@ -81,23 +84,25 @@ class _HomePageState extends State<HomePage> {
         }
       }
     });
+
     // Reference to metadata document
     DocumentReference dataDoc = FirebaseFirestore.instance
         .collection('notes-meta')
         .doc(noteData.ownerId);
+
     // Updates notes whenever the metadata document is updated from a different
     // device and the new data is different from the current data
     subscription = dataDoc.snapshots().listen(
       (event) async {
-        if (!isFirstTime &&
+        if (!isNew &&
             !noteData.isDeleting &&
             noteData.ownerId != null &&
             event.data() != null &&
             !event.metadata.hasPendingWrites &&
             !DeepCollectionEquality().equals(event.data(), noteData.toJson())) {
           updateNotesAndShowLoading(context, labelsData.filterLabelId);
-          isFirstTime = false;
         }
+        isNew = false;
       },
     );
   }
@@ -157,12 +162,12 @@ class _HomePageState extends State<HomePage> {
         if (!isOpen) {
           // Saves label name if one was being edited
           if (labelsData.labelsEditMode &&
-              labelsData.labelEditing != -1 &&
+              labelsData.editLabelId != '' &&
               labelsData.labelName != null &&
               labelsData.labelName !=
-                  noteData.getLabelName(labelsData.labelEditing)) {
+                  noteData.getLabelName(labelsData.editLabelId)) {
             noteData.editLabelName(
-                context, labelsData.labelEditing, labelsData.labelName!);
+                context, labelsData.editLabelId, labelsData.labelName!);
           }
           // Resets data
           labelsData.resetEditing();
@@ -200,12 +205,12 @@ class _HomePageState extends State<HomePage> {
 class LabelsData {
   // Whether the labels section is in edit mode
   bool labelsEditMode = false;
-  // Which label is in name edit mode (-1 for none)
-  int labelEditing = -1;
+  // Which label is in name edit mode (empty string for none)
+  String editLabelId = '';
   // Current edited label name
   String? labelName;
   // Filtering label
-  int? filterLabelId;
+  String? filterLabelId;
   // Function for refreshing the home page
   final Function refreshNotes;
   // Function to filter by a label
@@ -214,7 +219,7 @@ class LabelsData {
   // Resets variables related to label editing
   void resetEditing() {
     labelsEditMode = false;
-    labelEditing = -1;
+    editLabelId = '';
     labelName = null;
   }
 

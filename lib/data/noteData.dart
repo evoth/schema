@@ -27,9 +27,9 @@ class NoteData {
   // Total number of notes
   int numNotes = 0;
   // Map of label ids and their details
-  Map<int, Map<String, dynamic>> labels = {};
+  Map<String, Map<String, dynamic>> labels = {};
   // Map of note ids and their details
-  Map<int, Map<String, dynamic>> noteMeta = {};
+  Map<String, Map<String, dynamic>> noteMeta = {};
   // Relatively self-explanatory
   @JsonKey(fromJson: _rawTimeStamp, toJson: _rawTimeStamp)
   Timestamp timeRegistered = Timestamp.now();
@@ -81,7 +81,7 @@ class NoteData {
       }
     }
     if (!onlyTemp) {
-      for (int id in noteMeta.keys) {
+      for (String id in noteMeta.keys) {
         if (noteMeta[id]?['index'] >= index) {
           noteMeta[id]?['index'] += amount;
         }
@@ -104,12 +104,12 @@ class NoteData {
   }
 
   // Adds a new (empty) note and inserts at index 0 (returns new note)
-  Note newNote(int? filterLabelId, {Note? note, bool update = true}) {
+  Note newNote(String? filterLabelId, {Note? note, bool update = true}) {
     // Shifts other notes forward
     shiftNoteIndices(1);
     // New note id is the current time in milliseconds
     Timestamp timeCreated = Timestamp.now();
-    int newNoteId = getUniqueId();
+    String newNoteId = getUniqueId();
     // Updates note metadata
     noteMeta[newNoteId] = {
       'index': 0,
@@ -151,30 +151,32 @@ class NoteData {
     }
   }
 
-  // Deletes note and shifts indices
-  void deleteNote(BuildContext context, int index, Function refreshNotes,
+  // Deletes note and shifts indices if the note still exists
+  void deleteNote(BuildContext context, Note note, Function refreshNotes,
       {String? message}) {
-    // Deletes from database
-    tryQuery(
-      () => FirebaseFirestore.instance
-          .collection('notes')
-          .doc(ownerId! + '-' + notes[index].id.toString())
-          .delete(),
-    );
+    if (notes[note.tempIndex].id == note.id) {
+      // Deletes from database
+      tryQuery(
+        () => FirebaseFirestore.instance
+            .collection('notes')
+            .doc(ownerId! + '-' + note.id)
+            .delete(),
+      );
 
-    // Decreases respective label counters
-    for (String labelId in noteMeta[notes[index].id]?['labels'].keys) {
-      labels[int.parse(labelId)]?['numNotes']--;
+      // Decreases respective label counters
+      for (String labelId in noteMeta[note.id]?['labels'].keys) {
+        labels[labelId]?['numNotes']--;
+      }
+      // Removes note and shifts other notes
+      noteMeta.remove(note.id);
+      notes.removeAt(note.tempIndex);
+      shiftNoteIndices(-1, index: note.tempIndex);
+      // Updates metadata
+      numNotes--;
+      updateData();
+      showAlert(context, message ?? Constants.deleteMessage, useSnackbar: true);
+      refreshNotes();
     }
-    // Removes note and shifts other notes
-    noteMeta.remove(notes[index].id);
-    notes.removeAt(index);
-    shiftNoteIndices(-1, index: index);
-    // Updates metadata
-    numNotes--;
-    updateData();
-    showAlert(context, message ?? Constants.deleteMessage, useSnackbar: true);
-    refreshNotes();
   }
 
   // Saves note after 3 seconds of inactivity. Set wait to false to save
@@ -226,7 +228,7 @@ class NoteData {
 
     // Removes note if new and empty
     if (note.isNew && note.title == '' && note.text == '') {
-      deleteNote(context, note.tempIndex, refreshNotes,
+      deleteNote(context, note, refreshNotes,
           message: Constants.discardMessage);
     }
     note.isNew = false;
@@ -239,14 +241,14 @@ class NoteData {
     // Updates notes on home screen
     refreshNotes();
     // Saves note
-    saveNote(note, wait: false);
+    await saveNote(note, wait: false);
   }
 
   // Adds new label with the specified name
-  int newLabel(String name, {bool update = true}) {
+  String newLabel(String name, {bool update = true}) {
     // New label id is the current time in milliseconds
     Timestamp timeCreated = Timestamp.now();
-    int newLabelId = getUniqueId();
+    String newLabelId = getUniqueId();
     labels[newLabelId] = {
       'name': name,
       'numNotes': 0,
@@ -261,17 +263,17 @@ class NoteData {
   }
 
   // Deletes label
-  void deleteLabel(int labelId) {
+  void deleteLabel(String labelId) {
     // Removes from any notes that may have this label
-    for (int noteId in noteMeta.keys) {
-      noteMeta[noteId]?.remove(labelId.toString());
+    for (String noteId in noteMeta.keys) {
+      noteMeta[noteId]?.remove(labelId);
     }
     labels.remove(labelId);
     updateData();
   }
 
   // Edit label name
-  void editLabelName(BuildContext context, int labelId, String name) async {
+  void editLabelName(BuildContext context, String labelId, String name) async {
     String? checkedName = await checkLabelName(context, name);
     if (checkedName == null || checkedName == labels[labelId]?['name']) {
       return;
@@ -283,8 +285,119 @@ class NoteData {
   }
 
   // Gets name of label
-  String getLabelName(int labelId) {
+  String getLabelName(String labelId) {
     return labels[labelId]?['name'] ?? '';
+  }
+
+  // Gets list of all label ids
+  @JsonKey(ignore: true)
+  List<String> get labelIds {
+    List<String> labelIds = labels.keys.toList();
+    // Sorts labels alphabetically
+    labelIds.sort(
+      (a, b) => getLabelName(a).compareTo(getLabelName(b)),
+    );
+    return labelIds;
+  }
+
+  // Returns whether a label with the given name exists and is not deleted
+  bool labelExists(String name) {
+    for (Map<String, dynamic> label in labels.values) {
+      if (label['name'].toLowerCase() == name.toLowerCase()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Returns the id of the label with the given name
+  String getLabelId(String name) {
+    for (String labelId in labels.keys) {
+      if (getLabelName(labelId).toLowerCase() == name.toLowerCase()) {
+        return labelId;
+      }
+    }
+    return '';
+  }
+
+  // Sets online status and time offline if necessary
+  void setIsOnline(bool newIsOnline) {
+    if (isOnline && !newIsOnline) {
+      timeOffline = Timestamp.now();
+    }
+    isOnline = newIsOnline;
+  }
+
+  // Deletes all online data for specified user (will only work if signed in)
+  Future<void> deleteUser() async {
+    // Creates local copy of ownerId in case it changes
+    String? deleteOwnerId = ownerId;
+    // Deletes all note documents in batches to avoid out of memory errors
+    QuerySnapshot<Map<String, dynamic>> noteDocs;
+    do {
+      noteDocs = await FirebaseFirestore.instance
+          .collection('notes')
+          .where('ownerId', isEqualTo: deleteOwnerId)
+          .limit(Constants.deleteBatchSize)
+          .get();
+
+      for (var element in noteDocs.docs) {
+        await element.reference.delete();
+      }
+    } while (noteDocs.docs.isNotEmpty);
+
+    // Deletes any metadata in offline collection
+    noteDocs = await FirebaseFirestore.instance
+        .collection('notes-meta-offline')
+        .where('ownerId', isEqualTo: deleteOwnerId)
+        .get();
+
+    for (var element in noteDocs.docs) {
+      await element.reference.delete();
+    }
+
+    // Deletes main metadata document
+    await FirebaseFirestore.instance
+        .collection('notes-meta')
+        .doc(deleteOwnerId)
+        .delete();
+
+    // Finally, deletes the actual user from the database
+    await FirebaseAuth.instance.currentUser?.delete();
+  }
+
+  // Overrides contents of note document with updated note
+  void updateNote(Note note, {bool update = true}) {
+    Map<String, dynamic> noteJson = note.toJson();
+    if (update) {
+      updateData();
+    }
+    note.hasOfflineChanges = !isOnline;
+    FirebaseFirestore.instance
+        .collection('notes')
+        .doc(ownerId! + '-' + note.id)
+        .set(noteJson);
+  }
+
+  // Updates note metadata document for the user
+  Future<void> updateData({bool resetNums = false}) async {
+    // Resets note counts (in case of desync)
+    if (resetNums) {
+      numNotes = 0;
+      for (String labelId in labels.keys) {
+        labels[labelId]?['numNotes'] = 0;
+      }
+      for (String noteId in noteMeta.keys) {
+        numNotes++;
+        for (String labelId in noteMeta[noteId]?['labels'].keys) {
+          labels[labelId]?['numNotes']++;
+        }
+      }
+    }
+    await FirebaseFirestore.instance
+        .collection('notes-meta')
+        .doc(ownerId)
+        .set(toJson());
   }
 
   // Downloads all notes as one query from database
@@ -309,7 +422,7 @@ class NoteData {
   // Downloads metadata (creating new if necessary) and downloads notes that fit
   // the query and have been newly updated, keeping any already up-to-date notes
   // TODO: create variables for each type of query
-  Future<void> updateNotes(BuildContext context, int? filterLabelId) async {
+  Future<void> updateNotes(BuildContext context, String? filterLabelId) async {
     // Variables used to update data
     NoteData? newNoteData;
     TryData tryData;
@@ -383,17 +496,16 @@ class NoteData {
     }
 
     // Stores current note indices in a map for easy checking and accessing
-    Map<int, int> noteIndices = {};
+    Map<String, int> noteIndices = {};
     for (int i = 0; i < notes.length; i++) {
       noteIndices[notes[i].id] = i;
     }
 
     // Adds all note ids that fit the current label or lack of thereof to a list
-    List<int> newNoteIds = [];
-    for (int noteId in newNoteData.noteMeta.keys) {
+    List<String> newNoteIds = [];
+    for (String noteId in newNoteData.noteMeta.keys) {
       if (filterLabelId == null ||
-          newNoteData.noteMeta[noteId]?['labels']
-              .containsKey(filterLabelId.toString())) {
+          newNoteData.noteMeta[noteId]?['labels'].containsKey(filterLabelId)) {
         newNoteIds.add(noteId);
       }
     }
@@ -403,7 +515,7 @@ class NoteData {
     // Attempts to retrieve up-to-date notes that are already on device
     if (isSameUser) {
       for (int i = 0; i < newNoteIds.length; i++) {
-        int noteId = newNoteIds[i];
+        String noteId = newNoteIds[i];
         // Check if note is out of date
         if (noteMeta[noteId]?['timeUpdated'] ==
             newNoteData.noteMeta[noteId]?['timeUpdated']) {
@@ -417,7 +529,7 @@ class NoteData {
             tryData = await tryQuery(
               () async => await FirebaseFirestore.instance
                   .collection('notes')
-                  .doc(ownerId! + '-' + noteId.toString())
+                  .doc(ownerId! + '-' + noteId)
                   .get(),
             );
             failed = tryData.status != 0;
@@ -441,12 +553,12 @@ class NoteData {
     await FirebaseFirestore.instance.enableNetwork();
 
     bool error = false;
-    for (int noteId in newNoteIds) {
+    for (String noteId in newNoteIds) {
       // Attempts to get note document from database
       tryData = await tryQuery(
         () async => await FirebaseFirestore.instance
             .collection('notes')
-            .doc(ownerId! + '-' + noteId.toString())
+            .doc(ownerId! + '-' + noteId)
             .get(),
       );
       failed = tryData.status != 0;
@@ -470,6 +582,9 @@ class NoteData {
       showAlert(context, Constants.updateNotesErrorMessage, useSnackbar: true);
     }
 
+    // Updates metadata
+    setNoteData(newNoteData);
+
     // Sorts notes according to index
     newNotes.sort(
       (a, b) => a.index.compareTo(b.index),
@@ -480,10 +595,9 @@ class NoteData {
       newNotes[i].tempIndex = i;
     }
 
-    // Updates data
-    setNoteData(newNoteData);
+    // Updates other data
     themeData.updateTheme();
-    updateData(resetNums: true);
+    await updateData(resetNums: true);
     notes = newNotes;
   }
 
@@ -605,8 +719,8 @@ class NoteData {
     // Add labels from old user, merging any that share the same name and
     // storing which new ids go with which old ones (to be used when
     // transferring notes)
-    int newLabelId;
-    for (int labelId in labels.keys) {
+    String newLabelId;
+    for (String labelId in labels.keys) {
       if (newNoteData.labelExists(getLabelName(labelId))) {
         newLabelId = newNoteData.getLabelId(getLabelName(labelId));
       } else {
@@ -621,7 +735,7 @@ class NoteData {
     Note newNote;
     for (Note note in notes.reversed) {
       newNote = newNoteData.newNote(null, note: note, update: false);
-      for (int labelId in note.labelIds) {
+      for (String labelId in note.labelIds) {
         newNote.addLabel(labels[labelId]?['newId'], update: false);
       }
     }
@@ -641,117 +755,6 @@ class NoteData {
       ),
       (route) => route.isFirst,
     );
-  }
-
-  // Gets list of all label ids
-  @JsonKey(ignore: true)
-  List<int> get labelIds {
-    List<int> labelIds = labels.keys.toList();
-    // Sorts labels alphabetically
-    labelIds.sort(
-      (a, b) => getLabelName(a).compareTo(getLabelName(b)),
-    );
-    return labelIds;
-  }
-
-  // Returns whether a label with the given name exists and is not deleted
-  bool labelExists(String name) {
-    for (Map<String, dynamic> label in labels.values) {
-      if (label['name'].toLowerCase() == name.toLowerCase()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  // Returns the id of the label with the given name
-  int getLabelId(String name) {
-    for (int labelId in labels.keys) {
-      if (getLabelName(labelId).toLowerCase() == name.toLowerCase()) {
-        return labelId;
-      }
-    }
-    return -1;
-  }
-
-  // Overrides contents of note document with updated note
-  void updateNote(Note note, {bool update = true}) {
-    Map<String, dynamic> noteJson = note.toJson();
-    if (update) {
-      updateData();
-    }
-    note.hasOfflineChanges = !isOnline;
-    FirebaseFirestore.instance
-        .collection('notes')
-        .doc(ownerId! + '-' + note.id.toString())
-        .set(noteJson);
-  }
-
-  // Updates note metadata document for the user
-  Future<void> updateData({bool resetNums = false}) async {
-    // Resets note counts (in case of desync)
-    if (resetNums) {
-      numNotes = 0;
-      for (int labelId in labels.keys) {
-        labels[labelId]?['numNotes'] = 0;
-      }
-      for (int noteId in noteMeta.keys) {
-        numNotes++;
-        for (String labelId in noteMeta[noteId]?['labels'].keys) {
-          labels[int.parse(labelId)]?['numNotes']++;
-        }
-      }
-    }
-    await FirebaseFirestore.instance
-        .collection('notes-meta')
-        .doc(ownerId)
-        .set(toJson());
-  }
-
-  // Sets online status and time offline if necessary
-  void setIsOnline(bool newIsOnline) {
-    if (isOnline && !newIsOnline) {
-      timeOffline = Timestamp.now();
-    }
-    isOnline = newIsOnline;
-  }
-
-  // Deletes all online data for specified user (will only work if signed in)
-  Future<void> deleteUser() async {
-    // Creates local copy of ownerId in case it changes
-    String? deleteOwnerId = ownerId;
-    // Deletes all note documents in batches to avoid out of memory errors
-    QuerySnapshot<Map<String, dynamic>> noteDocs;
-    do {
-      noteDocs = await FirebaseFirestore.instance
-          .collection('notes')
-          .where('ownerId', isEqualTo: deleteOwnerId)
-          .limit(Constants.deleteBatchSize)
-          .get();
-
-      for (var element in noteDocs.docs) {
-        await element.reference.delete();
-      }
-    } while (noteDocs.docs.isNotEmpty);
-
-    // Deletes any metadata in offline collection
-    noteDocs = await FirebaseFirestore.instance
-        .collection('notes-meta-offline')
-        .where('ownerId', isEqualTo: deleteOwnerId)
-        .get();
-
-    for (var element in noteDocs.docs) {
-      await element.reference.delete();
-    }
-
-    // Deletes main metadata document
-    await FirebaseFirestore.instance
-        .collection('notes-meta')
-        .doc(deleteOwnerId)
-        .delete();
-
-    // Finally, deletes the actual user from the database
-    await FirebaseAuth.instance.currentUser?.delete();
   }
 
   NoteData({required this.ownerId, this.isAnonymous = true, this.email});

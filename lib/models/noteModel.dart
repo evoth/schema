@@ -9,7 +9,7 @@ part 'noteModel.g.dart';
 @JsonSerializable()
 class Note {
   // Basic note properties
-  int id;
+  String id;
   String title;
   String text;
   String? ownerId;
@@ -52,6 +52,7 @@ class Note {
 
   // Index of note represented in metadata so that note document does not need
   // to be updated when only move notes (same idea for other properties).
+  @JsonKey(ignore: true)
   int get index {
     return data.noteMeta[id]?['index'] ?? -1;
   }
@@ -73,7 +74,7 @@ class Note {
   // When the note has last been updated (content or labels)
   @JsonKey(ignore: true)
   Timestamp get timeUpdated {
-    return data.noteMeta[id]?['timeUpdated'] ?? false;
+    return data.noteMeta[id]?['timeUpdated'] ?? Timestamp.now();
   }
 
   set timeUpdated(Timestamp timeUpdated) {
@@ -82,15 +83,15 @@ class Note {
 
   // Gets list of label ids
   @JsonKey(ignore: true)
-  List<int> get labelIds {
-    List<int> labelIds = data.noteMeta[id]?['labels'].keys
-            .map<int>((labelId) => int.parse(labelId))
+  List<String> get labelIds {
+    List<String> labelIds = data.noteMeta[id]?['labels'].keys
+            .map<String>((labelId) => labelId.toString())
             .toList() ??
         [];
     // Excludes and removes deleted labels in case of desync
     for (int i = 0; i < labelIds.length; i++) {
       if (!data.labels.containsKey(labelIds[i])) {
-        data.noteMeta[id]?['labels'].remove(labelIds[i].toString());
+        data.noteMeta[id]?['labels'].remove(labelIds[i]);
         labelIds.removeAt(i);
         i--;
       }
@@ -103,19 +104,18 @@ class Note {
   }
 
   // Returns whether the given label is possessed by the note
-  bool hasLabel(NoteData data, int labelId) {
-    return data.noteMeta[id]?['labels'].containsKey(labelId.toString()) ??
-        false;
+  bool hasLabel(NoteData data, String labelId) {
+    return data.noteMeta[id]?['labels'].containsKey(labelId) ?? false;
   }
 
   // Adds a label to a note (we use a map instead of a list for access speed)
-  void addLabel(int labelId, {bool update = true}) {
+  void addLabel(String labelId, {bool update = true}) {
     // Mark note as unsaved
     isSavedNotifier.value = false;
     // Convert label id to string because of strange error
-    data.noteMeta[id]?['labels'][labelId.toString()] = true;
+    data.noteMeta[id]?['labels'][labelId] = true;
     data.labels[labelId]?['numNotes']++;
-    data.noteMeta[id]?['timeUpdated'] = Timestamp.now();
+    timeUpdated = Timestamp.now();
     hasOfflineChanges = !data.isOnline;
     if (update) {
       data.updateData();
@@ -125,10 +125,10 @@ class Note {
   }
 
   // Removes a label from a note
-  void removeLabel(int labelId) {
+  void removeLabel(String labelId) {
     // Mark note as unsaved
     isSavedNotifier.value = false;
-    data.noteMeta[id]?['labels'].remove(labelId.toString());
+    data.noteMeta[id]?['labels'].remove(labelId);
     data.labels[labelId]?['numNotes']--;
     timeUpdated = Timestamp.now();
     hasOfflineChanges = !data.isOnline;

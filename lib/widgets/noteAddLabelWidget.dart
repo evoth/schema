@@ -22,8 +22,8 @@ class NoteAddLabelButton extends StatelessWidget {
     // Gets list of dialog options for adding a new label
     List<SimpleDialogOption> addLabelDialogOptions() {
       // Gets list of label ids that note doesn't already have
-      List<int> labelIds = noteData.labelIds
-          .where((int labelId) => !note.hasLabel(noteData, labelId))
+      List<String> labelIds = noteData.labelIds
+          .where((String labelId) => !note.hasLabel(noteData, labelId))
           .toList();
       // Makes list of dialog options from label ids
       List<SimpleDialogOption> options = labelIds.map((labelId) {
@@ -42,7 +42,7 @@ class NoteAddLabelButton extends StatelessWidget {
         0,
         SimpleDialogOption(
           onPressed: () {
-            Navigator.of(context).pop(-1);
+            Navigator.of(context).pop('');
           },
           child: Row(
             children: [
@@ -73,8 +73,8 @@ class NoteAddLabelButton extends StatelessWidget {
       ),
       onPressed: () async {
         // Shows dialog with labels returns id of selected label (null means
-        // dialog was dismissed early, and -1 means create new note)
-        int? labelId = await showDialog<int>(
+        // dialog was dismissed early, and empty string means create new note)
+        String? labelId = await showDialog<String>(
           context: context,
           builder: (BuildContext context) {
             return SimpleDialog(
@@ -89,7 +89,7 @@ class NoteAddLabelButton extends StatelessWidget {
         if (labelId == null) {
           // Dialog was dismissed
           return;
-        } else if (labelId == -1) {
+        } else if (labelId == '') {
           // Prompt user for name and attempt to create new label
           addNewLabel(context, note, refreshLabels);
         } else {
@@ -128,7 +128,7 @@ void addNewLabel(
     return;
   }
   // Creates new label with the given name
-  int newLabelId = noteData.newLabel(newLabelName, update: note == null);
+  String newLabelId = noteData.newLabel(newLabelName, update: note == null);
   // Adds the new label to the current note if note is
   // not null; if it is null then don't do anything (note will be null when
   // called from the drawer on home page)
