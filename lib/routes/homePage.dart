@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:alert_dialog/alert_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
@@ -86,20 +85,20 @@ class _HomePageState extends State<HomePage> {
     });
 
     // Reference to metadata document
-    DocumentReference dataDoc = FirebaseFirestore.instance
-        .collection('notes-meta')
-        .doc(noteData.ownerId);
+    DocumentReference dataDoc = noteData.noteDataDocRef(forceOnline: true);
 
     // Updates notes whenever the metadata document is updated from a different
     // device and the new data is different from the current data
     subscription = dataDoc.snapshots().listen(
       (event) async {
-        if (!isNew &&
-            !noteData.isDeleting &&
-            noteData.ownerId != null &&
-            event.data() != null &&
-            !event.metadata.hasPendingWrites &&
-            !DeepCollectionEquality().equals(event.data(), noteData.toJson())) {
+        if (noteData.isBackOnline ||
+            (!isNew &&
+                !noteData.isDeleting &&
+                noteData.ownerId != null &&
+                event.data() != null &&
+                !event.metadata.hasPendingWrites &&
+                !DeepCollectionEquality()
+                    .equals(event.data(), noteData.toJson()))) {
           updateNotesAndShowLoading(context, labelsData.filterLabelId);
         }
         isNew = false;

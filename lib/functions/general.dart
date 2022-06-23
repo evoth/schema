@@ -133,3 +133,22 @@ String customTimeAgo(DateTime dateTime) {
   }
   return capitalize(timeAgoText);
 }
+
+// Returns the newer of two maps using their 'timeUpdated' property
+Map<String, dynamic> newerMap(
+  Map<String, dynamic> map1,
+  Map<String, dynamic> map2,
+) {
+  if (map1['timeUpdated'].compareTo(map2['timeUpdated']) < 0) {
+    return map1;
+  } else {
+    return map2;
+  }
+}
+
+// Timestamp rounded to the nearest millisecond (had issues with mobile using
+// more precision, causing unnecessary updates)
+Timestamp timestampNowRounded() {
+  int milliseconds = Timestamp.now().millisecondsSinceEpoch;
+  return Timestamp.fromMillisecondsSinceEpoch(milliseconds);
+}

@@ -18,17 +18,13 @@ class NoteEditPage extends StatelessWidget {
   final NoteWidgetData noteWidgetData;
 
   // Returns app bar title based on the edit/save state of the note
+  // TODO: decide what to do with time ago text, and deal with overflow if keep
   Row noteEditAppBarTitle(BuildContext context, Note note) {
     // Initialize the Row with title text
     List<Widget> content = [
       Text(Constants.editTitle),
       SizedBox(width: Constants.appBarPadding),
     ];
-    // Color to be used by icon and time ago text
-    Color editStatusColor = HSVColor.fromColor(Theme.of(context).canvasColor)
-        .withValue(1.0)
-        .toColor()
-        .withOpacity(0.5);
     // DateTime when note was last updated
     DateTime timeUpdated = note.timeUpdated.toDate();
     // Note has been saved
@@ -37,7 +33,7 @@ class NoteEditPage extends StatelessWidget {
         // Note has changes that have only been saved to the device
         content.add(
           IconButton(
-            icon: Icon(Icons.cloud_off, color: editStatusColor),
+            icon: Icon(Icons.cloud_off),
             tooltip: Constants.savedOfflineTip,
             onPressed: () {
               // Alert explains how note is saved and the time it was last saved
@@ -58,7 +54,7 @@ class NoteEditPage extends StatelessWidget {
         // Note has been saved to the cloud
         content.add(
           IconButton(
-            icon: Icon(Icons.cloud_done, color: editStatusColor),
+            icon: Icon(Icons.cloud_done),
             tooltip: Constants.savedCloudTip,
             onPressed: () {
               // Alert explains how note is saved and the time it was last saved
@@ -80,20 +76,12 @@ class NoteEditPage extends StatelessWidget {
       // New changes haven't been saved yet
       content.add(
         IconButton(
-          icon: Icon(Icons.cloud_upload, color: editStatusColor),
+          icon: Icon(Icons.cloud_upload),
           tooltip: Constants.savingTip,
           onPressed: () {},
         ),
       );
     }
-    content.add(SizedBox(width: Constants.appBarPadding));
-    // Time ago text
-    content.add(
-      Text(
-        customTimeAgo(timeUpdated),
-        style: TextStyle(color: editStatusColor),
-      ),
-    );
     return Row(
       children: content,
     );

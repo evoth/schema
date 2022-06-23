@@ -32,7 +32,7 @@ class NoteData {
   Map<String, Map<String, dynamic>> noteMeta = {};
   // Relatively self-explanatory
   @JsonKey(fromJson: _rawTimeStamp, toJson: _rawTimeStamp)
-  Timestamp timeRegistered = Timestamp.now();
+  Timestamp timeRegistered = timestampNowRounded();
   String? ownerId;
   bool isAnonymous = true;
   String? email;
@@ -42,15 +42,20 @@ class NoteData {
   // Whether we are currently deleting notes (and thus should not update)
   @JsonKey(ignore: true)
   bool isDeleting = false;
+  // Whether we have just gone online (and should therefore update notes)
+  @JsonKey(ignore: true)
+  bool isBackOnline = false;
   // Theme data
   int themeColorId = Constants.themeDefaultColorId;
   bool themeIsDark = Constants.themeDefaultIsDark;
   bool themeIsMonochrome = Constants.themeDefaultIsMonochrome;
+  // Time that the theme was most recently updated (used in offline merge)
+  @JsonKey(fromJson: _rawTimeStamp, toJson: _rawTimeStamp)
+  Timestamp themeTimeUpdated = timestampNowRounded();
   // Time that we most recently went offline
   @JsonKey(fromJson: _rawTimeStamp, toJson: _rawTimeStamp)
-  Timestamp timeOffline = Timestamp.now();
+  Timestamp timeOffline = timestampNowRounded();
   // Whether we are online
-  @JsonKey(ignore: true)
   bool isOnline = true;
 
   static Timestamp _rawTimeStamp(t) => t as Timestamp;
@@ -69,7 +74,9 @@ class NoteData {
     this.themeColorId = copyData.themeColorId;
     this.themeIsDark = copyData.themeIsDark;
     this.themeIsMonochrome = copyData.themeIsMonochrome;
+    this.themeTimeUpdated = copyData.themeTimeUpdated;
     this.timeOffline = copyData.timeOffline;
+    this.isOnline = copyData.isOnline;
   }
 
   // Shifts indices by the given amount, starting at a certain index (default 0)
@@ -91,11 +98,9 @@ class NoteData {
 
   // Adds a specified note at a certain index, or at the end by default
   // (returns new note)
-  Note addNote(Note note, bool hasOfflineChanges, {int? index}) {
+  Note addNote(Note note, {int? index}) {
     // Adds note object to notes list
     index = index ?? notes.length;
-    // Updates hasOfflineChanges
-    note.hasOfflineChanges = hasOfflineChanges;
     // Actually insert note and populate tempIndex
     notes.insert(index, note);
     notes[index].tempIndex = notes[index].index;
@@ -108,14 +113,13 @@ class NoteData {
     // Shifts other notes forward
     shiftNoteIndices(1);
     // New note id is the current time in milliseconds
-    Timestamp timeCreated = Timestamp.now();
+    Timestamp timeCreated = timestampNowRounded();
     String newNoteId = getUniqueId();
     // Updates note metadata
     noteMeta[newNoteId] = {
       'index': 0,
       'timeCreated': timeCreated,
       'timeUpdated': timeCreated,
-      'hasOfflineChanges': false,
       'labels': {},
     };
 
@@ -128,7 +132,6 @@ class NoteData {
         isNew: note == null,
         ownerId: ownerId,
       ),
-      false,
       index: 0,
     );
 
@@ -155,13 +158,13 @@ class NoteData {
   void deleteNote(BuildContext context, Note note, Function refreshNotes,
       {String? message}) {
     if (notes[note.tempIndex].id == note.id) {
-      // Deletes from database
-      tryQuery(
-        () => FirebaseFirestore.instance
-            .collection('notes')
-            .doc(ownerId! + '-' + note.id)
-            .delete(),
-      );
+      // Deletes from database if we are online. Otherwise, we will wait until
+      // we are online to decide whether the document should be deleted
+      if (isOnline) {
+        tryQuery(
+          () => noteDocRef(note.id).delete(),
+        );
+      }
 
       // Decreases respective label counters
       for (String labelId in noteMeta[note.id]?['labels'].keys) {
@@ -194,7 +197,7 @@ class NoteData {
     if (note.editTicker == currentTicker) {
       // Updates note in database if anything has changed
       if (note.previousTitle != note.title || note.previousText != note.text) {
-        note.timeUpdated = Timestamp.now();
+        note.timeUpdated = timestampNowRounded();
         updateNote(note);
       }
       // Updates edit state
@@ -235,7 +238,7 @@ class NoteData {
 
     // If note does not have label currently being filtered, remove from view
     if (noteWidgetData.filterLabelId != null &&
-        !note.hasLabel(this, noteWidgetData.filterLabelId!)) {
+        !note.hasLabel(noteWidgetData.filterLabelId!)) {
       removeNote(note);
     }
     // Updates notes on home screen
@@ -247,14 +250,13 @@ class NoteData {
   // Adds new label with the specified name
   String newLabel(String name, {bool update = true}) {
     // New label id is the current time in milliseconds
-    Timestamp timeCreated = Timestamp.now();
+    Timestamp timeCreated = timestampNowRounded();
     String newLabelId = getUniqueId();
     labels[newLabelId] = {
       'name': name,
       'numNotes': 0,
       'timeCreated': timeCreated,
       'timeUpdated': timeCreated,
-      'hasOfflineChanges': false,
     };
     if (update) {
       updateData();
@@ -279,8 +281,7 @@ class NoteData {
       return;
     }
     labels[labelId]?['name'] = checkedName;
-    labels[labelId]?['timeUpdated'] = Timestamp.now();
-    labels[labelId]?['hasOfflineChanges'] = !isOnline;
+    labels[labelId]?['timeUpdated'] = timestampNowRounded();
     updateData();
   }
 
@@ -320,10 +321,40 @@ class NoteData {
     return '';
   }
 
-  // Sets online status and time offline if necessary
-  void setIsOnline(bool newIsOnline) {
+  // Returns DocumentReference to the note with the given id
+  DocumentReference noteDocRef(String noteId) {
+    return FirebaseFirestore.instance
+        .collection('notes')
+        .doc(ownerId! + '-' + noteId);
+  }
+
+  // Returns DocumentReference to the metadata for the current user. If
+  // forceOnline is true, then get the online document regardless of onlineness
+  DocumentReference noteDataDocRef({bool forceOnline = false}) {
+    if (isOnline || forceOnline) {
+      return FirebaseFirestore.instance.collection('notes-meta').doc(ownerId);
+    } else {
+      return FirebaseFirestore.instance.collection('notes-meta-offline').doc(
+          (ownerId!) + '-' + timeOffline.millisecondsSinceEpoch.toString());
+    }
+  }
+
+  // Sets online status and time offline if necessary. Kicks back online
+  // procedure into motion if we're just getting back online
+  void setIsOnline(bool newIsOnline) async {
     if (isOnline && !newIsOnline) {
-      timeOffline = Timestamp.now();
+      timeOffline = timestampNowRounded();
+    } else if (!isOnline && newIsOnline) {
+      // Lets HomePage and updateData know what's going on
+      isBackOnline = true;
+      // Waits for any pending offline writes
+      await updateData();
+      // Preeminently sets online status to true for aforementioned functions
+      isOnline = true;
+      // Triggers metadata document listener in HomePage, without notifying
+      // other devices that may be listening so that we can complete the back
+      // online process undisturbed
+      await noteDataDocRef().update({'denyRequest': true});
     }
     isOnline = newIsOnline;
   }
@@ -372,11 +403,7 @@ class NoteData {
     if (update) {
       updateData();
     }
-    note.hasOfflineChanges = !isOnline;
-    FirebaseFirestore.instance
-        .collection('notes')
-        .doc(ownerId! + '-' + note.id)
-        .set(noteJson);
+    noteDocRef(note.id).set(noteJson);
   }
 
   // Updates note metadata document for the user
@@ -394,10 +421,84 @@ class NoteData {
         }
       }
     }
-    await FirebaseFirestore.instance
-        .collection('notes-meta')
-        .doc(ownerId)
-        .set(toJson());
+    // If we are offline, update data as normal. Otherwise, use a special
+    // document in the offline collection to store offline session changes
+    await tryQuery(() => noteDataDocRef().set(toJson()));
+  }
+
+  // Merges data with NoteData representing an offline session
+  void mergeOfflineData(NoteData offlineData) {
+    // First, iterates through labels in current data
+    for (String labelId in labels.keys.toList()) {
+      // If label is contained in both, the newer label takes precedent.
+      // Otherwise, the label is deleted as long as it was last updated before
+      // the device went offline, and thus before it was deleted
+      if (offlineData.labels.containsKey(labelId)) {
+        labels[labelId] = newerMap(
+          labels[labelId]!,
+          offlineData.labels[labelId]!,
+        );
+      } else if (offlineData.timeOffline
+              .compareTo(labels[labelId]!['timeUpdated']) >
+          0) {
+        labels.remove(labelId);
+      }
+    }
+    // Then, iterates through labels in offline data, adding any labels that
+    // have been created or updated since we went offline, even if they were
+    // deleted before
+    for (String labelId in offlineData.labels.keys) {
+      if (!labels.containsKey(labelId) &&
+          offlineData.timeOffline
+                  .compareTo(offlineData.labels[labelId]!['timeUpdated']) <
+              0) {
+        labels[labelId] = offlineData.labels[labelId]!;
+      }
+    }
+
+    // Iterates through notes in current data
+    for (String noteId in noteMeta.keys.toList()) {
+      // Same as above, but for notes. Additionally, we delete the online
+      // document if we end up deleting the note, because we wouldn't have done
+      // so while offline
+      if (offlineData.noteMeta.containsKey(noteId)) {
+        noteMeta[noteId] = newerMap(
+          noteMeta[noteId]!,
+          offlineData.noteMeta[noteId]!,
+        );
+      } else if (offlineData.timeOffline
+              .compareTo(noteMeta[noteId]!['timeUpdated']) >
+          0) {
+        // Deletes note and its document
+        shiftNoteIndices(-1, index: noteMeta[noteId]!['index']);
+        noteMeta.remove(noteId);
+        tryQuery(
+          () => noteDocRef(noteId).delete(),
+        );
+      }
+    }
+    // Iterates through notes in offline data, adding any notes that
+    // have been created or updated since we went offline, even if they were
+    // deleted before
+    for (String noteId in offlineData.noteMeta.keys) {
+      if (!noteMeta.containsKey(noteId) &&
+          offlineData.timeOffline
+                  .compareTo(offlineData.noteMeta[noteId]!['timeUpdated']) <
+              0) {
+        shiftNoteIndices(1);
+        noteMeta[noteId] = offlineData.noteMeta[noteId]!;
+        noteMeta[noteId]!['index'] = 0;
+      }
+    }
+
+    // Uses the theme from offline if it was updated more recently
+    // TODO: Fix theme reversal behavior
+    if (themeTimeUpdated.compareTo(offlineData.themeTimeUpdated) < 0) {
+      themeColorId = offlineData.themeColorId;
+      themeIsDark = offlineData.themeIsDark;
+      themeIsMonochrome = offlineData.themeIsMonochrome;
+      themeTimeUpdated = offlineData.themeTimeUpdated;
+    }
   }
 
   // Downloads all notes as one query from database
@@ -410,8 +511,8 @@ class NoteData {
         .where('ownerId', isEqualTo: ownerId)
         .get();
 
-    for (var element in noteDocs.docs) {
-      addNote(Note.fromJson(element.data()), element.metadata.hasPendingWrites);
+    for (QueryDocumentSnapshot<Map<String, dynamic>> doc in noteDocs.docs) {
+      addNote(Note.fromJson(doc.data()));
     }
 
     notes.sort(
@@ -421,8 +522,12 @@ class NoteData {
 
   // Downloads metadata (creating new if necessary) and downloads notes that fit
   // the query and have been newly updated, keeping any already up-to-date notes
-  // TODO: create variables for each type of query
   Future<void> updateNotes(BuildContext context, String? filterLabelId) async {
+    // Sets isBackOnline to false so that we don't have duplicate updates
+    if (isBackOnline) {
+      isBackOnline = false;
+    }
+
     // Variables used to update data
     NoteData? newNoteData;
     TryData tryData;
@@ -434,10 +539,7 @@ class NoteData {
       await FirebaseFirestore.instance.disableNetwork();
 
       tryData = await tryQuery(
-        () async => await FirebaseFirestore.instance
-            .collection('notes-meta')
-            .doc(ownerId)
-            .get(),
+        () async => await noteDataDocRef().get(),
       );
       failed = tryData.status != 0;
       dataDoc = tryData.returnValue;
@@ -453,22 +555,22 @@ class NoteData {
       await FirebaseFirestore.instance.enableNetwork();
     }
 
+    // When we get back offline, the online status isn't immediately updated so
+    // that we don't overwrite the online data. Here we update the status.
+    if (isBackOnline) {
+      isOnline = true;
+    }
+
     // Attempts to get user data
     tryData = await tryQuery(
-      () async => await FirebaseFirestore.instance
-          .collection('notes-meta')
-          .doc(ownerId)
-          .get(),
+      () async => await noteDataDocRef().get(),
     );
     failed = tryData.status != 0;
     dataDoc = tryData.returnValue;
 
     // If the document doesn't exist, create a new one with the empty NoteData
     if (!failed && !dataDoc!.exists) {
-      await FirebaseFirestore.instance
-          .collection('notes-meta')
-          .doc(ownerId)
-          .set(toJson());
+      await noteDataDocRef(forceOnline: true).set(toJson());
       noteData = NoteData(
         ownerId: ownerId,
         isAnonymous: isAnonymous,
@@ -484,6 +586,23 @@ class NoteData {
     if (newNoteData == null) {
       showAlert(context, Constants.updateNotesErrorMessage, useSnackbar: true);
       return;
+    }
+
+    // Merges any offline sessions that haven't been merged yet
+    if (isOnline) {
+      // Gets all of our offline documents
+      QuerySnapshot<Map<String, dynamic>> offlineDocs = await FirebaseFirestore
+          .instance
+          .collection('notes-meta-offline')
+          .where('ownerId', isEqualTo: ownerId)
+          .get();
+
+      // For each document, merge it with our data
+      for (QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in offlineDocs.docs) {
+        newNoteData.mergeOfflineData(NoteData.fromJson(doc.data()));
+        doc.reference.delete();
+      }
     }
 
     // Disable network access so that we can check notes that are cached
@@ -527,10 +646,7 @@ class NoteData {
           } else {
             // Attempts to get note document from cache
             tryData = await tryQuery(
-              () async => await FirebaseFirestore.instance
-                  .collection('notes')
-                  .doc(ownerId! + '-' + noteId)
-                  .get(),
+              () async => await noteDocRef(noteId).get(),
             );
             failed = tryData.status != 0;
             DocumentSnapshot<Map<String, dynamic>>? noteDoc =
@@ -539,8 +655,6 @@ class NoteData {
             // Note was in our Firestore cache
             if (!failed && noteDoc!.exists) {
               newNotes.add(Note.fromJson(noteDoc.data()!));
-              newNotes.last.hasOfflineChanges =
-                  noteDoc.metadata.hasPendingWrites;
               newNoteIds.removeAt(i);
               i--;
             }
@@ -556,10 +670,7 @@ class NoteData {
     for (String noteId in newNoteIds) {
       // Attempts to get note document from database
       tryData = await tryQuery(
-        () async => await FirebaseFirestore.instance
-            .collection('notes')
-            .doc(ownerId! + '-' + noteId)
-            .get(),
+        () async => await noteDocRef(noteId).get(),
       );
       failed = tryData.status != 0;
       DocumentSnapshot<Map<String, dynamic>>? noteDoc = tryData.returnValue;
@@ -570,7 +681,6 @@ class NoteData {
       } else if (!failed && noteDoc!.exists) {
         // Adds note from database
         newNotes.add(Note.fromJson(noteDoc.data()!));
-        newNotes.last.hasOfflineChanges = noteDoc.metadata.hasPendingWrites;
       } else if (failed) {
         error = true;
       }
@@ -597,7 +707,7 @@ class NoteData {
 
     // Updates other data
     themeData.updateTheme();
-    await updateData(resetNums: true);
+    updateData(resetNums: true);
     notes = newNotes;
   }
 

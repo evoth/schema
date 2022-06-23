@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:schema/data/noteData.dart';
 import 'package:schema/data/themeData.dart';
 import 'package:schema/functions/constants.dart';
+import 'package:schema/functions/general.dart';
 
 // Returns a column of content to put in the theme edit dialog from home page
 class ThemeEditContent extends StatefulWidget {
@@ -24,6 +25,7 @@ class _ThemeEditContentState extends State<ThemeEditContent> {
       onPressed: () {
         noteData.themeIsDark = isDark;
         noteData.themeIsMonochrome = isMonochrome;
+        noteData.themeTimeUpdated = timestampNowRounded();
         themeData.updateTheme();
         noteData.updateData();
         setState(() {});
@@ -131,6 +133,7 @@ class _ThemeEditContentState extends State<ThemeEditContent> {
               noteData.themeColorId = colorId;
               noteData.themeIsMonochrome =
                   themeData.isMonochromeColor(colorId) || intenseMode;
+              noteData.themeTimeUpdated = timestampNowRounded();
               themeData.updateTheme();
               noteData.updateData();
               setState(() {});

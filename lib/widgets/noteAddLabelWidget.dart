@@ -23,7 +23,7 @@ class NoteAddLabelButton extends StatelessWidget {
     List<SimpleDialogOption> addLabelDialogOptions() {
       // Gets list of label ids that note doesn't already have
       List<String> labelIds = noteData.labelIds
-          .where((String labelId) => !note.hasLabel(noteData, labelId))
+          .where((String labelId) => !note.hasLabel(labelId))
           .toList();
       // Makes list of dialog options from label ids
       List<SimpleDialogOption> options = labelIds.map((labelId) {

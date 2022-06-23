@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:schema/data/noteData.dart';
+import 'package:schema/functions/general.dart';
 part 'noteModel.g.dart';
 
 // Note class (other data about note is stored in NoteData to make things more
@@ -64,17 +65,13 @@ class Note {
   // Whether the note has pending writes, meaning it has been edited offline
   @JsonKey(ignore: true)
   bool get hasOfflineChanges {
-    return data.noteMeta[id]?['hasOfflineChanges'] ?? false;
-  }
-
-  set hasOfflineChanges(bool hasOfflineChanges) {
-    data.noteMeta[id]?['hasOfflineChanges'] = hasOfflineChanges;
+    return !data.isOnline && timeUpdated.compareTo(data.timeOffline) > 0;
   }
 
   // When the note has last been updated (content or labels)
   @JsonKey(ignore: true)
   Timestamp get timeUpdated {
-    return data.noteMeta[id]?['timeUpdated'] ?? Timestamp.now();
+    return data.noteMeta[id]?['timeUpdated'] ?? timestampNowRounded();
   }
 
   set timeUpdated(Timestamp timeUpdated) {
@@ -104,7 +101,7 @@ class Note {
   }
 
   // Returns whether the given label is possessed by the note
-  bool hasLabel(NoteData data, String labelId) {
+  bool hasLabel(String labelId) {
     return data.noteMeta[id]?['labels'].containsKey(labelId) ?? false;
   }
 
@@ -112,11 +109,18 @@ class Note {
   void addLabel(String labelId, {bool update = true}) {
     // Mark note as unsaved
     isSavedNotifier.value = false;
-    // Convert label id to string because of strange error
+    // Add label and update data
     data.noteMeta[id]?['labels'][labelId] = true;
     data.labels[labelId]?['numNotes']++;
-    timeUpdated = Timestamp.now();
-    hasOfflineChanges = !data.isOnline;
+    data.labels[labelId]?['timeUpdated'] = timestampNowRounded();
+    timeUpdated = timestampNowRounded();
+    // Updates this note if we are offline, so that a new note document will be
+    // created in the case that the note was deleted online and the only change
+    // we made offline was to add/remove a label
+    if (!data.isOnline) {
+      data.updateNote(this, update: false);
+    }
+    // Updates noteData so that other devices will update
     if (update) {
       data.updateData();
     }
@@ -128,10 +132,15 @@ class Note {
   void removeLabel(String labelId) {
     // Mark note as unsaved
     isSavedNotifier.value = false;
+    // Remove label and update data
     data.noteMeta[id]?['labels'].remove(labelId);
     data.labels[labelId]?['numNotes']--;
-    timeUpdated = Timestamp.now();
-    hasOfflineChanges = !data.isOnline;
+    timeUpdated = timestampNowRounded();
+    // See note in addLabel()
+    if (!data.isOnline) {
+      data.updateNote(this, update: false);
+    }
+    // Updates noteData so that other devices will update
     data.updateData();
     // Mark note as saved if other content is already saved
     isSavedNotifier.value = editTicker == 0;
@@ -144,10 +153,7 @@ class Note {
     required this.ownerId,
     this.drag = false,
     this.isNew = false,
-    bool hasOfflineChanges = false,
-  }) {
-    this.hasOfflineChanges = hasOfflineChanges;
-  }
+  });
 
   factory Note.fromJson(Map<String, dynamic> json) => _$NoteFromJson(json);
   Map<String, dynamic> toJson() => _$NoteToJson(this);
