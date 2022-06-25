@@ -20,6 +20,26 @@ class Constants {
   // Note opacity
   static const double noteOpacity = 0.8;
 
+  // Note dimension options (represents relative dimensions, 1x1 being default)
+  static const List<List<int>> layoutDimensionOptions = [
+    [1, 1],
+    [2, 1],
+    [1, 2],
+    [2, 2],
+  ];
+  static const List<String> layoutDimensionNames = [
+    "Default",
+    "Wide",
+    "Tall",
+    "Large",
+  ];
+  static const List<String> layoutDimensionTips = [
+    "1 x 1",
+    "2 x 1",
+    "1 x 2",
+    "2 x 2",
+  ];
+
   /* Page layout constants */
 
   // Home page
@@ -56,6 +76,11 @@ class Constants {
   static const double themeEditSpacing = 10;
   static const double themeEditRadius = 8;
   static const double themeEditSize = 40;
+
+  // Layout edit dialog
+  static const double layoutEditSpacing = 10;
+  static const double layoutEditRadius = 10;
+  static const double layoutEditSize = 80;
 
   /* Durations */
 
@@ -106,6 +131,8 @@ class Constants {
           'notes already saved on your Google account will remain.';
   static const String transferDeleteOK = 'Delete data';
   static const String transferCompleteMessage = 'Transfer complete';
+  static const String layoutEditTitle = 'Change note layout';
+  static const String layoutEditOK = 'Done';
   static const String themeEditTitle = 'Edit theme';
   static const String themeEditOK = 'Done';
   static const String savedCloudMessage = 'This note is saved to the cloud. ' +
@@ -133,6 +160,7 @@ class Constants {
   static const String editLabelNameTip = 'Edit label name';
   static const String doneLabelNameTip = 'Done';
   static const String stopFilterTip = 'Stop filtering';
+  static const String layoutTip = 'Change note layout';
   static const String themeTip = 'Edit theme';
   static const String savingTip = 'Saving...';
   static const String savedCloudTip = 'Saved to cloud';

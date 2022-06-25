@@ -9,6 +9,7 @@ import 'package:schema/functions/general.dart';
 import 'package:schema/layout/grid.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
+import 'package:schema/widgets/layoutEditWidget.dart';
 import 'package:schema/widgets/themeEditWidget.dart';
 import 'package:schema/widgets/homeDrawerWidget.dart';
 
@@ -122,10 +123,12 @@ class _HomePageState extends State<HomePage> {
         // Row to conditionally display loading indicator
         title: Row(
           children: [
+            // If filtering, filter name. Otherwise, "Schema"
             this.mounted && labelsData.filterLabelId != null
                 ? Text(noteData.getLabelName(labelsData.filterLabelId!))
                 : Text(Constants.appTitle),
             SizedBox(width: Constants.appBarPadding),
+            // Loading symbol if we are loading
             SizedBox(
               height: Constants.appBarSize,
               width: Constants.appBarSize,
@@ -136,9 +139,23 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
         elevation: 0,
-        //automaticallyImplyLeading: false,
         // App bar actions
         actions: [
+          // Note shape / layout button
+          IconButton(
+            onPressed: () {
+              alert(
+                context,
+                title: Text(Constants.layoutEditTitle),
+                content: LayoutEditContent(refresh: () => setState(() {})),
+                textOK: Text(Constants.layoutEditOK),
+              );
+            },
+            tooltip: Constants.layoutTip,
+            icon: Icon(Icons.grid_view_rounded),
+          ),
+          SizedBox(width: Constants.appBarPadding),
+          // Theme edit button
           IconButton(
             onPressed: () {
               alert(
@@ -180,7 +197,9 @@ class _HomePageState extends State<HomePage> {
           DynamicGrid(
             refreshNotes: () => setState(() {}),
             filterLabelId: labelsData.filterLabelId,
-            key: ValueKey(labelsData.filterLabelId),
+            // Rebuilds when the filter id or layout changes
+            key: ValueKey(labelsData.filterLabelId ??
+                '' + noteData.layoutDimensionId.toString()),
           ),
           // Add note button
           Container(

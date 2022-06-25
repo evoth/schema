@@ -23,6 +23,8 @@ NoteData _$NoteDataFromJson(Map<String, dynamic> json) => NoteData(
       ..themeIsDark = json['themeIsDark'] as bool
       ..themeIsMonochrome = json['themeIsMonochrome'] as bool
       ..themeTimeUpdated = NoteData._rawTimeStamp(json['themeTimeUpdated'])
+      ..layoutDimensionId = json['layoutDimensionId'] as int
+      ..layoutTimeUpdated = NoteData._rawTimeStamp(json['layoutTimeUpdated'])
       ..timeOffline = NoteData._rawTimeStamp(json['timeOffline'])
       ..isOnline = json['isOnline'] as bool;
 
@@ -38,6 +40,8 @@ Map<String, dynamic> _$NoteDataToJson(NoteData instance) => <String, dynamic>{
       'themeIsDark': instance.themeIsDark,
       'themeIsMonochrome': instance.themeIsMonochrome,
       'themeTimeUpdated': NoteData._rawTimeStamp(instance.themeTimeUpdated),
+      'layoutDimensionId': instance.layoutDimensionId,
+      'layoutTimeUpdated': NoteData._rawTimeStamp(instance.layoutTimeUpdated),
       'timeOffline': NoteData._rawTimeStamp(instance.timeOffline),
       'isOnline': instance.isOnline,
     };

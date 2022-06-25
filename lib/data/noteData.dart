@@ -52,6 +52,11 @@ class NoteData {
   // Time that the theme was most recently updated (used in offline merge)
   @JsonKey(fromJson: _rawTimeStamp, toJson: _rawTimeStamp)
   Timestamp themeTimeUpdated = timestampNowRounded();
+  // Layout data
+  int layoutDimensionId = 0;
+  // Time that the layout was most recently updated (used in offline merge)
+  @JsonKey(fromJson: _rawTimeStamp, toJson: _rawTimeStamp)
+  Timestamp layoutTimeUpdated = timestampNowRounded();
   // Time that we most recently went offline
   @JsonKey(fromJson: _rawTimeStamp, toJson: _rawTimeStamp)
   Timestamp timeOffline = timestampNowRounded();
@@ -75,6 +80,8 @@ class NoteData {
     this.themeIsDark = copyData.themeIsDark;
     this.themeIsMonochrome = copyData.themeIsMonochrome;
     this.themeTimeUpdated = copyData.themeTimeUpdated;
+    this.layoutDimensionId = copyData.layoutDimensionId;
+    this.layoutTimeUpdated = copyData.layoutTimeUpdated;
     this.timeOffline = copyData.timeOffline;
     this.isOnline = copyData.isOnline;
   }

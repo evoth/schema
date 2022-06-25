@@ -10,7 +10,6 @@ Functional notes app with features like labels, cloud storage, themes, offline f
 - Make variables that are only set once final or const
 - Optimize grid.dart?
 - Finishing touches
-   - Note shapes
    - Tutorial / about
    - Placeholder for when there are no notes
    - Smaller note edit window on bigger screens

@@ -9,9 +9,11 @@ import 'package:schema/widgets/noteWidget.dart';
 
 // Dynamic, animated grid
 class DynamicGrid extends StatefulWidget {
-  DynamicGrid(
-      {Key? key, required this.refreshNotes, required this.filterLabelId})
-      : super(key: key);
+  DynamicGrid({
+    Key? key,
+    required this.refreshNotes,
+    required this.filterLabelId,
+  }) : super(key: key);
 
   // Gets note functions to pass down
   final Function refreshNotes;
@@ -27,6 +29,15 @@ class _DynamicGridState extends State<DynamicGrid> {
   // calcNotePositions function) so that it can be used elsewhere
   double globalGridWidth = 0;
 
+  // Stores note width and aspect ratio based on chosen layout
+  late double minNoteWidth = Constants.minNoteWidth *
+      Constants.layoutDimensionOptions[noteData.layoutDimensionId][0];
+  late double prefNoteWidth = Constants.prefNoteWidth *
+      Constants.layoutDimensionOptions[noteData.layoutDimensionId][0];
+  late double noteAR =
+      Constants.layoutDimensionOptions[noteData.layoutDimensionId][0] /
+          Constants.layoutDimensionOptions[noteData.layoutDimensionId][1];
+
   // Fill mode (if true, fills up entire width; if false, adds margins to
   // maintain preferred note size)
   final bool fillMode = isMobileDevice();
@@ -37,21 +48,21 @@ class _DynamicGridState extends State<DynamicGrid> {
   // Returns number of columns based on space available
   int nColumns(double gridWidth) {
     if (fillMode) {
-      return max(gridWidth ~/ Constants.minNoteWidth, 1);
+      return max(gridWidth ~/ minNoteWidth, 1);
     } else {
-      return max(gridWidth ~/ Constants.prefNoteWidth, 1);
+      return max(gridWidth ~/ prefNoteWidth, 1);
     }
   }
 
-  // If not on mobile, makes it so notes are preffered size
+  // If not on mobile, makes it so notes are preferred size
   // In any case, if too narrow to display two notes, note fills entire width
   double calcWidth(double maxWidth) {
     double gridWidth = 0;
     if (fillMode) {
       gridWidth = maxWidth;
     } else {
-      if (maxWidth >= Constants.prefNoteWidth) {
-        gridWidth = maxWidth - maxWidth.remainder(Constants.prefNoteWidth);
+      if (maxWidth >= prefNoteWidth) {
+        gridWidth = maxWidth - maxWidth.remainder(prefNoteWidth);
       } else {
         gridWidth = maxWidth;
       }
@@ -66,8 +77,8 @@ class _DynamicGridState extends State<DynamicGrid> {
     // Calculates width based off of grid width and padding
     double width = (gridWidth - (padding * (nColumns + 1))) / nColumns;
     // Calculates height based off of aspect ratio (for now)
-    double height = width * Constants.noteAR;
-    return <double>[height, width];
+    double height = width / noteAR;
+    return <double>[width, height];
   }
 
   // Creates a list of note positions based off of tempIndex, used when building
