@@ -79,6 +79,14 @@ class SchemaThemeData with ChangeNotifier {
             isMonochrome ? null : 0.05,
             0.15,
           ),
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: Constants.appBarSize,
+            fontWeight: FontWeight.w500,
+          ),
+          iconTheme: IconThemeData(
+            color: Colors.white,
+          ),
         ),
         primaryColor: colorWithSaturationLightness(
           color,
@@ -91,8 +99,30 @@ class SchemaThemeData with ChangeNotifier {
       return ThemeData(
         brightness: Brightness.light,
         primarySwatch: color,
+        canvasColor: colorWithSaturationLightness(
+          color,
+          isMonochrome ? null : 1,
+          0.99,
+        ),
+        dialogBackgroundColor: colorWithSaturationLightness(
+          color,
+          isMonochrome ? null : 1,
+          0.99,
+        ),
         appBarTheme: AppBarTheme(
-          backgroundColor: color,
+          backgroundColor: colorWithSaturationLightness(
+            color,
+            isMonochrome ? null : 1,
+            0.99,
+          ),
+          titleTextStyle: TextStyle(
+            color: Colors.black,
+            fontSize: Constants.appBarSize,
+            fontWeight: FontWeight.w500,
+          ),
+          iconTheme: IconThemeData(
+            color: Colors.black,
+          ),
         ),
       );
     }
