@@ -47,12 +47,12 @@ class NoteEditFields extends StatelessWidget {
           onChanged: (newText) {
             note.title = newText.trim();
             noteData.saveNote(note);
+            noteWidgetData.refreshNotes();
           },
         ),
         SizedBox(height: Constants.editPadding),
         // Text text field (with a set minimum height)
         Container(
-          constraints: BoxConstraints(minHeight: Constants.textMinHeight),
           child: TextField(
             decoration: noBorder(
               contentPadding: EdgeInsets.symmetric(
@@ -60,10 +60,9 @@ class NoteEditFields extends StatelessWidget {
               ),
               hintText: Constants.textHint,
             ),
-            // Text style
-            //style: Theme.of(context).textTheme.bodyText1,
-            // Multiline
+            // Multiline, with a minimum height of 3 lines
             keyboardType: TextInputType.multiline,
+            minLines: 3,
             maxLines: null,
             // Focus on this field initially
             autofocus: noteWidgetData.note.isNew,
@@ -75,6 +74,7 @@ class NoteEditFields extends StatelessWidget {
             onChanged: (newText) {
               note.text = newText.trim();
               noteData.saveNote(note);
+              noteWidgetData.refreshNotes();
             },
           ),
         ),

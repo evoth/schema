@@ -91,12 +91,13 @@ class NoteAddLabelButton extends StatelessWidget {
           return;
         } else if (labelId == '') {
           // Prompt user for name and attempt to create new label
-          addNewLabel(context, note, refreshLabels);
+          await addNewLabel(context, note, refreshLabels);
         } else {
           // Adds the selected label to the current note
           note.addLabel(labelId);
           refreshLabels();
         }
+        noteWidgetData.refreshNotes();
       },
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -111,7 +112,7 @@ class NoteAddLabelButton extends StatelessWidget {
 }
 
 // Prompt user for new label name and either create it or display error message
-void addNewLabel(
+Future<void> addNewLabel(
     BuildContext context, Note? note, Function refreshLabels) async {
   // Prompt user for new label name
   String? newLabelName = await prompt(

@@ -229,12 +229,26 @@ class NoteData {
     note.isSavedNotifier.value = true;
     note.editTicker = 0;
 
-    // Navigate to the second screen and wait until it is popped.
-    await Navigator.of(context).push<void>(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) => NoteEditPage(noteWidgetData),
-      ),
-    );
+    // Navigate to the second screen and wait until it is popped. If we are on
+    // mobile, navigate to edit screen as usual. Otherwise, display as modal for
+    // a more user friendly reading/editing experience
+    if (isMobileDevice()) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => NoteEditPage(noteWidgetData),
+        ),
+      );
+    } else {
+      await alert(
+        context,
+        content: SizedBox(
+          width: Constants.editWidth,
+          height: Constants.editHeight,
+          child: NoteEditPage(noteWidgetData),
+        ),
+        textOK: Container(),
+      );
+    }
 
     // Removes note if new and empty
     if (note.isNew && note.title == '' && note.text == '') {

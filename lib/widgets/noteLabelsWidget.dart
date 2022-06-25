@@ -24,6 +24,7 @@ class _NoteLabelsState extends State<NoteLabels> {
         note,
         Theme.of(context).backgroundColor.withOpacity(Constants.noteOpacity),
         setState,
+        widget.noteWidgetData.refreshNotes,
         true);
     chips.add(
       NoteAddLabelButton(
@@ -51,11 +52,13 @@ List<Widget> labelChips(
   Note note,
   Color color,
   Function? setState,
+  Function? refreshNotes,
   bool showDelete,
 ) {
   List<String> labelIds = note.labelIds;
   List<Widget> chips = labelIds
       .map<Widget>(
+        // If showDelete, show delete button, which removes label from note
         (String labelId) => Chip(
           backgroundColor: color,
           label: Text(noteData.getLabelName(labelId)),
@@ -63,6 +66,7 @@ List<Widget> labelChips(
               ? () {
                   note.removeLabel(labelId);
                   setState!(() {});
+                  refreshNotes!();
                 }
               : null,
           deleteIcon: showDelete

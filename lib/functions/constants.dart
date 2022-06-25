@@ -54,7 +54,8 @@ class Constants {
 
   // Edit page
   static const double editPadding = 30;
-  static const double textMinHeight = 40;
+  static const double editWidth = 600;
+  static const double editHeight = 900;
   static const double addNewGap = 5;
   static const double addLabelTitleSize = 22;
   static const double addLabelOptionSize = 18;
@@ -144,6 +145,7 @@ class Constants {
       'Device back online. Connecting to cloud...';
   static const String isOfflineMessage =
       'Connection has been lost. Saving notes locally while offline.';
+  static const String noteEditOK = 'Close';
 
   // Tooltips and hint texts
   static const String newNoteTip = 'New note';

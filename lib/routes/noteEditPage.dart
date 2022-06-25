@@ -12,13 +12,15 @@ import 'package:sprintf/sprintf.dart';
 
 // Page that allows user to edit note and add/remove labels
 class NoteEditPage extends StatelessWidget {
-  const NoteEditPage(this.noteWidgetData);
+  NoteEditPage(this.noteWidgetData);
 
   // Note widget data
   final NoteWidgetData noteWidgetData;
 
+  // Scrollbar for edit page
+  final scrollController = ScrollController();
+
   // Returns app bar title based on the edit/save state of the note
-  // TODO: decide what to do with time ago text, and deal with overflow if keep
   Row noteEditAppBarTitle(BuildContext context, Note note) {
     // Initialize the Row with title text
     List<Widget> content = [
@@ -131,10 +133,15 @@ class NoteEditPage extends StatelessWidget {
         onTap: () {
           unfocus(context);
         },
-        // Content is scrollable
-        child: SingleChildScrollView(
-          // Text fields for title and text
-          child: NoteEditFields(noteWidgetData),
+        // Content is scrollable, and scrollbar is always shown when not mobile
+        child: Scrollbar(
+          controller: scrollController,
+          thumbVisibility: !isMobileDevice(),
+          child: SingleChildScrollView(
+            controller: scrollController,
+            // Text fields for title and text
+            child: NoteEditFields(noteWidgetData),
+          ),
         ),
       ),
     );

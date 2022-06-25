@@ -209,7 +209,13 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
             spacing: Constants.labelChipSpacing,
             runSpacing: Constants.labelChipSpacing,
             children: labelChips(
-                context, note, Theme.of(context).primaryColor, null, false),
+              context,
+              note,
+              Theme.of(context).primaryColor,
+              null,
+              null,
+              false,
+            ),
           ),
         ),
       );

@@ -12,7 +12,6 @@ Functional notes app with features like labels, cloud storage, themes, offline f
 - Finishing touches
    - Tutorial / about
    - Placeholder for when there are no notes
-   - Smaller note edit window on bigger screens
    - Publish
    - Update web descriptions
 - Check back in around March 2023 to see if I need to migrate to new authentication provider
