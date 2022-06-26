@@ -35,6 +35,18 @@ class SchemaThemeData with ChangeNotifier {
     }
   }
 
+  // Temporary theme that will be changed back when updateTheme is called
+  void tempTheme(
+    int tempColorId,
+    bool tempIsDark,
+    bool tempIsMonochrome,
+  ) async {
+    colorId = tempColorId;
+    isDark = tempIsDark;
+    isMonochrome = tempIsMonochrome;
+    notifyListeners();
+  }
+
   // Color helper function
   Color colorWithSaturationLightness(
     Color color,

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:schema/data/noteData.dart';
+import 'package:schema/data/themeData.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
 import 'package:schema/routes/homePage.dart';
@@ -13,10 +14,13 @@ import 'package:url_launcher/url_launcher.dart';
 
 // Returns the drawer used on the home screen
 class HomeDrawer extends StatefulWidget {
-  const HomeDrawer(this.data);
+  const HomeDrawer(this.data, this.homeContext);
 
   // Data relating to editing labels
   final LabelsData data;
+
+  // Stable context from home page
+  final BuildContext homeContext;
 
   @override
   State<HomeDrawer> createState() => _HomeDrawerState();
@@ -39,22 +43,41 @@ class _HomeDrawerState extends State<HomeDrawer> {
           children: [
             // Shows sign in button if anonymous; sign out button otherwise
             noteData.isAnonymous
-                // Google sign in button
+                // Sign in button
                 ? SignInButton(
-                    icon: SvgPicture.asset(
-                      Constants.googleG,
-                      height: Constants.signInButtonSize *
+                    icon: Icon(
+                      Icons.login,
+                      color: Theme.of(context).primaryColor,
+                      size: Constants.signInButtonSize *
                           Constants.drawerSignInScale,
                     ),
-                    text: Constants.googleButton,
-                    onPressed: noteData.transferNotes,
+                    text: Constants.signInButton,
+                    onPressed: (BuildContext context) async {
+                      // Temporarily changes theme color to blue
+                      themeData.tempTheme(
+                        Constants.themeDefaultColorId,
+                        noteData.themeIsDark,
+                        noteData.themeIsMonochrome,
+                      );
+                      // Pops drawer and pushes sign in page
+                      Navigator.of(widget.homeContext).pop();
+                      await Navigator.of(widget.homeContext).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (BuildContext context) => SignInPage(
+                            homeContext: widget.homeContext,
+                          ),
+                        ),
+                      );
+                      // Changes color back if we canceled
+                      themeData.updateTheme();
+                    },
                     scale: Constants.drawerSignInScale,
                   )
                 // Sign out button
                 : SignInButton(
                     icon: Icon(
                       Icons.logout,
-                      color: Theme.of(context).backgroundColor,
+                      color: Theme.of(context).primaryColor,
                       size: Constants.signInButtonSize *
                           Constants.drawerSignInScale,
                     ),
@@ -62,6 +85,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                     onPressed: (context) async {
                       // Signs out and resets data
                       noteData = NoteData(ownerId: null);
+                      themeData.updateTheme();
                       await FirebaseAuth.instance.signOut();
                     },
                     scale: Constants.drawerSignInScale,

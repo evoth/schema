@@ -64,14 +64,12 @@ class _HomePageState extends State<HomePage> {
     updateNotesAndShowLoading(context, labelId);
   }
 
-  // Subscription to metadata document
-  late StreamSubscription subscription;
+  // Stream subscription for note metadata document
+  late StreamSubscription<DocumentSnapshot<Object?>> dataDocSubscription;
 
   // Subscribes to document
   @override
   void initState() {
-    super.initState();
-
     // Deals with data if we were deleting/transferring
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (noteData.isDeleting) {
@@ -85,12 +83,10 @@ class _HomePageState extends State<HomePage> {
       }
     });
 
-    // Reference to metadata document
-    DocumentReference dataDoc = noteData.noteDataDocRef(forceOnline: true);
-
     // Updates notes whenever the metadata document is updated from a different
     // device and the new data is different from the current data
-    subscription = dataDoc.snapshots().listen(
+    dataDocSubscription =
+        noteData.noteDataDocRef(forceOnline: true).snapshots().listen(
       (event) async {
         if (noteData.isBackOnline ||
             (!isNew &&
@@ -98,19 +94,23 @@ class _HomePageState extends State<HomePage> {
                 noteData.ownerId != null &&
                 event.data() != null &&
                 !event.metadata.hasPendingWrites &&
-                !DeepCollectionEquality()
-                    .equals(event.data(), noteData.toJson()))) {
+                !DeepCollectionEquality().equals(
+                  event.data(),
+                  noteData.toJson(),
+                ))) {
           updateNotesAndShowLoading(context, labelsData.filterLabelId);
         }
         isNew = false;
       },
     );
+
+    super.initState();
   }
 
-  // Unsubscribes when widget is disposed
+  // Cancels note metadata document listener
   @override
   void dispose() {
-    subscription.cancel();
+    dataDocSubscription.cancel();
     super.dispose();
   }
 
@@ -172,7 +172,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       // Drawer with settings, labels, etc
-      drawer: HomeDrawer(labelsData),
+      drawer: HomeDrawer(labelsData, context),
       // Saves label name when drawer is closed
       onDrawerChanged: (isOpen) {
         if (!isOpen) {

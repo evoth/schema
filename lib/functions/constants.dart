@@ -169,10 +169,11 @@ class Constants {
   static const String savedOfflineTip = 'Saved offline';
 
   // Button texts
-  static const String googleButton = 'Sign in with Google';
-  static const String anonButton = 'Skip sign in for now';
-  static const String signOutButton = 'Sign out of Google account';
-  static const String settingsButton = 'Settings';
+  static const String signInGoogleButton = 'Sign in with Google';
+  static const String signInAnonButton = 'Skip sign in for now';
+  static const String signInCancelButton = 'Stay signed out for now';
+  static const String signInButton = 'Sign in to sync';
+  static const String signOutButton = 'Sign out of account';
   static const String privacyPolicyButton = 'Privacy Policy';
   static const String themeLightButton = 'Light mode';
   static const String themeDarkButton = 'Dark mode';
@@ -253,6 +254,10 @@ class Constants {
     Colors.grey,
     Colors.blueGrey,
   ];
+
+  // Color for background of Google sign in button (see branding guidelines at
+  // https://developers.google.com/identity/branding-guidelines)
+  static const Color googleColor = Color(0xFF4285F4);
 
   // Theme defaults
   static const int themeDefaultColorId = 13;

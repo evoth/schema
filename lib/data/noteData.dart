@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:alert_dialog/alert_dialog.dart';
@@ -520,6 +521,12 @@ class NoteData {
       themeIsMonochrome = offlineData.themeIsMonochrome;
       themeTimeUpdated = offlineData.themeTimeUpdated;
     }
+
+    // Updates the layout from offline if it was updated more recently
+    // TODO: Fix theme reversal behavior
+    if (layoutTimeUpdated.compareTo(offlineData.layoutTimeUpdated) < 0) {
+      layoutDimensionId = offlineData.layoutDimensionId;
+    }
   }
 
   // Downloads all notes as one query from database
@@ -543,7 +550,10 @@ class NoteData {
 
   // Downloads metadata (creating new if necessary) and downloads notes that fit
   // the query and have been newly updated, keeping any already up-to-date notes
-  Future<void> updateNotes(BuildContext context, String? filterLabelId) async {
+  Future<void> updateNotes(
+    BuildContext context,
+    String? filterLabelId,
+  ) async {
     // Sets isBackOnline to false so that we don't have duplicate updates
     if (isBackOnline) {
       isBackOnline = false;
@@ -735,7 +745,9 @@ class NoteData {
   // Transfers all notes from one account (anonymous) to another (Google), upon
   // user's sign in and prompting for transfer options (use cloud function in
   // future so there's no possibility of deleting someone's notes)
-  Future<void> transferNotes(BuildContext context) async {
+  Future<void> transferNotes(
+    BuildContext context,
+  ) async {
     // Gets all notes for current user to prepare for transfer
     await updateNotes(context, null);
 
@@ -794,11 +806,15 @@ class NoteData {
         }
 
         // Gets all of the note data for the new user
-        noteData = NoteData(
-          ownerId: newUser.uid,
-          isAnonymous: newUser.isAnonymous,
-          email: newUser.email,
+        setNoteData(
+          NoteData(
+            ownerId: newUser.uid,
+            isAnonymous: newUser.isAnonymous,
+            email: newUser.email,
+          ),
         );
+
+        await updateNotes(context, null);
 
         // Go to homepage
         Navigator.of(context).pushAndRemoveUntil<void>(
@@ -845,6 +861,7 @@ class NoteData {
       isAnonymous: newUser.isAnonymous,
       email: newUser.email,
     );
+
     await newNoteData.updateNotes(context, null);
 
     // Add labels from old user, merging any that share the same name and

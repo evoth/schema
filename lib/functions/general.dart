@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 import 'dart:math';
 import 'package:alert_dialog/alert_dialog.dart';
@@ -5,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:schema/data/noteData.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:timeago/timeago.dart' as timeago;
 

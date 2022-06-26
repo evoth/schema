@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:schema/data/noteData.dart';
+import 'package:schema/data/themeData.dart';
 import 'package:schema/functions/auth.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
 
 // Page displayed when user needs to sign in
 class SignInPage extends StatelessWidget {
+  const SignInPage({this.homeContext});
+
+  // Include a stable context from home page
+  final BuildContext? homeContext;
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -61,19 +68,48 @@ class SignInPage extends StatelessWidget {
                       Constants.googleG,
                       height: Constants.signInButtonSize,
                     ),
-                    text: Constants.googleButton,
-                    onPressed: signInWithGoogle,
+                    buttonColor: Constants.googleColor,
+                    text: Constants.signInGoogleButton,
+                    // If we are signed in anonymously, ask to transfer notes.
+                    // Otherwise, just sign in normally
+                    onPressed: (BuildContext context) {
+                      if (noteData.ownerId != null && noteData.isAnonymous) {
+                        // Pop sign in page and ask to transfer notes
+                        Navigator.of(homeContext!).pop();
+                        noteData.transferNotes(homeContext!);
+                      } else {
+                        signInWithGoogle(context);
+                      }
+                    },
                   ),
-                  // Anonymous sign in button
-                  SignInButton(
-                    icon: Icon(
-                      Icons.fast_forward,
-                      color: Theme.of(context).primaryColor,
-                      size: Constants.signInButtonSize,
-                    ),
-                    text: Constants.anonButton,
-                    onPressed: signInAnonymously,
-                  ),
+                  // If we are already signed and anonymous, this is a cancel
+                  // sign in button. Otherwise, it's an anonymous sign in button
+                  (noteData.ownerId != null && noteData.isAnonymous)
+                      ?
+                      // Stay signed out button
+                      SignInButton(
+                          icon: Icon(
+                            Icons.close,
+                            color: Constants.googleColor,
+                            size: Constants.signInButtonSize,
+                          ),
+                          buttonColor: Constants.googleColor,
+                          text: Constants.signInCancelButton,
+                          onPressed: (BuildContext context) =>
+                              Navigator.of(context).pop(),
+                        )
+                      :
+                      // Anonymous sign in button
+                      SignInButton(
+                          icon: Icon(
+                            Icons.fast_forward,
+                            color: Constants.googleColor,
+                            size: Constants.signInButtonSize,
+                          ),
+                          buttonColor: Constants.googleColor,
+                          text: Constants.signInAnonButton,
+                          onPressed: signInAnonymously,
+                        ),
                 ],
               ),
             ),
@@ -91,12 +127,14 @@ class SignInButton extends StatelessWidget {
     required this.text,
     required this.onPressed,
     this.scale,
+    this.buttonColor,
   });
 
   final Widget icon;
   final String text;
   final void Function(BuildContext) onPressed;
   final double? scale;
+  final Color? buttonColor;
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +143,7 @@ class SignInButton extends StatelessWidget {
     // Rounded button
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        primary: Theme.of(context).primaryColor,
+        primary: buttonColor ?? Theme.of(context).primaryColor,
         padding: EdgeInsets.all(Constants.signInButtonPadding * s),
         fixedSize: Size(
           double.infinity,

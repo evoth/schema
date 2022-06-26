@@ -1,8 +1,13 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:schema/data/noteData.dart';
 import 'package:schema/data/themeData.dart';
 import 'package:schema/functions/general.dart';
 import 'package:schema/routes/homePage.dart';
+import 'package:schema/routes/initPage.dart';
 import 'package:url_strategy/url_strategy.dart';
 
 import 'firebase_options.dart';
@@ -42,13 +47,34 @@ class Schema extends StatefulWidget {
 }
 
 class _SchemaState extends State<Schema> {
-  // Listen to changes in themeData so we can update the theme throughout app
+  // Controller to listen to authentication state
+  StreamController<User?> authController = StreamController<User?>.broadcast();
+  // Controller to listen to connectivity state
+  StreamController<ConnectivityResult> connectivityController =
+      StreamController<ConnectivityResult>.broadcast();
+
   @override
   void initState() {
-    super.initState();
+    // Listen to changes in themeData so we can update the theme throughout app
     themeData.addListener(() {
       setState(() {});
     });
+
+    // Add stream to authentication stream controller
+    authController.addStream(FirebaseAuth.instance.authStateChanges());
+
+    // Add stream to connectivity stream controller
+    connectivityController.addStream(Connectivity().onConnectivityChanged);
+
+    super.initState();
+  }
+
+  // Unsubscribes from streams when widget is disposed
+  @override
+  void dispose() {
+    authController.close();
+    connectivityController.close();
+    super.dispose();
   }
 
   @override
@@ -60,7 +86,11 @@ class _SchemaState extends State<Schema> {
       routes: {
         // If user is signed in, skip loading page
         '/': (context) => noteData.ownerId == null
-            ? LoadingPage(mainContext: context)
+            ? InitPage(
+                mainContext: context,
+                authController: authController,
+                connectivityController: connectivityController,
+              )
             : HomePage(),
       },
       // Theme data that we're listening to
