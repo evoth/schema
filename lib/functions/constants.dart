@@ -17,8 +17,9 @@ class Constants {
   static const double gridPadding = 10;
   static const double noteTitleSpace = 10;
 
-  // Note opacity
+  // Note and label opacity
   static const double noteOpacity = 0.8;
+  static const double labelOpacity = 0.7;
 
   // Note dimension options (represents relative dimensions, 1x1 being default)
   static const List<List<int>> layoutDimensionOptions = [
@@ -54,6 +55,7 @@ class Constants {
 
   // Edit page
   static const double editPadding = 30;
+  static const double editDialogPadding = 10;
   static const double editWidth = 600;
   static const double editHeight = 900;
   static const double addNewGap = 5;
@@ -88,6 +90,7 @@ class Constants {
   // Delay and animation durations (in milliseconds)
   static const int noteDragDelay = 500;
   static const int noteShiftDuration = 300;
+  static const int noteHeroDuration = 300;
 
   // Length of inactivity before note is saved (in seconds)
   static const int saveInactivityDuration = 3;
@@ -258,6 +261,9 @@ class Constants {
   // Color for background of Google sign in button (see branding guidelines at
   // https://developers.google.com/identity/branding-guidelines)
   static const Color googleColor = Color(0xFF4285F4);
+
+  // Dialog theme
+  static const double dialogRadius = 20;
 
   // Theme defaults
   static const int themeDefaultColorId = 13;

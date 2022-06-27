@@ -85,13 +85,16 @@ class _NoteWidgetState extends State<NoteWidget> {
       } else {
         return LayoutBuilder(
           builder: (context, constraints) => Draggable(
-            // Note when not being dragged
-            child: NoteWidgetBase(
-              noteWidgetData: widget.noteWidgetData,
-              width: constraints.maxWidth,
-              height: constraints.maxHeight,
+            // Note (Material ancestor for when it's floating)
+            child: Material(
+              color: Colors.transparent,
+              child: NoteWidgetBase(
+                noteWidgetData: widget.noteWidgetData,
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+              ),
             ),
-            // Note when dragged (had to wrap in a Material because of a glitch)
+            // Note when dragged (Material ancestor for when it's floating)
             feedback: Material(
               color: Colors.transparent,
               child: NoteWidgetBase(
@@ -203,6 +206,7 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
     // Labels
     if (note.labelIds.isNotEmpty) {
       texts.add(
+        // Can scroll sideways to see all labels on mobile
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Wrap(
@@ -211,7 +215,9 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
             children: labelChips(
               context,
               note,
-              Theme.of(context).primaryColor,
+              Theme.of(context)
+                  .primaryColor
+                  .withOpacity(Constants.labelOpacity),
               null,
               null,
               false,
@@ -250,22 +256,29 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
 
   @override
   Widget build(BuildContext context) {
-    // Detects taps on the note
-    return GestureDetector(
-      onTap: edit,
-      // Creates a container around the note in order to decorate and pad it.
-      child: Container(
-        // Expands to correct size when dragging
-        width: widget.width,
-        height: widget.height,
-        // Padding surrounding text field
-        padding: const EdgeInsets.all(Constants.notePadding),
-        // Creates note outline
-        decoration: boxDecoration(),
-        // Column to show both title and text
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: noteDisplayText(),
+    // Hero to animate note between grid and dialog on desktop
+    return Hero(
+      tag: widget.noteWidgetData.note.id,
+      // Detects taps on the note
+      child: GestureDetector(
+        onTap: edit,
+        child: Container(
+          // Expands to correct size when dragging
+          width: widget.width,
+          height: widget.height,
+          // Padding surrounding text field
+          padding: const EdgeInsets.all(Constants.notePadding),
+          // Creates note outline
+          decoration: boxDecoration(),
+          // Provides a Material ancestor when transitioning
+          child: Material(
+            color: Colors.transparent,
+            // Column to show both title and text
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: noteDisplayText(),
+            ),
+          ),
         ),
       ),
     );

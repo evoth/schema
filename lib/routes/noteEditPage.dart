@@ -12,7 +12,10 @@ import 'package:sprintf/sprintf.dart';
 
 // Page that allows user to edit note and add/remove labels
 class NoteEditPage extends StatelessWidget {
-  NoteEditPage(this.noteWidgetData);
+  NoteEditPage(this.noteWidgetData, {this.isDialog = false});
+
+  // Whether this is being displayed in a dialog, like on desktop
+  final bool isDialog;
 
   // Note widget data
   final NoteWidgetData noteWidgetData;
@@ -103,6 +106,8 @@ class NoteEditPage extends StatelessWidget {
           },
         ),
         elevation: 0,
+        // When in a dialog, this is transparent
+        backgroundColor: isDialog ? Colors.transparent : null,
         automaticallyImplyLeading: true,
         actions: <Widget>[
           // Button to delete note
@@ -128,6 +133,8 @@ class NoteEditPage extends StatelessWidget {
           SizedBox(width: Constants.appBarPadding),
         ],
       ),
+      // When in a dialog, this is transparent
+      backgroundColor: isDialog ? Colors.transparent : null,
       // If user taps outside of text fields, unfocus (and dismiss keyboard)
       body: GestureDetector(
         onTap: () {
@@ -140,7 +147,10 @@ class NoteEditPage extends StatelessWidget {
           child: SingleChildScrollView(
             controller: scrollController,
             // Text fields for title and text
-            child: NoteEditFields(noteWidgetData),
+            child: NoteEditFields(
+              noteWidgetData,
+              isDialog: isDialog,
+            ),
           ),
         ),
       ),

@@ -69,7 +69,7 @@ class NoteAddLabelButton extends StatelessWidget {
     return TextButton(
       style: TextButton.styleFrom(
         //textStyle: const TextStyle(fontSize: 20),
-        padding: EdgeInsets.all(0),
+        padding: EdgeInsets.zero,
       ),
       onPressed: () async {
         // Shows dialog with labels returns id of selected label (null means

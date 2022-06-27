@@ -8,10 +8,13 @@ import 'package:schema/widgets/noteLabelsWidget.dart';
 
 // Returns the content of the note edit screen
 class NoteEditFields extends StatelessWidget {
-  const NoteEditFields(this.noteWidgetData);
+  const NoteEditFields(this.noteWidgetData, {required this.isDialog});
 
   // Note widget data
   final NoteWidgetData noteWidgetData;
+
+  // Whether this is being displayed in a dialog, like on desktop
+  final bool isDialog;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +50,7 @@ class NoteEditFields extends StatelessWidget {
           onChanged: (newText) {
             note.title = newText.trim();
             noteData.saveNote(note);
-            noteWidgetData.refreshNotes();
+            //noteWidgetData.refreshNotes();
           },
         ),
         SizedBox(height: Constants.editPadding),
@@ -74,7 +77,7 @@ class NoteEditFields extends StatelessWidget {
             onChanged: (newText) {
               note.text = newText.trim();
               noteData.saveNote(note);
-              noteWidgetData.refreshNotes();
+              //noteWidgetData.refreshNotes();
             },
           ),
         ),
@@ -84,9 +87,12 @@ class NoteEditFields extends StatelessWidget {
           padding: EdgeInsets.symmetric(
             horizontal: Constants.editPadding,
           ),
-          child: NoteLabels(noteWidgetData),
+          child: NoteLabels(
+            noteWidgetData,
+            isDialog: isDialog,
+          ),
         ),
-        SizedBox(height: Constants.editPadding),
+        isDialog ? Container() : SizedBox(height: Constants.editPadding),
       ],
     );
   }

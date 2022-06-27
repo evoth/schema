@@ -16,6 +16,7 @@ import 'package:schema/models/noteWidgetModel.dart';
 import 'package:schema/routes/homePage.dart';
 import 'package:schema/routes/loadingPage.dart';
 import 'package:schema/routes/noteEditPage.dart';
+import 'package:schema/widgets/heroDialogRoute.dart';
 import 'package:schema/widgets/noteAddLabelWidget.dart';
 part 'noteData.g.dart';
 
@@ -240,14 +241,79 @@ class NoteData {
         ),
       );
     } else {
-      await alert(
-        context,
-        content: SizedBox(
-          width: Constants.editWidth,
-          height: Constants.editHeight,
-          child: NoteEditPage(noteWidgetData),
+      // Dialog with the note edit page
+      /*await showDialog<String>(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          // Constrained to a reasonable size for easier reading
+          content: SizedBox(
+            width: Constants.editWidth,
+            height: Constants.editHeight,
+            child: NoteEditPage(
+              noteWidgetData,
+              isDialog: true,
+            ),
+          ),
+          // Equal padding except bottom to compensate for padding in EditPage
+          contentPadding: EdgeInsets.fromLTRB(
+            Constants.editDialogPadding,
+            Constants.editDialogPadding,
+            Constants.editDialogPadding,
+            Constants.editDialogPadding + Constants.editPadding,
+          ),
+          // Simulates overlaying note color onto canvas color
+          backgroundColor: Color.alphaBlend(
+            Theme.of(context)
+                .backgroundColor
+                .withOpacity(Constants.noteOpacity),
+            Theme.of(context).canvasColor,
+          ),
         ),
-        textOK: Container(),
+      );*/
+
+      await Navigator.of(context).push(
+        HeroDialogRoute(
+          duration: Constants.noteHeroDuration,
+          builder: (BuildContext context) {
+            return Center(
+              // Constrained to a reasonable size for easier reading
+              child: SizedBox(
+                width: Constants.editWidth,
+                height: Constants.editHeight,
+                // Hero transition to and from note in grid
+                child: Hero(
+                  tag: note.id,
+                  child: AlertDialog(
+                    // Constrained again because Hero was being strange
+                    content: SizedBox(
+                      width: Constants.editWidth,
+                      height: Constants.editHeight,
+                      child: NoteEditPage(
+                        noteWidgetData,
+                        isDialog: true,
+                      ),
+                    ),
+                    // Equal padding except bottom to compensate for padding in EditPage
+                    contentPadding: EdgeInsets.fromLTRB(
+                      Constants.editDialogPadding,
+                      Constants.editDialogPadding,
+                      Constants.editDialogPadding,
+                      Constants.editDialogPadding + Constants.editPadding,
+                    ),
+                    // Simulates overlaying note color onto canvas color
+                    backgroundColor: Color.alphaBlend(
+                      Theme.of(context)
+                          .backgroundColor
+                          .withOpacity(Constants.noteOpacity),
+                      Theme.of(context).canvasColor,
+                    ),
+                    insetPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       );
     }
 

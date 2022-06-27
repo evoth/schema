@@ -66,14 +66,17 @@ class SchemaThemeData with ChangeNotifier {
   // Creates ThemeData from whether the theme is dark and a color swatch
   ThemeData getTheme() {
     MaterialColor color = Constants.themeColorOptions[colorId];
+    // TODO: comment
     if (isDark) {
       return ThemeData(
         brightness: Brightness.dark,
         primarySwatch: color,
+        primaryColor: color,
+        accentColor: color,
         backgroundColor: colorWithSaturationLightness(
           color,
-          isMonochrome ? null : 0.6,
-          0.2,
+          isMonochrome ? null : 0.4,
+          0.22,
         ),
         canvasColor: colorWithSaturationLightness(
           color,
@@ -100,17 +103,25 @@ class SchemaThemeData with ChangeNotifier {
             color: Colors.white,
           ),
         ),
-        primaryColor: colorWithSaturationLightness(
-          color,
-          isMonochrome ? null : 0.7,
-          0.4,
+        dialogTheme: DialogTheme(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(Constants.dialogRadius),
+            ),
+          ),
         ),
-        accentColor: color,
       );
     } else {
       return ThemeData(
         brightness: Brightness.light,
         primarySwatch: color,
+        primaryColor: color,
+        accentColor: color,
+        backgroundColor: colorWithSaturationLightness(
+          color,
+          isMonochrome ? null : 0.8,
+          0.85,
+        ),
         canvasColor: colorWithSaturationLightness(
           color,
           isMonochrome ? null : 1,
@@ -134,6 +145,13 @@ class SchemaThemeData with ChangeNotifier {
           ),
           iconTheme: IconThemeData(
             color: Colors.black,
+          ),
+        ),
+        dialogTheme: DialogTheme(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(Constants.dialogRadius),
+            ),
           ),
         ),
       );

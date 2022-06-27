@@ -32,9 +32,6 @@ class _HomeDrawerState extends State<HomeDrawer> {
     // Padding and decoration for header
     return Container(
       padding: EdgeInsets.all(Constants.drawerPadding),
-      decoration: BoxDecoration(
-        color: Theme.of(context).appBarTheme.backgroundColor,
-      ),
       // Prevent overflow behind notification bar
       child: SafeArea(
         // Column to hold both the button and text

@@ -7,10 +7,13 @@ import 'package:schema/widgets/noteAddLabelWidget.dart';
 
 // Returns the labels section at the bottom of a note
 class NoteLabels extends StatefulWidget {
-  const NoteLabels(this.noteWidgetData);
+  const NoteLabels(this.noteWidgetData, {required this.isDialog});
 
   // Note widget data
   final NoteWidgetData noteWidgetData;
+
+  // Whether this is being displayed in a dialog, like on desktop
+  final bool isDialog;
 
   @override
   State<NoteLabels> createState() => _NoteLabelsState();
@@ -22,7 +25,11 @@ class _NoteLabelsState extends State<NoteLabels> {
     List<Widget> chips = labelChips(
         context,
         note,
-        Theme.of(context).backgroundColor.withOpacity(Constants.noteOpacity),
+        widget.isDialog
+            ? Theme.of(context).primaryColor.withOpacity(Constants.labelOpacity)
+            : Theme.of(context)
+                .backgroundColor
+                .withOpacity(Constants.noteOpacity),
         setState,
         widget.noteWidgetData.refreshNotes,
         true);
