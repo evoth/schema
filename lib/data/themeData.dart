@@ -52,9 +52,10 @@ class SchemaThemeData with ChangeNotifier {
     Color color,
     double? saturation,
     double? lightness,
+    bool isMonochrome,
   ) {
     HSLColor newColor = HSLColor.fromColor(color);
-    if (saturation != null) {
+    if (saturation != null && !isMonochrome) {
       newColor = newColor.withSaturation(saturation);
     }
     if (lightness != null) {
@@ -68,32 +69,31 @@ class SchemaThemeData with ChangeNotifier {
     MaterialColor color = Constants.themeColorOptions[colorId];
     // TODO: comment
     if (isDark) {
+      Color canvasColor = colorWithSaturationLightness(
+        color,
+        0.05,
+        0.15,
+        isMonochrome,
+      );
+      Color backgroundColor = colorWithSaturationLightness(
+        color,
+        0.4,
+        0.22,
+        isMonochrome,
+      );
       return ThemeData(
         brightness: Brightness.dark,
         primarySwatch: color,
         primaryColor: color,
         accentColor: color,
-        backgroundColor: colorWithSaturationLightness(
-          color,
-          isMonochrome ? null : 0.4,
-          0.22,
-        ),
-        canvasColor: colorWithSaturationLightness(
-          color,
-          isMonochrome ? null : 0.05,
-          0.15,
-        ),
-        dialogBackgroundColor: colorWithSaturationLightness(
-          color,
-          isMonochrome ? null : 0.05,
-          0.15,
+        backgroundColor: backgroundColor,
+        canvasColor: canvasColor,
+        dialogBackgroundColor: Color.alphaBlend(
+          backgroundColor.withOpacity(Constants.noteOpacity),
+          canvasColor,
         ),
         appBarTheme: AppBarTheme(
-          backgroundColor: colorWithSaturationLightness(
-            color,
-            isMonochrome ? null : 0.05,
-            0.15,
-          ),
+          backgroundColor: canvasColor,
           titleTextStyle: TextStyle(
             color: Colors.white,
             fontSize: Constants.appBarSize,
@@ -112,32 +112,31 @@ class SchemaThemeData with ChangeNotifier {
         ),
       );
     } else {
+      Color canvasColor = colorWithSaturationLightness(
+        color,
+        1,
+        0.99,
+        isMonochrome,
+      );
+      Color backgroundColor = colorWithSaturationLightness(
+        color,
+        0.8,
+        0.85,
+        isMonochrome,
+      );
       return ThemeData(
         brightness: Brightness.light,
         primarySwatch: color,
         primaryColor: color,
         accentColor: color,
-        backgroundColor: colorWithSaturationLightness(
-          color,
-          isMonochrome ? null : 0.8,
-          0.85,
-        ),
-        canvasColor: colorWithSaturationLightness(
-          color,
-          isMonochrome ? null : 1,
-          0.99,
-        ),
-        dialogBackgroundColor: colorWithSaturationLightness(
-          color,
-          isMonochrome ? null : 1,
-          0.99,
+        backgroundColor: backgroundColor,
+        canvasColor: canvasColor,
+        dialogBackgroundColor: Color.alphaBlend(
+          backgroundColor.withOpacity(Constants.noteOpacity),
+          canvasColor,
         ),
         appBarTheme: AppBarTheme(
-          backgroundColor: colorWithSaturationLightness(
-            color,
-            isMonochrome ? null : 1,
-            0.99,
-          ),
+          backgroundColor: canvasColor,
           titleTextStyle: TextStyle(
             color: Colors.black,
             fontSize: Constants.appBarSize,

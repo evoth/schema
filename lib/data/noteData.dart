@@ -157,16 +157,17 @@ class NoteData {
 
   // Remove note from current view if it still exists there
   void removeNote(Note note) {
-    if (notes[note.tempIndex].id == note.id) {
+    if (note.tempIndex >= 0) {
       notes.removeAt(note.tempIndex);
       shiftNoteIndices(-1, index: note.tempIndex, onlyTemp: true);
+      note.tempIndex = -1;
     }
   }
 
   // Deletes note and shifts indices if the note still exists
   void deleteNote(BuildContext context, Note note, Function refreshNotes,
       {String? message}) {
-    if (notes[note.tempIndex].id == note.id) {
+    if (note.tempIndex >= 0) {
       // Deletes from database if we are online. Otherwise, we will wait until
       // we are online to decide whether the document should be deleted
       if (isOnline) {
@@ -183,6 +184,7 @@ class NoteData {
       noteMeta.remove(note.id);
       notes.removeAt(note.tempIndex);
       shiftNoteIndices(-1, index: note.tempIndex);
+      note.tempIndex = -1;
       // Updates metadata
       numNotes--;
       updateData();
@@ -191,8 +193,8 @@ class NoteData {
     }
   }
 
-  // Saves note after 3 seconds of inactivity. Set wait to false to save
-  // immediately.
+  // Saves note after 3 seconds of inactivity (if it still exists). Set wait to
+  // false to save immediately.
   Future<void> saveNote(Note note, {bool wait = true}) async {
     note.editTicker++;
     note.isSavedNotifier.value = false;
@@ -203,7 +205,7 @@ class NoteData {
     }
 
     // If this function has not run in the last 3 seconds, update note
-    if (note.editTicker == currentTicker) {
+    if (note.editTicker == currentTicker && note.tempIndex >= 0) {
       // Updates note in database if anything has changed
       if (note.previousTitle != note.title || note.previousText != note.text) {
         note.timeUpdated = timestampNowRounded();
@@ -236,41 +238,28 @@ class NoteData {
     // a more user friendly reading/editing experience
     if (isMobileDevice()) {
       await Navigator.of(context).push<void>(
-        MaterialPageRoute<void>(
-          builder: (BuildContext context) => NoteEditPage(noteWidgetData),
+        HeroDialogRoute(
+          duration: Constants.noteHeroDuration,
+          builder: (BuildContext context) {
+            // Hero transition to and from note in grid
+            return Hero(
+              tag: note.id,
+              child: Container(
+                // Simulates overlaying note color onto canvas color
+                color: Color.alphaBlend(
+                  Theme.of(context)
+                      .backgroundColor
+                      .withOpacity(Constants.noteOpacity),
+                  Theme.of(context).canvasColor,
+                ),
+                child: NoteEditPage(noteWidgetData),
+              ),
+            );
+          },
         ),
       );
     } else {
-      // Dialog with the note edit page
-      /*await showDialog<String>(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
-          // Constrained to a reasonable size for easier reading
-          content: SizedBox(
-            width: Constants.editWidth,
-            height: Constants.editHeight,
-            child: NoteEditPage(
-              noteWidgetData,
-              isDialog: true,
-            ),
-          ),
-          // Equal padding except bottom to compensate for padding in EditPage
-          contentPadding: EdgeInsets.fromLTRB(
-            Constants.editDialogPadding,
-            Constants.editDialogPadding,
-            Constants.editDialogPadding,
-            Constants.editDialogPadding + Constants.editPadding,
-          ),
-          // Simulates overlaying note color onto canvas color
-          backgroundColor: Color.alphaBlend(
-            Theme.of(context)
-                .backgroundColor
-                .withOpacity(Constants.noteOpacity),
-            Theme.of(context).canvasColor,
-          ),
-        ),
-      );*/
-
+      // TODO: make this another whole widget
       await Navigator.of(context).push(
         HeroDialogRoute(
           duration: Constants.noteHeroDuration,
@@ -288,10 +277,7 @@ class NoteData {
                     content: SizedBox(
                       width: Constants.editWidth,
                       height: Constants.editHeight,
-                      child: NoteEditPage(
-                        noteWidgetData,
-                        isDialog: true,
-                      ),
+                      child: NoteEditPage(noteWidgetData),
                     ),
                     // Equal padding except bottom to compensate for padding in EditPage
                     contentPadding: EdgeInsets.fromLTRB(
@@ -324,6 +310,9 @@ class NoteData {
     }
     note.isNew = false;
 
+    // Saves note (if it still exists)
+    await saveNote(note, wait: false);
+
     // If note does not have label currently being filtered, remove from view
     if (noteWidgetData.filterLabelId != null &&
         !note.hasLabel(noteWidgetData.filterLabelId!)) {
@@ -331,8 +320,6 @@ class NoteData {
     }
     // Updates notes on home screen
     refreshNotes();
-    // Saves note
-    await saveNote(note, wait: false);
   }
 
   // Adds new label with the specified name

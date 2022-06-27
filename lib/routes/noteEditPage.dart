@@ -12,10 +12,7 @@ import 'package:sprintf/sprintf.dart';
 
 // Page that allows user to edit note and add/remove labels
 class NoteEditPage extends StatelessWidget {
-  NoteEditPage(this.noteWidgetData, {this.isDialog = false});
-
-  // Whether this is being displayed in a dialog, like on desktop
-  final bool isDialog;
+  NoteEditPage(this.noteWidgetData);
 
   // Note widget data
   final NoteWidgetData noteWidgetData;
@@ -24,7 +21,7 @@ class NoteEditPage extends StatelessWidget {
   final scrollController = ScrollController();
 
   // Returns app bar title based on the edit/save state of the note
-  Row noteEditAppBarTitle(BuildContext context, Note note) {
+  Wrap noteEditAppBarTitle(BuildContext context, Note note) {
     // Initialize the Row with title text
     List<Widget> content = [
       Text(Constants.editTitle),
@@ -87,7 +84,8 @@ class NoteEditPage extends StatelessWidget {
         ),
       );
     }
-    return Row(
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: content,
     );
   }
@@ -97,59 +95,59 @@ class NoteEditPage extends StatelessWidget {
     // Sets note variable for convenience
     Note note = noteWidgetData.note;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: ValueListenableBuilder(
-          valueListenable: note.isSavedNotifier,
-          builder: (BuildContext context, bool isSaved, Widget? child) {
-            return noteEditAppBarTitle(context, note);
-          },
-        ),
-        elevation: 0,
-        // When in a dialog, this is transparent
-        backgroundColor: isDialog ? Colors.transparent : null,
-        automaticallyImplyLeading: true,
-        actions: <Widget>[
-          // Button to delete note
-          IconButton(
-            icon: const Icon(Icons.delete),
-            tooltip: Constants.deleteNoteTip,
-            onPressed: () async {
-              // Confirms with user before deleting
-              if (await confirm(
-                context,
-                title: Text(Constants.deleteNoteMessageTitle),
-                content: Text(Constants.deleteNoteMessage),
-              )) {
-                noteData.deleteNote(
-                  context,
-                  note,
-                  noteWidgetData.refreshNotes,
-                );
-                Navigator.of(context).pop(context);
-              }
+    // New Scaffold messenger so that snackbars avoid this scaffold
+    return ScaffoldMessenger(
+      child: Scaffold(
+        appBar: AppBar(
+          title: ValueListenableBuilder(
+            valueListenable: note.isSavedNotifier,
+            builder: (BuildContext context, bool isSaved, Widget? child) {
+              return noteEditAppBarTitle(context, note);
             },
           ),
-          SizedBox(width: Constants.appBarPadding),
-        ],
-      ),
-      // When in a dialog, this is transparent
-      backgroundColor: isDialog ? Colors.transparent : null,
-      // If user taps outside of text fields, unfocus (and dismiss keyboard)
-      body: GestureDetector(
-        onTap: () {
-          unfocus(context);
-        },
-        // Content is scrollable, and scrollbar is always shown when not mobile
-        child: Scrollbar(
-          controller: scrollController,
-          thumbVisibility: !isMobileDevice(),
-          child: SingleChildScrollView(
+          elevation: 0,
+          // Transparent to show through to dialog below
+          backgroundColor: Colors.transparent,
+          automaticallyImplyLeading: true,
+          actions: <Widget>[
+            // Button to delete note
+            IconButton(
+              icon: const Icon(Icons.delete),
+              tooltip: Constants.deleteNoteTip,
+              onPressed: () async {
+                // Confirms with user before deleting
+                if (await confirm(
+                  context,
+                  title: Text(Constants.deleteNoteMessageTitle),
+                  content: Text(Constants.deleteNoteMessage),
+                )) {
+                  noteData.deleteNote(
+                    context,
+                    note,
+                    noteWidgetData.refreshNotes,
+                  );
+                  Navigator.of(context).pop(context);
+                }
+              },
+            ),
+            SizedBox(width: Constants.appBarPadding),
+          ],
+        ),
+        // Transparent to show to dialog beneath
+        backgroundColor: Colors.transparent,
+        // If user taps outside of text fields, unfocus (and dismiss keyboard)
+        body: GestureDetector(
+          onTap: () {
+            unfocus(context);
+          },
+          // Content is scrollable, and scrollbar is always shown when not mobile
+          child: Scrollbar(
             controller: scrollController,
-            // Text fields for title and text
-            child: NoteEditFields(
-              noteWidgetData,
-              isDialog: isDialog,
+            thumbVisibility: !isMobileDevice(),
+            child: SingleChildScrollView(
+              controller: scrollController,
+              // Text fields for title and text
+              child: NoteEditFields(noteWidgetData),
             ),
           ),
         ),

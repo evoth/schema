@@ -41,6 +41,10 @@ void main() async {
   runApp(Schema());
 }
 
+// Scaffold messenger key so that we can display messages only on home screen
+final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
 class Schema extends StatefulWidget {
   @override
   State<Schema> createState() => _SchemaState();
@@ -96,6 +100,7 @@ class _SchemaState extends State<Schema> {
       // Theme data that we're listening to
       theme: themeData.getTheme(),
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
     );
   }
 }

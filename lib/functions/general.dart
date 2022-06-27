@@ -7,6 +7,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:schema/data/noteData.dart';
+import 'package:schema/main.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -56,8 +57,8 @@ bool isMobileDevice() {
 // Shows snackbar with given text
 void showAlert(BuildContext context, String text, {bool useSnackbar = false}) {
   if (useSnackbar) {
-    ScaffoldMessenger.of(context)
-      ..removeCurrentSnackBar()
+    rootScaffoldMessengerKey.currentState
+      ?..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(text)));
   } else {
     alert(context, title: Text(text));
