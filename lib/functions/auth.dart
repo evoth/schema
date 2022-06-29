@@ -4,35 +4,36 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:schema/data/noteData.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
+import 'package:schema/main.dart';
 import 'package:schema/routes/loadingPage.dart';
 
 /* Authentication methods must be enabled in Firebase project */
 
 // Sign in with Google account
-Future<void> signInWithGoogle(BuildContext context) async {
+Future<void> signInWithGoogle() async {
   // Get credential to sign in
-  final AuthCredential? credential = await getGoogleCredential(context);
+  final AuthCredential? credential = await getGoogleCredential();
   if (credential != null) {
     // Push loading screen with signing in text
-    Navigator.of(context).pushAndRemoveUntil<void>(
+    Navigator.of(navigatorKey.currentContext!).pushAndRemoveUntil<void>(
       MaterialPageRoute<void>(
         builder: (BuildContext context) => LoadingPage(
           text: Constants.signInLoading,
         ),
       ),
-      (route) => route.isFirst,
+      (route) => false,
     );
     // Simple error catching (most likely error is user exiting sign in flow)
     try {
       // Sign in with the UserCredential
       await FirebaseAuth.instance.signInWithCredential(credential);
     } catch (e) {
-      signInError(context);
+      signInError();
     }
   }
 }
 
-Future<AuthCredential?> getGoogleCredential(BuildContext context) async {
+Future<AuthCredential?> getGoogleCredential() async {
   // Simple error catching (most likely error is user exiting sign in flow)
   try {
     // Trigger the authentication flow
@@ -48,32 +49,32 @@ Future<AuthCredential?> getGoogleCredential(BuildContext context) async {
       idToken: googleAuth?.idToken,
     );
   } catch (e) {
-    signInError(context);
+    signInError();
     return null;
   }
 }
 
 // Sign in with an anonymous account (persistent across reloads on the device)
-Future<void> signInAnonymously(BuildContext context) async {
+Future<void> signInAnonymously() async {
   // Push loading screen with signing in text
-  Navigator.of(context).pushAndRemoveUntil<void>(
+  Navigator.of(navigatorKey.currentContext!).pushAndRemoveUntil<void>(
     MaterialPageRoute<void>(
       builder: (BuildContext context) => LoadingPage(
         text: Constants.signInLoading,
       ),
     ),
-    (route) => route.isFirst,
+    (route) => false,
   );
   // Simple error catching
   try {
     // Sign in anonymously
     await FirebaseAuth.instance.signInAnonymously();
   } catch (e) {
-    signInError(context);
+    signInError();
   }
 }
 
 // Signs out if necessary and shows snackbar with error message
-void signInError(BuildContext context) {
-  showAlert(context, Constants.signInErrorMessage, useSnackbar: true);
+void signInError() {
+  showAlert(Constants.signInErrorMessage, useSnackbar: true);
 }

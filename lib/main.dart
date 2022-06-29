@@ -6,8 +6,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:schema/data/noteData.dart';
 import 'package:schema/data/themeData.dart';
 import 'package:schema/functions/general.dart';
+import 'package:schema/functions/init.dart';
 import 'package:schema/routes/homePage.dart';
-import 'package:schema/routes/initPage.dart';
 import 'package:url_strategy/url_strategy.dart';
 
 import 'firebase_options.dart';
@@ -32,10 +32,12 @@ void main() async {
           .enablePersistence(const PersistenceSettings(synchronizeTabs: true));
     }
   } catch (e) {
-    print('Cannot modify settings because Firebase has already been running.');
+    // Cannot modify settings because Firebase has already been running.
   }
   // Get theme data from shared preferences
   themeData = await SchemaThemeData.fromSP();
+  // Get timeOffline from shared preferences
+  await noteData.getTimeOfflineSP();
   // Remove hashtag from url
   setPathUrlStrategy();
   runApp(Schema());
@@ -45,17 +47,18 @@ void main() async {
 final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 
+// Navigator key so that we can access root context from anywhere
+GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 class Schema extends StatefulWidget {
   @override
   State<Schema> createState() => _SchemaState();
 }
 
 class _SchemaState extends State<Schema> {
-  // Controller to listen to authentication state
-  StreamController<User?> authController = StreamController<User?>.broadcast();
-  // Controller to listen to connectivity state
-  StreamController<ConnectivityResult> connectivityController =
-      StreamController<ConnectivityResult>.broadcast();
+  // Stream subscriptions for authentication and connectivity state
+  late StreamSubscription<User?> authSubscription;
+  late StreamSubscription<ConnectivityResult> connectivitySubscription;
 
   @override
   void initState() {
@@ -64,11 +67,25 @@ class _SchemaState extends State<Schema> {
       setState(() {});
     });
 
-    // Add stream to authentication stream controller
-    authController.addStream(FirebaseAuth.instance.authStateChanges());
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      // Reinitializes app whenever user signs in or out
+      FirebaseAuth.instance.authStateChanges().listen((User? user) {
+        if (!noteData.isDeleting) {
+          initApp(user);
+        }
+      });
 
-    // Add stream to connectivity stream controller
-    connectivityController.addStream(Connectivity().onConnectivityChanged);
+      // Listens to and updates connection state, notifying user of changes
+      Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+        bool newIsOnline = isConnectivityResultOnline(result);
+        if (newIsOnline && !noteData.isOnline) {
+          showAlert(Constants.isOnlineMessage, useSnackbar: true);
+        } else if (!newIsOnline && noteData.isOnline) {
+          showAlert(Constants.isOfflineMessage, useSnackbar: true);
+        }
+        noteData.setIsOnline(newIsOnline);
+      });
+    });
 
     super.initState();
   }
@@ -76,8 +93,9 @@ class _SchemaState extends State<Schema> {
   // Unsubscribes from streams when widget is disposed
   @override
   void dispose() {
-    authController.close();
-    connectivityController.close();
+    // Unsubscribes from respective streams
+    authSubscription.cancel();
+    connectivitySubscription.cancel();
     super.dispose();
   }
 
@@ -90,17 +108,14 @@ class _SchemaState extends State<Schema> {
       routes: {
         // If user is signed in, skip loading page
         '/': (context) => noteData.ownerId == null
-            ? InitPage(
-                mainContext: context,
-                authController: authController,
-                connectivityController: connectivityController,
-              )
+            ? LoadingPage(text: Constants.initLoading)
             : HomePage(),
       },
       // Theme data that we're listening to
       theme: themeData.getTheme(),
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
+      navigatorKey: navigatorKey,
     );
   }
 }

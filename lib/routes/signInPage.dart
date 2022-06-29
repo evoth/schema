@@ -5,14 +5,10 @@ import 'package:schema/data/themeData.dart';
 import 'package:schema/functions/auth.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
+import 'package:schema/main.dart';
 
 // Page displayed when user needs to sign in
 class SignInPage extends StatelessWidget {
-  const SignInPage({this.homeContext});
-
-  // Include a stable context from home page
-  final BuildContext? homeContext;
-
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -39,7 +35,7 @@ class SignInPage extends StatelessWidget {
                 border: isMobileDevice()
                     ? null
                     : Border.all(
-                        color: Theme.of(context).primaryColor,
+                        color: Constants.googleColor,
                         width: 2,
                       ),
                 borderRadius: BorderRadius.circular(Constants.signInPadding),
@@ -73,12 +69,20 @@ class SignInPage extends StatelessWidget {
                     // If we are signed in anonymously, ask to transfer notes.
                     // Otherwise, just sign in normally
                     onPressed: (BuildContext context) {
-                      if (noteData.ownerId != null && noteData.isAnonymous) {
-                        // Pop sign in page and ask to transfer notes
-                        Navigator.of(homeContext!).pop();
-                        noteData.transferNotes(homeContext!);
+                      if (noteData.isOnline) {
+                        if (noteData.ownerId != null && noteData.isAnonymous) {
+                          // Pop sign in page and ask to transfer notes
+                          Navigator.of(navigatorKey.currentContext!).pop();
+                          noteData.transferNotes();
+                        } else {
+                          signInWithGoogle();
+                        }
                       } else {
-                        signInWithGoogle(context);
+                        // If we are offline, block from signing in
+                        showAlert(
+                          Constants.signInOfflineErrorMessage,
+                          useSnackbar: true,
+                        );
                       }
                     },
                   ),
@@ -108,7 +112,18 @@ class SignInPage extends StatelessWidget {
                           ),
                           buttonColor: Constants.googleColor,
                           text: Constants.signInAnonButton,
-                          onPressed: signInAnonymously,
+                          onPressed: (context) {
+                            if (noteData.isOnline) {
+                              // Sign in using anonymous account
+                              signInAnonymously();
+                            } else {
+                              // If we are offline, block from signing in
+                              showAlert(
+                                Constants.signInOfflineErrorMessage,
+                                useSnackbar: true,
+                              );
+                            }
+                          },
                         ),
                 ],
               ),

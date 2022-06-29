@@ -5,6 +5,7 @@ import 'package:schema/data/noteData.dart';
 import 'package:schema/data/themeData.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
+import 'package:schema/main.dart';
 import 'package:schema/routes/homePage.dart';
 import 'package:schema/routes/signInPage.dart';
 import 'package:schema/widgets/homeDrawerLabelWidget.dart';
@@ -14,13 +15,10 @@ import 'package:url_launcher/url_launcher.dart';
 
 // Returns the drawer used on the home screen
 class HomeDrawer extends StatefulWidget {
-  const HomeDrawer(this.data, this.homeContext);
+  const HomeDrawer(this.data);
 
   // Data relating to editing labels
   final LabelsData data;
-
-  // Stable context from home page
-  final BuildContext homeContext;
 
   @override
   State<HomeDrawer> createState() => _HomeDrawerState();
@@ -28,7 +26,7 @@ class HomeDrawer extends StatefulWidget {
 
 class _HomeDrawerState extends State<HomeDrawer> {
   // Returns drawer header containing sign in / out button and text
-  Container homeDrawerHeader(BuildContext context) {
+  Container homeDrawerHeader() {
     // Padding and decoration for header
     return Container(
       padding: EdgeInsets.all(Constants.drawerPadding),
@@ -56,15 +54,16 @@ class _HomeDrawerState extends State<HomeDrawer> {
                         noteData.themeIsDark,
                         noteData.themeIsMonochrome,
                       );
+
                       // Pops drawer and pushes sign in page
-                      Navigator.of(widget.homeContext).pop();
-                      await Navigator.of(widget.homeContext).push<void>(
+                      Navigator.of(navigatorKey.currentContext!).pop();
+                      await Navigator.of(navigatorKey.currentContext!)
+                          .push<void>(
                         MaterialPageRoute<void>(
-                          builder: (BuildContext context) => SignInPage(
-                            homeContext: widget.homeContext,
-                          ),
+                          builder: (BuildContext context) => SignInPage(),
                         ),
                       );
+
                       // Changes color back if we canceled
                       themeData.updateTheme();
                     },
@@ -80,10 +79,17 @@ class _HomeDrawerState extends State<HomeDrawer> {
                     ),
                     text: Constants.signOutButton,
                     onPressed: (context) async {
-                      // Signs out and resets data
-                      noteData = NoteData(ownerId: null);
-                      themeData.updateTheme();
-                      await FirebaseAuth.instance.signOut();
+                      if (noteData.isOnline) {
+                        // Signs out and resets data
+                        noteData = NoteData(ownerId: null);
+                        await FirebaseAuth.instance.signOut();
+                      } else {
+                        // If we are offline, block from signing out
+                        showAlert(
+                          Constants.signOutOfflineErrorMessage,
+                          useSnackbar: true,
+                        );
+                      }
                     },
                     scale: Constants.drawerSignInScale,
                   ),
@@ -152,7 +158,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                   tooltip: Constants.newLabelText,
                   // Create new label
                   onPressed: () {
-                    addNewLabel(context, null, () => setState(() {}));
+                    addNewLabel(null, () => setState(() {}));
                   },
                 ),
                 // Edit label icon
@@ -194,8 +200,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
         widget.data.labelName != null &&
         widget.data.labelName !=
             noteData.getLabelName(widget.data.editLabelId)) {
-      noteData.editLabelName(
-          context, widget.data.editLabelId, widget.data.labelName!);
+      noteData.editLabelName(widget.data.editLabelId, widget.data.labelName!);
       widget.data.refreshNotes();
     }
     widget.data.editLabelId = '';
@@ -231,7 +236,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
     // List of widgets for the drawer column
     List<Widget> drawer = <Widget>[
           // Drawer header
-          homeDrawerHeader(context),
+          homeDrawerHeader(),
           Divider(),
           // Labels title
           labelsTitle(

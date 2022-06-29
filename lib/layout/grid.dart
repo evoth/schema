@@ -136,7 +136,7 @@ class _DynamicGridState extends State<DynamicGrid> {
     // Doesn't allow dragging when filtering by a label
     if (filter) {
       if (drag) {
-        showAlert(context, Constants.cantDragMessage, useSnackbar: true);
+        showAlert(Constants.cantDragMessage, useSnackbar: true);
       }
       return;
     }

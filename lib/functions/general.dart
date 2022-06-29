@@ -55,13 +55,13 @@ bool isMobileDevice() {
 }
 
 // Shows snackbar with given text
-void showAlert(BuildContext context, String text, {bool useSnackbar = false}) {
+void showAlert(String text, {bool useSnackbar = false}) {
   if (useSnackbar) {
     rootScaffoldMessengerKey.currentState
       ?..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(text)));
   } else {
-    alert(context, title: Text(text));
+    alert(navigatorKey.currentContext!, title: Text(text));
   }
 }
 
@@ -85,7 +85,7 @@ InputDecoration noBorder({
 }
 
 // Attempts an operation, returning the return value and type of error / success
-// 0 = success, 1 = unknown error, 2 = permission denied error
+// 0 = success, 1 = unknown error, 2 = permission denied error, 3 = unavailable
 Future<TryData> tryQuery(Function func) async {
   int status = 0;
   dynamic returnValue;
@@ -93,7 +93,13 @@ Future<TryData> tryQuery(Function func) async {
   try {
     returnValue = await func();
   } on FirebaseException catch (e) {
-    status = (e.code == 'permission-denied') ? 2 : 1;
+    if (e.code == 'permission-denied') {
+      status = 2;
+    } else if (e.code == 'unavailable') {
+      status = 3;
+    } else {
+      status = 1;
+    }
     error = e;
   } catch (e) {
     status = 1;
@@ -142,7 +148,7 @@ Map<String, dynamic> newerMap(
   Map<String, dynamic> map1,
   Map<String, dynamic> map2,
 ) {
-  if (map1['timeUpdated'].compareTo(map2['timeUpdated']) < 0) {
+  if (map1['timeUpdated'].compareTo(map2['timeUpdated']) > 0) {
     return map1;
   } else {
     return map2;
@@ -154,4 +160,21 @@ Map<String, dynamic> newerMap(
 Timestamp timestampNowRounded() {
   int milliseconds = Timestamp.now().millisecondsSinceEpoch;
   return Timestamp.fromMillisecondsSinceEpoch(milliseconds);
+}
+
+// Turns network access for Firestore on or off. If offline, always disable it.
+// Force is used to override online state.
+// TODO: delete force if not needed
+Future<void> setFirestoreNetwork(bool isOnline, {bool force = false}) async {
+  if (((noteData.isOnline && !force) || force) && isOnline) {
+    await FirebaseFirestore.instance.enableNetwork();
+  } else {
+    await FirebaseFirestore.instance.disableNetwork();
+  }
+}
+
+// Get a GetOptions object with a Source from which to get data. This forces
+// Firestore to either use cache or server when necessary
+GetOptions getOptions(bool fromOnline) {
+  return GetOptions(source: fromOnline ? Source.server : Source.cache);
 }

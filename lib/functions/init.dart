@@ -6,27 +6,36 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:schema/data/noteData.dart';
 import 'package:schema/data/themeData.dart';
+import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
+import 'package:schema/main.dart';
 import 'package:schema/routes/homePage.dart';
 import 'package:schema/routes/signInPage.dart';
 
 // Ensures user is signed in, then refreshes notes before navigating to homepage
 void initApp(
-  BuildContext context,
   User? user,
 ) async {
   // Updates whether we are online or not
   ConnectivityResult connectivityResult =
       await (Connectivity().checkConnectivity());
-  noteData.setIsOnline(isConnectivityResultOnline(connectivityResult));
+  noteData.isOnline = isConnectivityResultOnline(connectivityResult);
+  await setFirestoreNetwork(noteData.isOnline);
 
   // If user is not signed in, navigate to sign in page
   if (user == null) {
-    Navigator.of(context).pushAndRemoveUntil<void>(
+    // Temporarily changes theme color to blue
+    themeData.tempTheme(
+      Constants.themeDefaultColorId,
+      noteData.themeIsDark,
+      noteData.themeIsMonochrome,
+    );
+
+    Navigator.of(navigatorKey.currentContext!).pushAndRemoveUntil<void>(
       MaterialPageRoute<void>(
         builder: (BuildContext context) => SignInPage(),
       ),
-      (route) => route.isFirst,
+      (route) => false,
     );
     return;
   }
@@ -42,16 +51,16 @@ void initApp(
   }
 
   // Get notes, creating new user data if need be
-  await noteData.updateNotes(context, null);
+  await noteData.updateNotes(null);
 
   // Updates theme
   themeData.updateTheme();
 
   // Go to homepage
-  Navigator.of(context).pushAndRemoveUntil<void>(
+  Navigator.of(navigatorKey.currentContext!).pushAndRemoveUntil<void>(
     MaterialPageRoute<void>(
       builder: (BuildContext context) => HomePage(),
     ),
-    (route) => route.isFirst,
+    (route) => false,
   );
 }

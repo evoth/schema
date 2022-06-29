@@ -171,10 +171,7 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
   // Actions to be completed before and after note opened
   Future<void> edit() async {
     await noteData.editNote(
-      context,
-      widget.noteWidgetData,
-      widget.noteWidgetData.refreshNotes,
-    );
+        widget.noteWidgetData, widget.noteWidgetData.refreshNotes);
   }
 
   List<Widget> noteDisplayText() {

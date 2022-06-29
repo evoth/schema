@@ -3,6 +3,7 @@ import 'package:prompt_dialog/prompt_dialog.dart';
 import 'package:schema/data/noteData.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
+import 'package:schema/main.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
 
@@ -91,7 +92,7 @@ class NoteAddLabelButton extends StatelessWidget {
           return;
         } else if (labelId == '') {
           // Prompt user for name and attempt to create new label
-          await addNewLabel(context, note, refreshLabels);
+          await addNewLabel(note, refreshLabels);
         } else {
           // Adds the selected label to the current note
           note.addLabel(labelId);
@@ -112,11 +113,10 @@ class NoteAddLabelButton extends StatelessWidget {
 }
 
 // Prompt user for new label name and either create it or display error message
-Future<void> addNewLabel(
-    BuildContext context, Note? note, Function refreshLabels) async {
+Future<void> addNewLabel(Note? note, Function refreshLabels) async {
   // Prompt user for new label name
   String? newLabelName = await prompt(
-    context,
+    navigatorKey.currentContext!,
     title: Text(
       Constants.newLabelText,
       style: TextStyle(fontSize: Constants.addLabelTitleSize),
@@ -124,7 +124,7 @@ Future<void> addNewLabel(
     hintText: Constants.labelNameHint,
   );
   // Checks label name to make sure it's valid
-  newLabelName = await checkLabelName(context, newLabelName);
+  newLabelName = await checkLabelName(newLabelName);
   if (newLabelName == null) {
     return;
   }
@@ -140,7 +140,7 @@ Future<void> addNewLabel(
 }
 
 // Checks label name and displays error message if name is invalid
-Future<String?> checkLabelName(BuildContext context, String? newName) async {
+Future<String?> checkLabelName(String? newName) async {
   // Trim whitespace
   newName = newName?.trim();
   if (newName == null) {
@@ -149,12 +149,12 @@ Future<String?> checkLabelName(BuildContext context, String? newName) async {
   }
   if (newName.isEmpty) {
     // Label name was empty or only consisted of whitespace
-    showAlert(context, Constants.labelNameEmptyMessage);
+    showAlert(Constants.labelNameEmptyMessage);
     return null;
   }
   if (noteData.labelExists(newName)) {
     // A label with a similar name already exists
-    showAlert(context, Constants.labelExistsMessage);
+    showAlert(Constants.labelExistsMessage);
     return null;
   }
   return newName;

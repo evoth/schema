@@ -5,6 +5,7 @@ import 'package:schema/data/noteData.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
 import 'package:intl/intl.dart';
+import 'package:schema/main.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
 import 'package:schema/widgets/noteEditFieldsWidget.dart';
@@ -21,7 +22,7 @@ class NoteEditPage extends StatelessWidget {
   final scrollController = ScrollController();
 
   // Returns app bar title based on the edit/save state of the note
-  Wrap noteEditAppBarTitle(BuildContext context, Note note) {
+  Wrap noteEditAppBarTitle(Note note) {
     // Initialize the Row with title text
     List<Widget> content = [
       Text(Constants.editTitle),
@@ -40,7 +41,6 @@ class NoteEditPage extends StatelessWidget {
             onPressed: () {
               // Alert explains how note is saved and the time it was last saved
               showAlert(
-                context,
                 sprintf(
                   Constants.savedOfflineMessage,
                   [
@@ -61,7 +61,6 @@ class NoteEditPage extends StatelessWidget {
             onPressed: () {
               // Alert explains how note is saved and the time it was last saved
               showAlert(
-                context,
                 sprintf(
                   Constants.savedCloudMessage,
                   [
@@ -102,7 +101,7 @@ class NoteEditPage extends StatelessWidget {
           title: ValueListenableBuilder(
             valueListenable: note.isSavedNotifier,
             builder: (BuildContext context, bool isSaved, Widget? child) {
-              return noteEditAppBarTitle(context, note);
+              return noteEditAppBarTitle(note);
             },
           ),
           elevation: 0,
@@ -122,11 +121,10 @@ class NoteEditPage extends StatelessWidget {
                   content: Text(Constants.deleteNoteMessage),
                 )) {
                   noteData.deleteNote(
-                    context,
                     note,
                     noteWidgetData.refreshNotes,
                   );
-                  Navigator.of(context).pop(context);
+                  Navigator.of(navigatorKey.currentContext!).pop();
                 }
               },
             ),

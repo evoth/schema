@@ -110,6 +110,10 @@ class Constants {
   static const String discardMessage = 'Empty note discarded';
   static const String deleteMessage = 'Note deleted';
   static const String signInErrorMessage = 'Sign in error. Please try again.';
+  static const String signInOfflineErrorMessage =
+      'Cannot sign in without internet connection.';
+  static const String signOutOfflineErrorMessage =
+      'Cannot sign out without internet connection.';
   static const String labelExistsMessage =
       'A label with this name already exists.';
   static const String labelNameEmptyMessage = 'Label name cannot be empty.';
@@ -175,8 +179,8 @@ class Constants {
   static const String signInGoogleButton = 'Sign in with Google';
   static const String signInAnonButton = 'Skip sign in for now';
   static const String signInCancelButton = 'Stay signed out for now';
-  static const String signInButton = 'Sign in to sync';
-  static const String signOutButton = 'Sign out of account';
+  static const String signInButton = 'Sign in to sync your data';
+  static const String signOutButton = 'Sign out of your account';
   static const String privacyPolicyButton = 'Privacy Policy';
   static const String themeLightButton = 'Light mode';
   static const String themeDarkButton = 'Dark mode';
@@ -200,7 +204,8 @@ class Constants {
           'across multiple devices. Alternatively, you can start making notes ' +
           'without signing in, and sign in later if you change your mind.';
   static const String drawerSignedInText = 'Signed in as %s';
-  static const String drawerSignedOutText = 'Sign in to sync notes.';
+  static const String drawerSignedOutText =
+      'Notes are only saving to this device.';
 
   // Links
   static const String privacyPolicyLink = 'https://evoth.cf/privacy/#privacy';

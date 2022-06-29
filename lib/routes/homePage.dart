@@ -38,7 +38,6 @@ class _HomePageState extends State<HomePage> {
     Note newNote = noteData.newNote(labelsData.filterLabelId);
     // Go to the edit screen for the new note
     await noteData.editNote(
-      context,
       NoteWidgetData(
         newNote,
         () => setState(() {}),
@@ -48,24 +47,29 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Updates notes while showing loading symbol
-  void updateNotesAndShowLoading(BuildContext context, String? labelId) async {
-    isLoading = true;
-    setState(() {});
-    await noteData.updateNotes(context, labelId);
-    isLoading = false;
-    setState(() {});
+  // Updates notes while showing loading symbol, prevents concurrent updates
+  void updateNotesAndShowLoading(String? labelId) async {
+    if (!isLoading) {
+      isLoading = true;
+      setState(() {});
+      await noteData.updateNotes(labelId);
+      isLoading = false;
+      setState(() {});
+    }
   }
 
   // Filters by the given label (if null, stops filtering and shows all notes)
   void filterLabel(String? labelId) async {
     labelsData.filterLabelId = labelId;
     Navigator.of(context).pop();
-    updateNotesAndShowLoading(context, labelId);
+    updateNotesAndShowLoading(labelId);
   }
 
   // Stream subscription for note metadata document
   late StreamSubscription<DocumentSnapshot<Object?>> dataDocSubscription;
+
+  // Listener to update notes when back online
+  late void Function() backOnlineListener;
 
   // Subscribes to document
   @override
@@ -74,11 +78,11 @@ class _HomePageState extends State<HomePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (noteData.isDeleting) {
         noteData.isDeleting = false;
-        updateNotesAndShowLoading(context, labelsData.filterLabelId);
+        updateNotesAndShowLoading(labelsData.filterLabelId);
         // Shows transfer complete message if applicable
         if (noteData.isTransferring) {
           noteData.isTransferring = false;
-          showAlert(context, Constants.transferCompleteMessage);
+          showAlert(Constants.transferCompleteMessage);
         }
       }
     });
@@ -88,21 +92,39 @@ class _HomePageState extends State<HomePage> {
     dataDocSubscription =
         noteData.noteDataDocRef(forceOnline: true).snapshots().listen(
       (event) async {
-        if (noteData.isBackOnline ||
-            (!isNew &&
-                !noteData.isDeleting &&
-                noteData.ownerId != null &&
-                event.data() != null &&
-                !event.metadata.hasPendingWrites &&
-                !DeepCollectionEquality().equals(
-                  event.data(),
-                  noteData.toJson(),
-                ))) {
-          updateNotesAndShowLoading(context, labelsData.filterLabelId);
+        // Removes timeUpdated from each so that it doesn't affect equality
+        Map<String, dynamic> newNoteDataMap =
+            event.data() as Map<String, dynamic>;
+        newNoteDataMap.remove("timeUpdated");
+        Map<String, dynamic> noteDataMap = noteData.toJson();
+        noteDataMap.remove("timeUpdated");
+        // Evaluates necessary conditions and updates notes if needed
+        if (noteData.isOnline &&
+            !isNew &&
+            !noteData.isDeleting &&
+            noteData.ownerId != null &&
+            event.data() != null &&
+            !event.metadata.hasPendingWrites &&
+            !DeepCollectionEquality().equals(
+              newNoteDataMap,
+              noteDataMap,
+            )) {
+          updateNotesAndShowLoading(labelsData.filterLabelId);
         }
         isNew = false;
       },
     );
+
+    // Updates notes when we have just gone back online so we can merge them
+    backOnlineListener = () {
+      if (noteData.backOnlineNotifier.value) {
+        updateNotesAndShowLoading(
+          labelsData.filterLabelId,
+        );
+      }
+    };
+
+    noteData.backOnlineNotifier.addListener(backOnlineListener);
 
     super.initState();
   }
@@ -110,6 +132,7 @@ class _HomePageState extends State<HomePage> {
   // Cancels note metadata document listener
   @override
   void dispose() {
+    noteData.backOnlineNotifier.removeListener(backOnlineListener);
     dataDocSubscription.cancel();
     super.dispose();
   }
@@ -172,7 +195,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       // Drawer with settings, labels, etc
-      drawer: HomeDrawer(labelsData, context),
+      drawer: HomeDrawer(labelsData),
       // Saves label name when drawer is closed
       onDrawerChanged: (isOpen) {
         if (!isOpen) {
@@ -183,7 +206,9 @@ class _HomePageState extends State<HomePage> {
               labelsData.labelName !=
                   noteData.getLabelName(labelsData.editLabelId)) {
             noteData.editLabelName(
-                context, labelsData.editLabelId, labelsData.labelName!);
+              labelsData.editLabelId,
+              labelsData.labelName!,
+            );
           }
           // Resets data
           labelsData.resetEditing();

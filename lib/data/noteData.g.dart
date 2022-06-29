@@ -26,7 +26,8 @@ NoteData _$NoteDataFromJson(Map<String, dynamic> json) => NoteData(
       ..layoutDimensionId = json['layoutDimensionId'] as int
       ..layoutTimeUpdated = NoteData._rawTimeStamp(json['layoutTimeUpdated'])
       ..timeOffline = NoteData._rawTimeStamp(json['timeOffline'])
-      ..isOnline = json['isOnline'] as bool;
+      ..isOnline = json['isOnline'] as bool
+      ..timeUpdated = NoteData._rawTimeStamp(json['timeUpdated']);
 
 Map<String, dynamic> _$NoteDataToJson(NoteData instance) => <String, dynamic>{
       'numNotes': instance.numNotes,
@@ -44,4 +45,5 @@ Map<String, dynamic> _$NoteDataToJson(NoteData instance) => <String, dynamic>{
       'layoutTimeUpdated': NoteData._rawTimeStamp(instance.layoutTimeUpdated),
       'timeOffline': NoteData._rawTimeStamp(instance.timeOffline),
       'isOnline': instance.isOnline,
+      'timeUpdated': NoteData._rawTimeStamp(instance.timeUpdated),
     };

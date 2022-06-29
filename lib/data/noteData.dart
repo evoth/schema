@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'dart:math';
 
-import 'package:alert_dialog/alert_dialog.dart';
+import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:confirm_dialog/confirm_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,6 +10,7 @@ import 'package:schema/data/themeData.dart';
 import 'package:schema/functions/auth.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
+import 'package:schema/main.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
 import 'package:schema/routes/homePage.dart';
@@ -18,6 +18,7 @@ import 'package:schema/routes/loadingPage.dart';
 import 'package:schema/routes/noteEditPage.dart';
 import 'package:schema/widgets/heroDialogRoute.dart';
 import 'package:schema/widgets/noteAddLabelWidget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 part 'noteData.g.dart';
 
 // Keeps track of notes and metadata
@@ -44,9 +45,9 @@ class NoteData {
   // Whether we are currently deleting notes (and thus should not update)
   @JsonKey(ignore: true)
   bool isDeleting = false;
-  // Whether we have just gone online (and should therefore update notes)
+  // Notifies HomePage when we have just gone back online so it can update notes
   @JsonKey(ignore: true)
-  bool isBackOnline = false;
+  ValueNotifier<bool> backOnlineNotifier = ValueNotifier(false);
   // Theme data
   int themeColorId = Constants.themeDefaultColorId;
   bool themeIsDark = Constants.themeDefaultIsDark;
@@ -64,6 +65,9 @@ class NoteData {
   Timestamp timeOffline = timestampNowRounded();
   // Whether we are online
   bool isOnline = true;
+  // Time the data was last updated (used in security rules to prevent desync)
+  @JsonKey(fromJson: _rawTimeStamp, toJson: _rawTimeStamp)
+  Timestamp timeUpdated = timestampNowRounded();
 
   static Timestamp _rawTimeStamp(t) => t as Timestamp;
 
@@ -165,8 +169,7 @@ class NoteData {
   }
 
   // Deletes note and shifts indices if the note still exists
-  void deleteNote(BuildContext context, Note note, Function refreshNotes,
-      {String? message}) {
+  void deleteNote(Note note, Function refreshNotes, {String? message}) {
     if (note.tempIndex >= 0) {
       // Deletes from database if we are online. Otherwise, we will wait until
       // we are online to decide whether the document should be deleted
@@ -188,7 +191,7 @@ class NoteData {
       // Updates metadata
       numNotes--;
       updateData();
-      showAlert(context, message ?? Constants.deleteMessage, useSnackbar: true);
+      showAlert(message ?? Constants.deleteMessage, useSnackbar: true);
       refreshNotes();
     }
   }
@@ -221,7 +224,6 @@ class NoteData {
 
   // Pushes edit screen and calls note edit function
   Future<void> editNote(
-    BuildContext context,
     NoteWidgetData noteWidgetData,
     Function refreshNotes,
   ) async {
@@ -237,7 +239,7 @@ class NoteData {
     // mobile, navigate to edit screen as usual. Otherwise, display as modal for
     // a more user friendly reading/editing experience
     if (isMobileDevice()) {
-      await Navigator.of(context).push<void>(
+      await Navigator.of(navigatorKey.currentContext!).push<void>(
         HeroDialogRoute(
           duration: Constants.noteHeroDuration,
           builder: (BuildContext context) {
@@ -260,7 +262,7 @@ class NoteData {
       );
     } else {
       // TODO: make this another whole widget
-      await Navigator.of(context).push(
+      await Navigator.of(navigatorKey.currentContext!).push(
         HeroDialogRoute(
           duration: Constants.noteHeroDuration,
           builder: (BuildContext context) {
@@ -305,8 +307,7 @@ class NoteData {
 
     // Removes note if new and empty
     if (note.isNew && note.title == '' && note.text == '') {
-      deleteNote(context, note, refreshNotes,
-          message: Constants.discardMessage);
+      deleteNote(note, refreshNotes, message: Constants.discardMessage);
     }
     note.isNew = false;
 
@@ -350,8 +351,8 @@ class NoteData {
   }
 
   // Edit label name
-  void editLabelName(BuildContext context, String labelId, String name) async {
-    String? checkedName = await checkLabelName(context, name);
+  void editLabelName(String labelId, String name) async {
+    String? checkedName = await checkLabelName(name);
     if (checkedName == null || checkedName == labels[labelId]?['name']) {
       return;
     }
@@ -417,21 +418,19 @@ class NoteData {
   // Sets online status and time offline if necessary. Kicks back online
   // procedure into motion if we're just getting back online
   void setIsOnline(bool newIsOnline) async {
-    if (isOnline && !newIsOnline) {
-      timeOffline = timestampNowRounded();
-    } else if (!isOnline && newIsOnline) {
-      // Lets HomePage and updateData know what's going on
-      isBackOnline = true;
-      // Waits for any pending offline writes
-      await updateData();
-      // Preeminently sets online status to true for aforementioned functions
-      isOnline = true;
-      // Triggers metadata document listener in HomePage, without notifying
-      // other devices that may be listening so that we can complete the back
-      // online process undisturbed
-      await noteDataDocRef().update({'denyRequest': true});
-    }
+    // Sets status and enables or disables Firestore network access accordingly
+    bool oldIsOnline = isOnline;
     isOnline = newIsOnline;
+    await setFirestoreNetwork(isOnline);
+    // Special actions for when device has just gone offline or online
+    if (oldIsOnline && !newIsOnline) {
+      timeOffline = timestampNowRounded();
+      setTimeOfflineSP();
+      updateData();
+    } else if (!oldIsOnline && newIsOnline) {
+      // Lets HomePage and updateData know what's going on
+      backOnlineNotifier.value = true;
+    }
   }
 
   // Deletes all online data for specified user (will only work if signed in)
@@ -496,6 +495,8 @@ class NoteData {
         }
       }
     }
+    // Update time updated (used by security rules to prevent desync)
+    timeUpdated = timestampNowRounded();
     // If we are offline, update data as normal. Otherwise, use a special
     // document in the offline collection to store offline session changes
     await tryQuery(() => noteDataDocRef().set(toJson()));
@@ -579,6 +580,7 @@ class NoteData {
     // TODO: Fix theme reversal behavior
     if (layoutTimeUpdated.compareTo(offlineData.layoutTimeUpdated) < 0) {
       layoutDimensionId = offlineData.layoutDimensionId;
+      layoutTimeUpdated = offlineData.layoutTimeUpdated;
     }
   }
 
@@ -604,13 +606,15 @@ class NoteData {
   // Downloads metadata (creating new if necessary) and downloads notes that fit
   // the query and have been newly updated, keeping any already up-to-date notes
   Future<void> updateNotes(
-    BuildContext context,
     String? filterLabelId,
   ) async {
-    // Sets isBackOnline to false so that we don't have duplicate updates
-    if (isBackOnline) {
-      isBackOnline = false;
+    // Sets backOnlineNotifier to false so that we don't have duplicate updates
+    if (backOnlineNotifier.value) {
+      backOnlineNotifier.value = false;
     }
+
+    // Enables network access
+    await setFirestoreNetwork(true);
 
     // Variables used to update data
     NoteData? newNoteData;
@@ -620,10 +624,8 @@ class NoteData {
 
     // Attempts to get user data already stored in cache if metadata is empty
     if (noteMeta.isEmpty) {
-      await FirebaseFirestore.instance.disableNetwork();
-
       tryData = await tryQuery(
-        () async => await noteDataDocRef().get(),
+        () async => await noteDataDocRef().get(getOptions(false)),
       );
       failed = tryData.status != 0;
       dataDoc = tryData.returnValue;
@@ -634,20 +636,39 @@ class NoteData {
         if (newLocalNoteData.ownerId == ownerId) {
           setNoteData(newLocalNoteData);
         }
-      }
+      } else if (!isOnline && tryData.status == 3) {
+        // If we get a firestore unavailable error (3), there is a good chance
+        // that we are newly offline and should use the online document
+        tryData = await tryQuery(
+          () async =>
+              await noteDataDocRef(forceOnline: true).get(getOptions(false)),
+        );
+        failed = tryData.status != 0;
+        dataDoc = tryData.returnValue;
 
-      await FirebaseFirestore.instance.enableNetwork();
+        // There was an online document that we could use
+        if (!failed && dataDoc!.exists) {
+          NoteData newLocalNoteData = NoteData.fromJson(dataDoc.data()!);
+          if (newLocalNoteData.ownerId == ownerId) {
+            // Restores data and converts to offline
+            setNoteData(newLocalNoteData);
+            isOnline = false;
+            timeOffline = timestampNowRounded();
+            setTimeOfflineSP();
+          }
+        }
+      }
     }
 
     // When we get back offline, the online status isn't immediately updated so
     // that we don't overwrite the online data. Here we update the status.
-    if (isBackOnline) {
+    if (backOnlineNotifier.value) {
       isOnline = true;
     }
 
     // Attempts to get user data
     tryData = await tryQuery(
-      () async => await noteDataDocRef().get(),
+      () async => await noteDataDocRef().get(getOptions(isOnline)),
     );
     failed = tryData.status != 0;
     dataDoc = tryData.returnValue;
@@ -664,11 +685,14 @@ class NoteData {
     } else if (!failed && dataDoc!.exists) {
       // Import metadata
       newNoteData = NoteData.fromJson(dataDoc.data()!);
+    } else if (!isOnline && tryData.status == 3) {
+      // We are likely newly offline, and should thus just copy the local data
+      newNoteData = NoteData.fromJson(toJson());
     }
 
     // We couldn't get metadata from cache or online, so something is wrong
     if (newNoteData == null) {
-      showAlert(context, Constants.updateNotesErrorMessage, useSnackbar: true);
+      showAlert(Constants.updateNotesErrorMessage, useSnackbar: true);
       return;
     }
 
@@ -679,7 +703,7 @@ class NoteData {
           .instance
           .collection('notes-meta-offline')
           .where('ownerId', isEqualTo: ownerId)
-          .get();
+          .get(getOptions(false));
 
       // For each document, merge it with our data
       for (QueryDocumentSnapshot<Map<String, dynamic>> doc
@@ -690,7 +714,7 @@ class NoteData {
     }
 
     // Disable network access so that we can check notes that are cached
-    await FirebaseFirestore.instance.disableNetwork();
+    await setFirestoreNetwork(false);
 
     // If the user has changed, download all notes before continuing
     bool isSameUser = ownerId == newNoteData.ownerId;
@@ -748,7 +772,7 @@ class NoteData {
     }
 
     // Enable network access so that we can get remaining notes from the cloud
-    await FirebaseFirestore.instance.enableNetwork();
+    await setFirestoreNetwork(true);
 
     bool error = false;
     for (String noteId in newNoteIds) {
@@ -773,7 +797,7 @@ class NoteData {
     // Errors in other methods will result in getting from database. If there is
     // an error here, something has gone wrong.
     if (error) {
-      showAlert(context, Constants.updateNotesErrorMessage, useSnackbar: true);
+      showAlert(Constants.updateNotesErrorMessage, useSnackbar: true);
     }
 
     // Updates metadata
@@ -798,15 +822,13 @@ class NoteData {
   // Transfers all notes from one account (anonymous) to another (Google), upon
   // user's sign in and prompting for transfer options (use cloud function in
   // future so there's no possibility of deleting someone's notes)
-  Future<void> transferNotes(
-    BuildContext context,
-  ) async {
+  Future<void> transferNotes() async {
     // Gets all notes for current user to prepare for transfer
-    await updateNotes(context, null);
+    await updateNotes(null);
 
     // Gets Google credential first, so that we can still access this account
     // during the transfer or in case of an error
-    final AuthCredential? credential = await getGoogleCredential(context);
+    final AuthCredential? credential = await getGoogleCredential();
 
     if (credential == null) {
       return;
@@ -814,7 +836,7 @@ class NoteData {
 
     // Asks user whether to transfer data
     bool transfer = await confirm(
-      context,
+      navigatorKey.currentContext!,
       title: Text(Constants.transferTitle),
       content: Text(Constants.transferMessage),
       textCancel: Text(Constants.transferCancel),
@@ -824,19 +846,20 @@ class NoteData {
     // If no, confirms again to make sure, canceling if not sure
     if (!transfer) {
       transfer = !(await confirm(
-        context,
+        navigatorKey.currentContext!,
         title: Text(Constants.transferDeleteTitle),
         content: Text(Constants.transferDeleteMessage),
         textOK: Text(Constants.transferDeleteOK),
       ));
       if (!transfer) {
         // Push loading screen with deleting text
-        Navigator.of(context).push<void>(
+        Navigator.of(navigatorKey.currentContext!).pushAndRemoveUntil<void>(
           MaterialPageRoute<void>(
             builder: (BuildContext context) => LoadingPage(
               text: Constants.deleteLoading,
             ),
           ),
+          (route) => false,
         );
 
         // Deletes anonymous user data
@@ -850,11 +873,11 @@ class NoteData {
               (await FirebaseAuth.instance.signInWithCredential(credential))
                   .user;
           if (newUser == null) {
-            signInError(context);
+            signInError();
             return;
           }
         } catch (e) {
-          signInError(context);
+          signInError();
           return;
         }
 
@@ -867,26 +890,27 @@ class NoteData {
           ),
         );
 
-        await updateNotes(context, null);
+        await updateNotes(null);
 
         // Go to homepage
-        Navigator.of(context).pushAndRemoveUntil<void>(
+        Navigator.of(navigatorKey.currentContext!).pushAndRemoveUntil<void>(
           MaterialPageRoute<void>(
             builder: (BuildContext context) => HomePage(),
           ),
-          (route) => route.isFirst,
+          (route) => false,
         );
       }
       return;
     }
 
     // Push loading screen with transferring text
-    Navigator.of(context).push<void>(
+    Navigator.of(navigatorKey.currentContext!).pushAndRemoveUntil<void>(
       MaterialPageRoute<void>(
         builder: (BuildContext context) => LoadingPage(
           text: Constants.transferLoading,
         ),
       ),
+      (route) => false,
     );
 
     // Marks data as transferred and delete account data from database
@@ -900,11 +924,11 @@ class NoteData {
       newUser =
           (await FirebaseAuth.instance.signInWithCredential(credential)).user;
       if (newUser == null) {
-        signInError(context);
+        signInError();
         return;
       }
     } catch (e) {
-      signInError(context);
+      signInError();
       return;
     }
 
@@ -915,7 +939,7 @@ class NoteData {
       email: newUser.email,
     );
 
-    await newNoteData.updateNotes(context, null);
+    await newNoteData.updateNotes(null);
 
     // Add labels from old user, merging any that share the same name and
     // storing which new ids go with which old ones (to be used when
@@ -950,12 +974,28 @@ class NoteData {
     themeData.updateTheme();
 
     // Go to homepage
-    Navigator.of(context).pushAndRemoveUntil<void>(
+    Navigator.of(navigatorKey.currentContext!).pushAndRemoveUntil<void>(
       MaterialPageRoute<void>(
         builder: (BuildContext context) => HomePage(),
       ),
-      (route) => route.isFirst,
+      (route) => false,
     );
+  }
+
+  // Sets timeOffline in shared preferences to retrieve when starting offline
+  Future<void> setTimeOfflineSP() async {
+    final sp = await SharedPreferences.getInstance();
+    sp.setInt("timeOfflineMilliseconds", timeOffline.millisecondsSinceEpoch);
+  }
+
+  // Gets timeOffline from shared preferences when starting offline
+  Future<void> getTimeOfflineSP() async {
+    final sp = await SharedPreferences.getInstance();
+    int? timeOfflineMilliseconds = sp.getInt("timeOfflineMilliseconds");
+    if (timeOfflineMilliseconds != null) {
+      timeOffline =
+          Timestamp.fromMillisecondsSinceEpoch(timeOfflineMilliseconds);
+    }
   }
 
   NoteData({required this.ownerId, this.isAnonymous = true, this.email});

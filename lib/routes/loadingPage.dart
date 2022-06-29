@@ -3,7 +3,6 @@ import 'package:schema/functions/constants.dart';
 
 // Returns loading page with custom text
 class LoadingPage extends StatelessWidget {
-  // If there's no text, needs mainContext
   const LoadingPage({required this.text});
 
   // Loading text
