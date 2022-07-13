@@ -14,16 +14,10 @@ A clean, customizable, and functional notes app with support for note organizati
 - Web app available at https://schema.ethanvoth.com
 
 ## Screenshots
-<div style="display: flex; flex-wrap: wrap; margin-bottom: 10px;">
-   <div style="display: flex; flex-wrap: wrap; flex: 1 420px;">
-      <img src="marketing/github/screenshots/png/phone_screenshot_1.png" alt="Schema Notes screenshot 1" width="200" style="flex: 1; margin: 5px">
-      <img src="marketing/github/screenshots/png/phone_screenshot_2.png" alt="Schema Notes screenshot 2" width="200" style="flex: 1; margin: 5px">
-   </div>
-   <div style="display: flex; flex-wrap: wrap; flex: 1 420px;">
-      <img src="marketing/github/screenshots/png/phone_screenshot_3.png" alt="Schema Notes screenshot 3" width="200" style="flex: 1; margin: 5px">
-      <img src="marketing/github/screenshots/png/phone_screenshot_4.png" alt="Schema Notes screenshot 4" width="200" style="flex: 1; margin: 5px">
-   </div>
-</div>
+[<img src="marketing/github/screenshots/png/phone_screenshot_1.png" alt="Schema Notes screenshot 1" width="200">](marketing/github/screenshots/png/phone_screenshot_1.png)
+[<img src="marketing/github/screenshots/png/phone_screenshot_2.png" alt="Schema Notes screenshot 2" width="200">](marketing/github/screenshots/png/phone_screenshot_2.png)
+[<img src="marketing/github/screenshots/png/phone_screenshot_3.png" alt="Schema Notes screenshot 3" width="200">](marketing/github/screenshots/png/phone_screenshot_3.png)
+[<img src="marketing/github/screenshots/png/phone_screenshot_4.png" alt="Schema Notes screenshot 4" width="200">](marketing/github/screenshots/png/phone_screenshot_4.png)
 
 ## To-Do
 - "Intense mode" for light mode and a darker dark mode option
