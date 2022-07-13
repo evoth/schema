@@ -31,13 +31,13 @@
 .gradle/
 .vscode/
 
-# Misc files
+# Firebase files
 .firebaserc
 firebase.json
 lib/firebase_options.dart
+ios/firebase_app_id_file.json
 
 # Web related
-lib/generated_plugin_registrant.dart
 
 # Symbolication related
 app.*.symbols

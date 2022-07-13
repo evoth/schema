@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:schema/data/noteData.dart';
 import 'package:schema/main.dart';
 import 'package:schema/models/noteModel.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 // Unfocuses text fields and dismisses keyboard
 void unfocus(BuildContext context) {
@@ -132,15 +131,6 @@ String capitalize(String str) {
 bool isConnectivityResultOnline(ConnectivityResult result) {
   return (result == ConnectivityResult.mobile ||
       result == ConnectivityResult.wifi);
-}
-
-// Customized time ago text (capitalized and sans the word "about")
-String customTimeAgo(DateTime dateTime) {
-  String timeAgoText = timeago.format(dateTime);
-  if (timeAgoText.substring(0, 6) == 'about ') {
-    timeAgoText = timeAgoText.substring(6);
-  }
-  return capitalize(timeAgoText);
 }
 
 // Returns the newer of two maps using their 'timeUpdated' property

@@ -13,8 +13,38 @@ class ThemeEditContent extends StatefulWidget {
 }
 
 class _ThemeEditContentState extends State<ThemeEditContent> {
+  @override
+  Widget build(BuildContext context) {
+    // ScrollView in case screen is too short
+    return SingleChildScrollView(
+      // Column is min so that it doesn't fill all vertical space possible
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        // Combines theme mode buttons and color tiles
+        children: themeModeButtons() +
+            [
+              Divider(),
+              SizedBox(height: Constants.themeEditSpacing),
+              SizedBox(
+                // Calculates correct width and height to contain tiles
+                height: (Constants.themeColorOptions.length /
+                                Constants.themeEditCount)
+                            .ceil() *
+                        (Constants.themeEditSize + Constants.themeEditSpacing) -
+                    Constants.themeEditSpacing,
+                width: (Constants.themeEditCount) *
+                        (Constants.themeEditSize + Constants.themeEditSpacing) -
+                    Constants.themeEditSpacing,
+                child: themeColorTiles(),
+              ),
+            ],
+      ),
+    );
+  }
+
   // Returns a button from the given text and function
-  ElevatedButton themeModeButton(
+  Widget themeModeButton(
     String text,
     bool isDark,
     bool isMonochrome,
@@ -112,7 +142,7 @@ class _ThemeEditContentState extends State<ThemeEditContent> {
   }
 
   // Returns a grid of colored tiles (with tooltips) to choose a theme color
-  GridView themeColorTiles() {
+  Widget themeColorTiles() {
     return GridView.count(
       // Spacing and cross axis count (number of tiles in a row)
       crossAxisCount: Constants.themeEditCount,
@@ -160,36 +190,6 @@ class _ThemeEditContentState extends State<ThemeEditContent> {
           ),
         );
       }).toList(),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // ScrollView in case screen is too short
-    return SingleChildScrollView(
-      // Column is min so that it doesn't fill all vertical space possible
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        // Combines theme mode buttons and color tiles
-        children: themeModeButtons() +
-            [
-              Divider(),
-              SizedBox(height: Constants.themeEditSpacing),
-              SizedBox(
-                // Calculates correct width and height to contain tiles
-                height: (Constants.themeColorOptions.length /
-                                Constants.themeEditCount)
-                            .ceil() *
-                        (Constants.themeEditSize + Constants.themeEditSpacing) -
-                    Constants.themeEditSpacing,
-                width: (Constants.themeEditCount) *
-                        (Constants.themeEditSize + Constants.themeEditSpacing) -
-                    Constants.themeEditSpacing,
-                child: themeColorTiles(),
-              ),
-            ],
-      ),
     );
   }
 }

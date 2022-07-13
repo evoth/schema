@@ -34,7 +34,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "com.evoth.schema"
+        applicationId "com.ethanvoth.schema"
         multiDexEnabled true
         minSdkVersion 19
         targetSdkVersion 30

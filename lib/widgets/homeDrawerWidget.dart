@@ -1,3 +1,4 @@
+import 'package:confirm_dialog/confirm_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -7,6 +8,7 @@ import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
 import 'package:schema/main.dart';
 import 'package:schema/routes/homePage.dart';
+import 'package:schema/routes/loadingPage.dart';
 import 'package:schema/routes/signInPage.dart';
 import 'package:schema/widgets/homeDrawerLabelWidget.dart';
 import 'package:schema/widgets/noteAddLabelWidget.dart';
@@ -25,8 +27,34 @@ class HomeDrawer extends StatefulWidget {
 }
 
 class _HomeDrawerState extends State<HomeDrawer> {
+  @override
+  Widget build(BuildContext context) {
+    // If user taps outside of text fields, unfocus (and dismiss keyboard) and
+    // save label name if one was being edited
+    return GestureDetector(
+      onTap: () {
+        doneLabelName();
+        unfocus(context);
+      },
+      // Scrollable drawer
+      child: Drawer(
+        child: CustomScrollView(
+          controller: ScrollController(),
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Column(
+                children: homeDrawerContent(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Returns drawer header containing sign in / out button and text
-  Container homeDrawerHeader() {
+  Widget homeDrawerHeader() {
     // Padding and decoration for header
     return Container(
       padding: EdgeInsets.all(Constants.drawerPadding),
@@ -101,7 +129,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
                   ? Constants.drawerSignedOutText
                   : sprintf(
                       Constants.drawerSignedInText,
-                      [noteData.email ?? ''],
+                      [FirebaseAuth.instance.currentUser?.email ?? ''],
                     ),
               style: TextStyle(
                 fontSize: Constants.drawerSubtitleSize,
@@ -114,7 +142,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
   }
 
   // Returns labels section title tile based on whether it's in edit mode
-  ListTile labelsTitle(
+  Widget labelsTitle(
       BuildContext context, bool editMode, String? filterLabelId) {
     return ListTile(
       // Title
@@ -191,20 +219,23 @@ class _HomeDrawerState extends State<HomeDrawer> {
 
   // Updates temp label name
   void updateLabelName(String name) {
-    widget.data.labelName = name;
+    widget.data.editLabelName = name;
   }
 
   // Saves label name
   void doneLabelName() {
     if (widget.data.editLabelId != '' &&
-        widget.data.labelName != null &&
-        widget.data.labelName !=
+        widget.data.editLabelName != null &&
+        widget.data.editLabelName !=
             noteData.getLabelName(widget.data.editLabelId)) {
-      noteData.editLabelName(widget.data.editLabelId, widget.data.labelName!);
+      noteData.editLabelName(
+        widget.data.editLabelId,
+        widget.data.editLabelName!,
+      );
       widget.data.refreshNotes();
     }
     widget.data.editLabelId = '';
-    widget.data.labelName = null;
+    widget.data.editLabelName = null;
     setState(() {});
   }
 
@@ -213,7 +244,7 @@ class _HomeDrawerState extends State<HomeDrawer> {
   void editLabelName(String labelId) {
     doneLabelName();
     widget.data.editLabelId = labelId;
-    widget.data.labelName = noteData.getLabelName(labelId);
+    widget.data.editLabelName = noteData.getLabelName(labelId);
     setState(() {});
   }
 
@@ -246,40 +277,51 @@ class _HomeDrawerState extends State<HomeDrawer> {
         <Widget>[
           Expanded(child: Container()),
           Divider(),
-          TextButton(
-            onPressed: () async {
-              await launchUrl(Uri.parse(Constants.privacyPolicyLink));
-            },
-            child: Text(Constants.privacyPolicyButton),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              TextButton(
+                onPressed: () async {
+                  await launchUrl(Uri.parse(Constants.privacyPolicyLink));
+                },
+                child: Text(Constants.privacyPolicyButton),
+              ),
+              TextButton(
+                onPressed: () async {
+                  // Gets confirmation from user before deleting their account
+                  // TODO: add checkbox (harder than it seems)
+                  if (!(await confirm(
+                    navigatorKey.currentContext!,
+                    title: Text(Constants.accountDeleteTitle),
+                    content: Text(Constants.accountDeleteMessage),
+                    textOK: Text(Constants.accountDeleteOK),
+                  ))) {
+                    return;
+                  }
+
+                  // Push loading screen with deleting text
+                  Navigator.of(navigatorKey.currentContext!)
+                      .pushAndRemoveUntil<void>(
+                    MaterialPageRoute<void>(
+                      builder: (BuildContext context) => LoadingPage(
+                        text: Constants.deleteLoading,
+                      ),
+                    ),
+                    (route) => false,
+                  );
+
+                  // Delete user
+                  await noteData.deleteUser();
+
+                  // Resets data
+                  noteData = NoteData(ownerId: null);
+                },
+                child: Text(Constants.deleteAccountButton),
+              ),
+            ],
           ),
           SizedBox(height: Constants.drawerPadding / 2),
         ];
     return drawer;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // If user taps outside of text fields, unfocus (and dismiss keyboard) and
-    // save label name if one was being edited
-    return GestureDetector(
-      onTap: () {
-        doneLabelName();
-        unfocus(context);
-      },
-      // Scrollable drawer
-      child: Drawer(
-        child: CustomScrollView(
-          controller: ScrollController(),
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Column(
-                children: homeDrawerContent(context),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

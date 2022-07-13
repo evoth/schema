@@ -1,17 +1,23 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:alert_dialog/alert_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:schema/data/noteData.dart';
+import 'package:schema/data/themeData.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
 import 'package:schema/layout/grid.dart';
+import 'package:schema/main.dart';
 import 'package:schema/models/noteModel.dart';
 import 'package:schema/models/noteWidgetModel.dart';
+import 'package:schema/routes/tutorialPage.dart';
 import 'package:schema/widgets/layoutEditWidget.dart';
 import 'package:schema/widgets/themeEditWidget.dart';
 import 'package:schema/widgets/homeDrawerWidget.dart';
+import 'package:widget_arrows/arrows.dart';
+import 'package:widget_arrows/widget_arrows.dart';
 
 // Home page to view notes and drawer to edit labels
 class HomePage extends StatefulWidget {
@@ -33,6 +39,9 @@ class _HomePageState extends State<HomePage> {
   // already updated earlier)
   bool isNew = true;
 
+  // Whether the drawer is currently open
+  bool isDrawerOpen = false;
+
   // Adds a new blank note
   void newNote() async {
     Note newNote = noteData.newNote(labelsData.filterLabelId);
@@ -53,6 +62,12 @@ class _HomePageState extends State<HomePage> {
       isLoading = true;
       setState(() {});
       await noteData.updateNotes(labelId);
+      // Resets label data if the label we're currently filtering by no longer
+      // exists
+      if (labelsData.filterLabelId != null &&
+          !noteData.labels.containsKey(labelsData.filterLabelId)) {
+        labelsData = LabelsData(null, () => setState(() {}), filterLabel);
+      }
       isLoading = false;
       setState(() {});
     }
@@ -95,9 +110,9 @@ class _HomePageState extends State<HomePage> {
         // Removes timeUpdated from each so that it doesn't affect equality
         Map<String, dynamic> newNoteDataMap =
             event.data() as Map<String, dynamic>;
-        newNoteDataMap.remove("timeUpdated");
+        newNoteDataMap.remove('timeUpdated');
         Map<String, dynamic> noteDataMap = noteData.toJson();
-        noteDataMap.remove("timeUpdated");
+        noteDataMap.remove('timeUpdated');
         // Evaluates necessary conditions and updates notes if needed
         if (noteData.isOnline &&
             !isNew &&
@@ -139,104 +154,166 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // If user taps outside of text fields, unfocus (and dismiss keyboard)
-    return Scaffold(
-      // App bar with title
-      appBar: AppBar(
-        // Row to conditionally display loading indicator
-        title: Row(
-          children: [
-            // If filtering, filter name. Otherwise, "Schema"
-            this.mounted && labelsData.filterLabelId != null
-                ? Text(noteData.getLabelName(labelsData.filterLabelId!))
-                : Text(Constants.appTitle),
-            SizedBox(width: Constants.appBarPadding),
-            // Loading symbol if we are loading
-            SizedBox(
-              height: Constants.appBarSize,
-              width: Constants.appBarSize,
-              child: Center(
-                child: isLoading ? CircularProgressIndicator() : null,
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: ArrowContainer(
+        child: Scaffold(
+          // App bar with title
+          appBar: AppBar(
+            // Row to conditionally display loading indicator
+            title: Row(
+              children: [
+                // If filtering, filter name. Otherwise, "Schema"
+                this.mounted && labelsData.filterLabelId != null
+                    ? Text(noteData.getLabelName(labelsData.filterLabelId!))
+                    : Text(Constants.appTitle),
+                SizedBox(width: Constants.appBarPadding),
+                // Loading symbol if we are loading
+                SizedBox(
+                  height: Constants.appBarSize,
+                  width: Constants.appBarSize,
+                  child: Center(
+                    child: isLoading ? CircularProgressIndicator() : null,
+                  ),
+                ),
+              ],
+            ),
+            elevation: 0,
+            // App bar actions
+            actions: [
+              // Note shape / layout button
+              IconButton(
+                onPressed: () {
+                  alert(
+                    context,
+                    title: Text(Constants.layoutEditTitle),
+                    content: LayoutEditContent(refresh: () => setState(() {})),
+                    textOK: Text(Constants.layoutEditOK),
+                  );
+                },
+                tooltip: Constants.layoutTip,
+                icon: Icon(Icons.grid_view_rounded),
               ),
-            ),
-          ],
+              SizedBox(width: Constants.appBarPadding),
+              // Theme edit button
+              IconButton(
+                onPressed: () {
+                  alert(
+                    context,
+                    title: Text(Constants.themeEditTitle),
+                    content: ThemeEditContent(),
+                    textOK: Text(Constants.themeEditOK),
+                  );
+                },
+                tooltip: Constants.themeTip,
+                icon: Icon(Icons.color_lens),
+              ),
+              SizedBox(width: Constants.appBarPadding),
+              // Tutorial button
+              IconButton(
+                onPressed: () {
+                  // Pushes tutorial page
+                  Navigator.of(navigatorKey.currentContext!).push<void>(
+                    MaterialPageRoute<void>(
+                      builder: (BuildContext context) => TutorialPage(),
+                    ),
+                  );
+                },
+                tooltip: Constants.tutorialTip,
+                icon: Icon(Icons.help),
+              ),
+              SizedBox(width: Constants.appBarPadding),
+            ],
+          ),
+          // Drawer with settings, labels, etc
+          drawer: HomeDrawer(labelsData),
+          // Saves label name when drawer is closed
+          onDrawerChanged: (isOpen) {
+            // Update the arrow when there are no notes
+            if (noteData.notes.length == 0) {
+              setState(() => isDrawerOpen = isOpen);
+            }
+            if (!isOpen) {
+              // Saves label name if one was being edited
+              if (labelsData.labelsEditMode &&
+                  labelsData.editLabelId != '' &&
+                  labelsData.editLabelName != null &&
+                  labelsData.editLabelName !=
+                      noteData.getLabelName(labelsData.editLabelId)) {
+                noteData.editLabelName(
+                  labelsData.editLabelId,
+                  labelsData.editLabelName!,
+                );
+              }
+              // Resets data
+              labelsData.resetEditing();
+              setState(() {});
+            }
+          },
+          // Stack so that buttons can go over the grid
+          body: Stack(
+            children: <Widget>[
+              noteData.notes.length != 0
+                  ?
+                  // Grid with notes
+                  DynamicGrid(
+                      refreshNotes: () => setState(() {}),
+                      filterLabelId: labelsData.filterLabelId,
+                      // Rebuilds when the filter id or layout changes
+                      key: ValueKey(labelsData.filterLabelId ??
+                          '' + noteData.layoutDimensionId.toString()),
+                    )
+                  // Placeholder if there are no notes to be shown
+                  : Container(
+                      padding: EdgeInsets.all(Constants.homePadding),
+                      alignment: isMobileDevice() ? null : Alignment.center,
+                      // An arrow pointing to the new note button
+                      child: ArrowElement(
+                        show: noteData.notes.length == 0 && !isDrawerOpen,
+                        id: 'placeholderText',
+                        targetId: 'newNoteButton',
+                        sourceAnchor: isMobileDevice()
+                            ? Alignment.bottomLeft
+                            : Alignment.bottomRight,
+                        arcDirection: ArcDirection.Left,
+                        padStart: Constants.homePadding,
+                        padEnd: Constants.homePadding,
+                        color: Theme.of(navigatorKey.currentContext!)
+                            .dialogBackgroundColor,
+                        width: Constants.homeArrowWidth,
+                        tipLength: Constants.homeArrowTipLength,
+                        // Placeholder text (different depending on whether we
+                        // are filtering)
+                        child: Text(
+                          labelsData.filterLabelId == null
+                              ? Constants.homePlaceholderTextAll
+                              : Constants.homePlaceholderTextLabel,
+                          style: TextStyle(
+                              fontSize: Constants.homePlaceholderSize,
+                              color: Theme.of(navigatorKey.currentContext!)
+                                  .primaryColor),
+                        ),
+                      ),
+                    ),
+              // Positions new note button in the bottom right
+              Container(
+                alignment: Alignment.bottomRight,
+                padding: const EdgeInsets.all(Constants.homePadding),
+                // Receives arrow from placeholder when there are no notes
+                child: ArrowElement(
+                  id: 'newNoteButton',
+                  targetAnchor: Alignment.topLeft,
+                  // New note button
+                  child: FloatingActionButton(
+                    onPressed: newNote,
+                    tooltip: Constants.newNoteTip,
+                    child: Icon(Icons.add),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        elevation: 0,
-        // App bar actions
-        actions: [
-          // Note shape / layout button
-          IconButton(
-            onPressed: () {
-              alert(
-                context,
-                title: Text(Constants.layoutEditTitle),
-                content: LayoutEditContent(refresh: () => setState(() {})),
-                textOK: Text(Constants.layoutEditOK),
-              );
-            },
-            tooltip: Constants.layoutTip,
-            icon: Icon(Icons.grid_view_rounded),
-          ),
-          SizedBox(width: Constants.appBarPadding),
-          // Theme edit button
-          IconButton(
-            onPressed: () {
-              alert(
-                context,
-                title: Text(Constants.themeEditTitle),
-                content: ThemeEditContent(),
-                textOK: Text(Constants.themeEditOK),
-              );
-            },
-            tooltip: Constants.themeTip,
-            icon: Icon(Icons.color_lens),
-          ),
-          SizedBox(width: Constants.appBarPadding),
-        ],
-      ),
-      // Drawer with settings, labels, etc
-      drawer: HomeDrawer(labelsData),
-      // Saves label name when drawer is closed
-      onDrawerChanged: (isOpen) {
-        if (!isOpen) {
-          // Saves label name if one was being edited
-          if (labelsData.labelsEditMode &&
-              labelsData.editLabelId != '' &&
-              labelsData.labelName != null &&
-              labelsData.labelName !=
-                  noteData.getLabelName(labelsData.editLabelId)) {
-            noteData.editLabelName(
-              labelsData.editLabelId,
-              labelsData.labelName!,
-            );
-          }
-          // Resets data
-          labelsData.resetEditing();
-          setState(() {});
-        }
-      },
-      // Stack so that buttons can go over the grid
-      body: Stack(
-        children: <Widget>[
-          // Grid with notes
-          DynamicGrid(
-            refreshNotes: () => setState(() {}),
-            filterLabelId: labelsData.filterLabelId,
-            // Rebuilds when the filter id or layout changes
-            key: ValueKey(labelsData.filterLabelId ??
-                '' + noteData.layoutDimensionId.toString()),
-          ),
-          // Add note button
-          Container(
-            alignment: Alignment.bottomRight,
-            padding: const EdgeInsets.all(Constants.homePadding),
-            child: FloatingActionButton(
-              onPressed: newNote,
-              tooltip: Constants.newNoteTip,
-              child: Icon(Icons.add),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -251,7 +328,7 @@ class LabelsData {
   // Which label is in name edit mode (empty string for none)
   String editLabelId = '';
   // Current edited label name
-  String? labelName;
+  String? editLabelName;
   // Filtering label
   String? filterLabelId;
   // Function for refreshing the home page
@@ -263,7 +340,7 @@ class LabelsData {
   void resetEditing() {
     labelsEditMode = false;
     editLabelId = '';
-    labelName = null;
+    editLabelName = null;
   }
 
   LabelsData(this.filterLabelId, this.refreshNotes, this.filterLabel);

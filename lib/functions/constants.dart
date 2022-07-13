@@ -1,5 +1,6 @@
 // App constants
 import 'package:flutter/material.dart';
+import 'package:schema/functions/general.dart';
 
 class Constants {
   /* Note and grid constants */
@@ -29,16 +30,16 @@ class Constants {
     [2, 2],
   ];
   static const List<String> layoutDimensionNames = [
-    "Default",
-    "Wide",
-    "Tall",
-    "Large",
+    'Default',
+    'Wide',
+    'Tall',
+    'Large',
   ];
   static const List<String> layoutDimensionTips = [
-    "1 x 1",
-    "2 x 1",
-    "1 x 2",
-    "2 x 2",
+    '1 x 1',
+    '2 x 1',
+    '1 x 2',
+    '2 x 2',
   ];
 
   /* Page layout constants */
@@ -52,6 +53,9 @@ class Constants {
   static const double drawerLabelSplashRadius = 24;
   static const double appBarPadding = 10;
   static const double appBarSize = 20;
+  static const double homePlaceholderSize = 20;
+  static const double homeArrowWidth = 5;
+  static const double homeArrowTipLength = 25;
 
   // Edit page
   static const double editPadding = 30;
@@ -85,6 +89,13 @@ class Constants {
   static const double layoutEditRadius = 10;
   static const double layoutEditSize = 80;
 
+  // Tutorial page
+  static const double tutorialPadding = 20;
+  static const double tutorialVidRadius = 10;
+  static const double tutorialWidth = 500;
+  static const double tutorialAspectRatioDesktop = 824 / 868;
+  static const double tutorialAspectRatioMobile = 800 / 1012;
+
   /* Durations */
 
   // Delay and animation durations (in milliseconds)
@@ -103,8 +114,10 @@ class Constants {
 
   // Page titles
   static const String appTitle = 'Schema';
+  static const String appTitleLong = 'Schema Notes';
   static const String editTitle = 'Edit note';
   static const String signInTitle = 'Sign in';
+  static const String tutorialTitle = 'Tutorial';
 
   // Alert/snackbar messages
   static const String discardMessage = 'Empty note discarded';
@@ -135,10 +148,16 @@ class Constants {
   static const String transferOK = 'Transfer data';
   static const String transferDeleteTitle = 'Delete data?';
   static const String transferDeleteMessage =
-      'This will delete all notes and labels you made while signed out. Any ' +
-          'notes already saved on your Google account will remain.';
+      'This will permanently delete all notes and labels that you made while ' +
+          'signed out. Any notes already saved on your Google account will remain.';
   static const String transferDeleteOK = 'Delete data';
   static const String transferCompleteMessage = 'Transfer complete';
+  static const String accountDeleteTitle = 'Delete account and all data?';
+  static const String accountDeleteMessage =
+      'This will permanently delete all notes and labels that you have made ' +
+          'on this account.';
+  static const String accountDeleteConfirm = 'I understand.';
+  static const String accountDeleteOK = 'Delete account';
   static const String layoutEditTitle = 'Change note layout';
   static const String layoutEditOK = 'Done';
   static const String themeEditTitle = 'Edit theme';
@@ -171,9 +190,11 @@ class Constants {
   static const String stopFilterTip = 'Stop filtering';
   static const String layoutTip = 'Change note layout';
   static const String themeTip = 'Edit theme';
+  static const String tutorialTip = 'Tutorial';
   static const String savingTip = 'Saving...';
   static const String savedCloudTip = 'Saved to cloud';
   static const String savedOfflineTip = 'Saved offline';
+  static const String backTip = 'Back';
 
   // Button texts
   static const String signInGoogleButton = 'Sign in with Google';
@@ -182,6 +203,7 @@ class Constants {
   static const String signInButton = 'Sign in to sync your data';
   static const String signOutButton = 'Sign out of your account';
   static const String privacyPolicyButton = 'Privacy Policy';
+  static const String deleteAccountButton = 'Delete account';
   static const String themeLightButton = 'Light mode';
   static const String themeDarkButton = 'Dark mode';
   static const String themeIntenseButton = 'Intense mode';
@@ -206,9 +228,15 @@ class Constants {
   static const String drawerSignedInText = 'Signed in as %s';
   static const String drawerSignedOutText =
       'Notes are only saving to this device.';
+  static const String homePlaceholderTextAll =
+      'You don\'t have any notes yet. Press the plus button to create your ' +
+          'first!';
+  static const String homePlaceholderTextLabel =
+      'There are no notes with this label. Press the plus button to add one!';
 
   // Links
-  static const String privacyPolicyLink = 'https://evoth.cf/privacy/#privacy';
+  static const String privacyPolicyLink =
+      'https://ethanvoth.com/privacy/#privacy';
 
   /* Asset constants */
 
@@ -274,4 +302,106 @@ class Constants {
   static const int themeDefaultColorId = 13;
   static const bool themeDefaultIsDark = true;
   static const bool themeDefaultIsMonochrome = true;
+
+  /* Tutorial content */
+
+  static List<TutorialItem> tutorialContent = [
+    TutorialItem(
+      title: 'Create and delete notes',
+      description:
+          'On the home screen, press the plus button in the bottom right ' +
+              'corner. A new note will be created and ready to edit! To ' +
+              'delete a note, ' +
+              (isMobileDevice() ? 'tap ' : 'click ') +
+              'the note on the home screen to open the edit page. Then, press ' +
+              'the delete button in the top right corner of the edit page to ' +
+              'delete the note.',
+      vidPathDesktop: 'assets/tutorial/desktop_create_delete_notes.mp4',
+      vidPathMobile: 'assets/tutorial/mobile_create_delete_notes.mp4',
+    ),
+    TutorialItem(
+      title: 'Edit a note',
+      description: (isMobileDevice() ? 'Tap ' : 'Click ') +
+          'the note on the home screen to open the edit page. There, you ' +
+          'can edit its title and text, add and remove labels, or delete ' +
+          'the note. Once you\'re done, just press the arrow in the top ' +
+          'left corner to return to the home page.',
+      vidPathDesktop: 'assets/tutorial/desktop_edit_note.mp4',
+      vidPathMobile: 'assets/tutorial/mobile_edit_note.mp4',
+    ),
+    TutorialItem(
+      title: 'Arrange notes',
+      description: (isMobileDevice()
+              ? 'Press and hold a note to start dragging it, '
+              : 'Click and drag a note, ') +
+          'then move it wherever you like. (Moving notes is disabled when ' +
+          'filtering by a label. Once you stop filtering, it will be enabled ' +
+          'again.)',
+      vidPathDesktop: 'assets/tutorial/desktop_arrange_notes.mp4',
+      vidPathMobile: 'assets/tutorial/mobile_arrange_notes.mp4',
+    ),
+    TutorialItem(
+      title: 'Edit a note\'s labels',
+      description:
+          'In the note\'s edit page, press the "Add label" button to add a ' +
+              'label to the note. To remove a label, press the "x" button ' +
+              'next to it.',
+      vidPathDesktop: 'assets/tutorial/desktop_edit_note_labels.mp4',
+      vidPathMobile: 'assets/tutorial/mobile_edit_note_labels.mp4',
+    ),
+    TutorialItem(
+      title: 'Create and delete labels',
+      description:
+          'On the home page, press the 3 bars in the top left corner to open ' +
+              'the drawer. To create a new label, press the plus button by the ' +
+              'word "Labels". To delete a label, press the edit button, then ' +
+              'press the delete button by the label you want to delete.',
+      vidPathDesktop: 'assets/tutorial/desktop_create_delete_labels.mp4',
+      vidPathMobile: 'assets/tutorial/mobile_create_delete_labels.mp4',
+    ),
+    TutorialItem(
+      title: 'Edit the name of a label',
+      description:
+          'On the home page, press the 3 bars in the top left corner to open ' +
+              'the drawer. Press the edit button by the word "Labels", then ' +
+              (isMobileDevice() ? 'tap ' : 'click ') +
+              'a label to edit its ' +
+              'name. Press the checkmark or enter key when you\'re done.',
+      vidPathDesktop: 'assets/tutorial/desktop_edit_label_name.mp4',
+      vidPathMobile: 'assets/tutorial/mobile_edit_label_name.mp4',
+    ),
+    TutorialItem(
+      title: 'Filter notes by a label',
+      description:
+          'On the home page, press the 3 bars in the top left corner to open ' +
+              'the drawer. ' +
+              (isMobileDevice() ? 'Tap ' : 'Click ') +
+              'a label to show only notes with that label. To stop filtering ' +
+              'and return to all notes, press the "x" button by the label.',
+      vidPathDesktop: 'assets/tutorial/desktop_filter_by_label.mp4',
+      vidPathMobile: 'assets/tutorial/mobile_filter_by_label.mp4',
+    ),
+  ];
+}
+
+// Stores the content of one item in the tutorial page
+class TutorialItem {
+  // If both video paths are provided, mark as having a video and fill the path
+  // field with the correct path for the device
+  TutorialItem({
+    required this.title,
+    required this.description,
+    String? vidPathDesktop,
+    String? vidPathMobile,
+  })  : this.hasVid = vidPathDesktop != null && vidPathMobile != null,
+        this.vidPath = isMobileDevice() ? vidPathMobile : vidPathDesktop,
+        this.vidAspectRatio = isMobileDevice()
+            ? Constants.tutorialAspectRatioMobile
+            : Constants.tutorialAspectRatioDesktop;
+
+  final String title;
+  final String description;
+  final bool hasVid;
+  final String? vidPath;
+  final double vidAspectRatio;
 }

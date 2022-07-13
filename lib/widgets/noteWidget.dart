@@ -19,102 +19,108 @@ class NoteWidget extends StatefulWidget {
 }
 
 class _NoteWidgetState extends State<NoteWidget> {
+  // Sets note variable for convenience
+  late Note note = widget.noteWidgetData.note;
+
   @override
   Widget build(BuildContext context) {
-    // Sets note variable for convenience
-    Note note = widget.noteWidgetData.note;
+    return deviceDraggable();
+  }
 
-    // Drag functions to be used by both LongPressDraggable and Draggable
-    void dragStartFunction() {
-      // Unfocuses text fields when dragged
-      unfocus(context);
-      // Gives grid some info about dragging
-      widget.noteWidgetData.drag1!(
-        note.index,
-        true,
-        originalX: widget.noteWidgetData.originalX,
-        originalY: widget.noteWidgetData.originalY,
+  // Drag functions to be used by both LongPressDraggable and Draggable
+  void dragStartFunction() {
+    // Unfocuses text fields when dragged
+    unfocus(context);
+    // Gives grid some info about dragging
+    widget.noteWidgetData.drag1!(
+      note.index,
+      true,
+      originalX: widget.noteWidgetData.originalX,
+      originalY: widget.noteWidgetData.originalY,
+    );
+  }
+
+  void dragUpdateFunction(DragUpdateDetails dragDetails) {
+    // Gives grid some info about dragging
+    widget.noteWidgetData.drag2!(
+      note.index,
+      dragDetails,
+    );
+  }
+
+  void dragEndFunction(DraggableDetails dragDetails) {
+    // Gives grid some info about dragging
+    widget.noteWidgetData.drag1!(note.index, false);
+  }
+
+  // Different draggable mode for different devices
+  Widget deviceDraggable() {
+    if (isMobileDevice()) {
+      return LayoutBuilder(
+        builder: (context, constraints) => LongPressDraggable(
+          // Buzz
+          hapticFeedbackOnStart: true,
+          // Long press before note starts to drag
+          delay: Duration(milliseconds: Constants.noteDragDelay),
+          // Note when not being dragged
+          child: NoteWidgetBase(
+            noteWidgetData: widget.noteWidgetData,
+            width: constraints.maxWidth,
+            height: constraints.maxHeight,
+          ),
+          // Note when dragged (had to wrap in a Material because of a glitch)
+          feedback: Material(
+            color: Colors.transparent,
+            child: NoteWidgetBase(
+              noteWidgetData: widget.noteWidgetData,
+              width: constraints.maxWidth,
+              height: constraints.maxHeight,
+              select: true,
+            ),
+          ),
+          childWhenDragging: Container(),
+          // See drag functions above
+          onDragStarted: dragStartFunction,
+          onDragUpdate: dragUpdateFunction,
+          onDragEnd: dragEndFunction,
+        ),
       );
-    }
-
-    void dragUpdateFunction(DragUpdateDetails dragDetails) {
-      // Gives grid some info about dragging
-      widget.noteWidgetData.drag2!(
-        note.index,
-        dragDetails,
-      );
-    }
-
-    void dragEndFunction(DraggableDetails dragDetails) {
-      // Gives grid some info about dragging
-      widget.noteWidgetData.drag1!(note.index, false);
-    }
-
-    // Different draggable mode for different devices
-    LayoutBuilder deviceDraggable() {
-      if (isMobileDevice()) {
-        return LayoutBuilder(
-          builder: (context, constraints) => LongPressDraggable(
-            // Buzz
-            hapticFeedbackOnStart: true,
-            // Long press before note starts to drag
-            delay: Duration(milliseconds: Constants.noteDragDelay),
-            // Note when not being dragged
+    } else {
+      return LayoutBuilder(
+        builder: (context, constraints) => Draggable(
+          // Note (Material ancestor for when it's floating)
+          child: Material(
+            color: Colors.transparent,
             child: NoteWidgetBase(
               noteWidgetData: widget.noteWidgetData,
               width: constraints.maxWidth,
               height: constraints.maxHeight,
             ),
-            // Note when dragged (had to wrap in a Material because of a glitch)
-            feedback: Material(
-              color: Colors.transparent,
-              child: NoteWidgetBase(
-                noteWidgetData: widget.noteWidgetData,
-                width: constraints.maxWidth,
-                height: constraints.maxHeight,
-                select: true,
-              ),
-            ),
-            childWhenDragging: Container(),
-            // See drag functions above
-            onDragStarted: dragStartFunction,
-            onDragUpdate: dragUpdateFunction,
-            onDragEnd: dragEndFunction,
           ),
-        );
-      } else {
-        return LayoutBuilder(
-          builder: (context, constraints) => Draggable(
-            // Note (Material ancestor for when it's floating)
+          // Grabbing cursor while dragging note on desktop (switched to beta
+          // just for this feature)
+          ignoringFeedbackPointer: false,
+          feedback: MouseRegion(
+            // Note when dragged (Material ancestor for when it's floating)
+            cursor: SystemMouseCursors.grabbing,
             child: Material(
               color: Colors.transparent,
               child: NoteWidgetBase(
                 noteWidgetData: widget.noteWidgetData,
                 width: constraints.maxWidth,
                 height: constraints.maxHeight,
-              ),
-            ),
-            // Note when dragged (Material ancestor for when it's floating)
-            feedback: Material(
-              color: Colors.transparent,
-              child: NoteWidgetBase(
-                noteWidgetData: widget.noteWidgetData,
-                width: constraints.maxWidth,
-                height: constraints.maxHeight,
                 select: true,
               ),
             ),
-            childWhenDragging: Container(),
-            // See drag functions above
-            onDragStarted: dragStartFunction,
-            onDragUpdate: dragUpdateFunction,
-            onDragEnd: dragEndFunction,
           ),
-        );
-      }
+          childWhenDragging: Container(),
+          // See drag functions above
+          onDragStarted: dragStartFunction,
+          onDragUpdate: dragUpdateFunction,
+          onDragEnd: dragEndFunction,
+        ),
+      );
     }
-
-    return deviceDraggable();
   }
 }
 
@@ -227,7 +233,7 @@ class _NoteWidgetBaseState extends State<NoteWidgetBase> {
   }
 
   // Workaround from https://github.com/flutter/flutter/issues/15465#issuecomment-868357973
-  LayoutBuilder mostLinesText(text) {
+  Widget mostLinesText(text) {
     return LayoutBuilder(builder: (context, constraints) {
       //use a text painter to calculate the height taking into account text scale factor.
       //could be moved to a extension method or similar

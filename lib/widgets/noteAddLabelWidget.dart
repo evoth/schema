@@ -49,14 +49,14 @@ class NoteAddLabelButton extends StatelessWidget {
             children: [
               Icon(
                 Icons.add,
-                color: Theme.of(context).accentColor,
+                color: Theme.of(context).primaryColor,
               ),
               SizedBox(width: Constants.addNewGap),
               Text(
                 Constants.newLabelText,
                 style: TextStyle(
                   fontSize: Constants.addLabelOptionSize,
-                  color: Theme.of(context).accentColor,
+                  color: Theme.of(context).primaryColor,
                 ),
               ),
             ],
@@ -122,6 +122,7 @@ Future<void> addNewLabel(Note? note, Function refreshLabels) async {
       style: TextStyle(fontSize: Constants.addLabelTitleSize),
     ),
     hintText: Constants.labelNameHint,
+    textCapitalization: TextCapitalization.sentences,
   );
   // Checks label name to make sure it's valid
   newLabelName = await checkLabelName(newLabelName);

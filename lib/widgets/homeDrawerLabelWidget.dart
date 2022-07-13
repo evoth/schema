@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:schema/data/noteData.dart';
 import 'package:schema/functions/constants.dart';
 import 'package:schema/functions/general.dart';
+import 'package:schema/main.dart';
 import 'package:schema/routes/homePage.dart';
 
 // Returns a list tile representing a label in the home drawer
@@ -128,6 +129,10 @@ class HomeDrawerLabel extends StatelessWidget {
         onTap: () async {
           data.filterLabel(labelId);
         },
+        // If filtering by this label, highlight and show stop filtering button
+        tileColor: data.filterLabelId == labelId
+            ? Theme.of(navigatorKey.currentContext!).dialogBackgroundColor
+            : null,
         trailing: data.filterLabelId == labelId
             ? IconButton(
                 splashRadius: Constants.drawerLabelSplashRadius,

@@ -9,7 +9,6 @@ part of 'noteData.dart';
 NoteData _$NoteDataFromJson(Map<String, dynamic> json) => NoteData(
       ownerId: json['ownerId'] as String?,
       isAnonymous: json['isAnonymous'] as bool? ?? true,
-      email: json['email'] as String?,
     )
       ..numNotes = json['numNotes'] as int
       ..labels = (json['labels'] as Map<String, dynamic>).map(
@@ -36,7 +35,6 @@ Map<String, dynamic> _$NoteDataToJson(NoteData instance) => <String, dynamic>{
       'timeRegistered': NoteData._rawTimeStamp(instance.timeRegistered),
       'ownerId': instance.ownerId,
       'isAnonymous': instance.isAnonymous,
-      'email': instance.email,
       'themeColorId': instance.themeColorId,
       'themeIsDark': instance.themeIsDark,
       'themeIsMonochrome': instance.themeIsMonochrome,

@@ -81,6 +81,10 @@ class SchemaThemeData with ChangeNotifier {
         0.22,
         isMonochrome,
       );
+      Color noteColor = Color.alphaBlend(
+        backgroundColor.withOpacity(Constants.noteOpacity),
+        canvasColor,
+      );
       return ThemeData(
         brightness: Brightness.dark,
         primarySwatch: color,
@@ -88,10 +92,7 @@ class SchemaThemeData with ChangeNotifier {
         accentColor: color,
         backgroundColor: backgroundColor,
         canvasColor: canvasColor,
-        dialogBackgroundColor: Color.alphaBlend(
-          backgroundColor.withOpacity(Constants.noteOpacity),
-          canvasColor,
-        ),
+        dialogBackgroundColor: noteColor,
         appBarTheme: AppBarTheme(
           backgroundColor: canvasColor,
           titleTextStyle: TextStyle(
@@ -110,6 +111,7 @@ class SchemaThemeData with ChangeNotifier {
             ),
           ),
         ),
+        fontFamily: 'Roboto',
       );
     } else {
       Color canvasColor = colorWithSaturationLightness(
@@ -124,6 +126,10 @@ class SchemaThemeData with ChangeNotifier {
         0.85,
         isMonochrome,
       );
+      Color noteColor = Color.alphaBlend(
+        backgroundColor.withOpacity(Constants.noteOpacity),
+        canvasColor,
+      );
       return ThemeData(
         brightness: Brightness.light,
         primarySwatch: color,
@@ -131,10 +137,7 @@ class SchemaThemeData with ChangeNotifier {
         accentColor: color,
         backgroundColor: backgroundColor,
         canvasColor: canvasColor,
-        dialogBackgroundColor: Color.alphaBlend(
-          backgroundColor.withOpacity(Constants.noteOpacity),
-          canvasColor,
-        ),
+        dialogBackgroundColor: noteColor,
         appBarTheme: AppBarTheme(
           backgroundColor: canvasColor,
           titleTextStyle: TextStyle(
@@ -153,6 +156,7 @@ class SchemaThemeData with ChangeNotifier {
             ),
           ),
         ),
+        fontFamily: 'Roboto',
       );
     }
   }

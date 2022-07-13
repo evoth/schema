@@ -1,17 +1,31 @@
-# Schema
-Functional notes app with features like labels, cloud storage, themes, offline functionality, and realtime syncing across devices.
+# Schema Notes
+A clean, customizable, and functional notes app with support for note organization, offline use, and real-time syncing across multiple devices.
 
-## Todo
+[<img src='https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png' alt='Get it on Google Play' width='210' height='80'>](https://play.google.com/store/apps/details?id=com.ethanvoth.schema)
+[<img src='marketing/github/web_badge/web_badge.png' alt='Use it as a Web App' width='210' height='80'>](https://schema.ethanvoth.com)
+
+## Features
+- Clean, simple, and customizable design
+- Arrange notes in any order
+- Easily organize notes using labels
+- Keep editing notes without connection
+- Many options to make your theme
+- Real-time sync across devices
+- Web app available at https://schema.ethanvoth.com
+
+## Screenshots
+<div style="display: flex; flex-wrap: wrap; margin-bottom: 10px;">
+   <div style="display: flex; flex-wrap: wrap; flex: 1 420px;">
+      <img src="marketing/github/screenshots/png/phone_screenshot_1.png" alt="Schema Notes screenshot 1" width="200" style="flex: 1; margin: 5px">
+      <img src="marketing/github/screenshots/png/phone_screenshot_2.png" alt="Schema Notes screenshot 2" width="200" style="flex: 1; margin: 5px">
+   </div>
+   <div style="display: flex; flex-wrap: wrap; flex: 1 420px;">
+      <img src="marketing/github/screenshots/png/phone_screenshot_3.png" alt="Schema Notes screenshot 3" width="200" style="flex: 1; margin: 5px">
+      <img src="marketing/github/screenshots/png/phone_screenshot_4.png" alt="Schema Notes screenshot 4" width="200" style="flex: 1; margin: 5px">
+   </div>
+</div>
+
+## To-Do
+- "Intense mode" for light mode and a darker dark mode option
 - Lazy loading
-- Mobile optimizations (remove scroll for labels?)
-- Make widgets like Text() const
-- Make it so you can't go back to loading screen
-- Make public variables that should be private private
-- Make variables that are only set once final or const
-- Optimize grid.dart?
-- Finishing touches
-   - Tutorial / about
-   - Placeholder for when there are no notes
-   - Publish
-   - Update web descriptions
-- Check back in around March 2023 to see if I need to migrate to new authentication provider
+- Add features like checklists, rich text, etc.

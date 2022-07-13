@@ -38,7 +38,6 @@ class NoteData {
   Timestamp timeRegistered = timestampNowRounded();
   String? ownerId;
   bool isAnonymous = true;
-  String? email;
   // Whether we are currently transferring notes
   @JsonKey(ignore: true)
   bool isTransferring = false;
@@ -81,7 +80,6 @@ class NoteData {
     this.timeRegistered = copyData.timeRegistered;
     this.ownerId = copyData.ownerId;
     this.isAnonymous = copyData.isAnonymous;
-    this.email = copyData.email;
     this.themeColorId = copyData.themeColorId;
     this.themeIsDark = copyData.themeIsDark;
     this.themeIsMonochrome = copyData.themeIsMonochrome;
@@ -248,12 +246,7 @@ class NoteData {
               tag: note.id,
               child: Container(
                 // Simulates overlaying note color onto canvas color
-                color: Color.alphaBlend(
-                  Theme.of(context)
-                      .backgroundColor
-                      .withOpacity(Constants.noteOpacity),
-                  Theme.of(context).canvasColor,
-                ),
+                color: Theme.of(context).dialogBackgroundColor,
                 child: NoteEditPage(noteWidgetData),
               ),
             );
@@ -289,12 +282,7 @@ class NoteData {
                       Constants.editDialogPadding + Constants.editPadding,
                     ),
                     // Simulates overlaying note color onto canvas color
-                    backgroundColor: Color.alphaBlend(
-                      Theme.of(context)
-                          .backgroundColor
-                          .withOpacity(Constants.noteOpacity),
-                      Theme.of(context).canvasColor,
-                    ),
+                    backgroundColor: Theme.of(context).dialogBackgroundColor,
                     insetPadding: EdgeInsets.zero,
                   ),
                 ),
@@ -482,7 +470,7 @@ class NoteData {
 
   // Updates note metadata document for the user
   Future<void> updateData({bool resetNums = false}) async {
-    // Resets note counts (in case of desync)
+    // Resets note counts and removes nonexistent labels (in case of desync)
     if (resetNums) {
       numNotes = 0;
       for (String labelId in labels.keys) {
@@ -490,8 +478,12 @@ class NoteData {
       }
       for (String noteId in noteMeta.keys) {
         numNotes++;
-        for (String labelId in noteMeta[noteId]?['labels'].keys) {
-          labels[labelId]?['numNotes']++;
+        for (String labelId in noteMeta[noteId]?['labels'].keys.toList()) {
+          if (labels.containsKey(labelId)) {
+            labels[labelId]?['numNotes']++;
+          } else {
+            noteMeta[noteId]?['labels'].remove(labelId);
+          }
         }
       }
     }
@@ -566,6 +558,10 @@ class NoteData {
         noteMeta[noteId]!['index'] = 0;
       }
     }
+
+    notes.sort(
+      (a, b) => a.index.compareTo(b.index),
+    );
 
     // Uses the theme from offline if it was updated more recently
     // TODO: Fix theme reversal behavior
@@ -679,7 +675,6 @@ class NoteData {
       noteData = NoteData(
         ownerId: ownerId,
         isAnonymous: isAnonymous,
-        email: email,
       );
       return;
     } else if (!failed && dataDoc!.exists) {
@@ -694,6 +689,12 @@ class NoteData {
     if (newNoteData == null) {
       showAlert(Constants.updateNotesErrorMessage, useSnackbar: true);
       return;
+    }
+
+    // If filter label no longer exists, stop filtering
+    if (filterLabelId != null &&
+        !newNoteData.labels.containsKey(filterLabelId)) {
+      filterLabelId = null;
     }
 
     // Merges any offline sessions that haven't been merged yet
@@ -886,7 +887,6 @@ class NoteData {
           NoteData(
             ownerId: newUser.uid,
             isAnonymous: newUser.isAnonymous,
-            email: newUser.email,
           ),
         );
 
@@ -936,7 +936,6 @@ class NoteData {
     NoteData newNoteData = NoteData(
       ownerId: newUser.uid,
       isAnonymous: newUser.isAnonymous,
-      email: newUser.email,
     );
 
     await newNoteData.updateNotes(null);
@@ -985,20 +984,20 @@ class NoteData {
   // Sets timeOffline in shared preferences to retrieve when starting offline
   Future<void> setTimeOfflineSP() async {
     final sp = await SharedPreferences.getInstance();
-    sp.setInt("timeOfflineMilliseconds", timeOffline.millisecondsSinceEpoch);
+    sp.setInt('timeOfflineMilliseconds', timeOffline.millisecondsSinceEpoch);
   }
 
   // Gets timeOffline from shared preferences when starting offline
   Future<void> getTimeOfflineSP() async {
     final sp = await SharedPreferences.getInstance();
-    int? timeOfflineMilliseconds = sp.getInt("timeOfflineMilliseconds");
+    int? timeOfflineMilliseconds = sp.getInt('timeOfflineMilliseconds');
     if (timeOfflineMilliseconds != null) {
       timeOffline =
           Timestamp.fromMillisecondsSinceEpoch(timeOfflineMilliseconds);
     }
   }
 
-  NoteData({required this.ownerId, this.isAnonymous = true, this.email});
+  NoteData({required this.ownerId, this.isAnonymous = true});
 
   factory NoteData.fromJson(Map<String, dynamic> json) =>
       _$NoteDataFromJson(json);

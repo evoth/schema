@@ -1,11 +1,11 @@
 {
-    "name": "Schema",
+    "name": "Schema Notes",
     "short_name": "Schema",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "A clean, customizable, and functional notes app with support for note organization, offline use, and real-time syncing across multiple devices.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

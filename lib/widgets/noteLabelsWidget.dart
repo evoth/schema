@@ -17,6 +17,16 @@ class NoteLabels extends StatefulWidget {
 }
 
 class _NoteLabelsState extends State<NoteLabels> {
+  @override
+  Widget build(BuildContext context) {
+    // Wraps the chips across multiple lines if necessary
+    return Wrap(
+      spacing: Constants.labelChipSpacing,
+      runSpacing: Constants.labelChipSpacing,
+      children: allChips(widget.noteWidgetData.note),
+    );
+  }
+
   // Gets list of chips fot the note's labels and the add label button
   List<Widget> allChips(Note note) {
     List<Widget> chips = labelChips(
@@ -33,16 +43,6 @@ class _NoteLabelsState extends State<NoteLabels> {
       ),
     );
     return chips;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Wraps the chips across multiple lines if necessary
-    return Wrap(
-      spacing: Constants.labelChipSpacing,
-      runSpacing: Constants.labelChipSpacing,
-      children: allChips(widget.noteWidgetData.note),
-    );
   }
 }
 

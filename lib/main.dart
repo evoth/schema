@@ -102,7 +102,7 @@ class _SchemaState extends State<Schema> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: Constants.appTitle,
+      title: Constants.appTitleLong,
       // Default route
       initialRoute: '/',
       routes: {

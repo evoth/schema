@@ -43,7 +43,6 @@ void initApp(
   // User data
   noteData.ownerId = user.uid;
   noteData.isAnonymous = user.isAnonymous;
-  noteData.email = user.email;
 
   // If we are in the middle of a transfer, hold off on the updating
   if (noteData.isTransferring) {

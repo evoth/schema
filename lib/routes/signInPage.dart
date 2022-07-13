@@ -8,6 +8,7 @@ import 'package:schema/functions/general.dart';
 import 'package:schema/main.dart';
 
 // Page displayed when user needs to sign in
+// TODO: isolate each button for cleaner code
 class SignInPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -21,116 +22,132 @@ class SignInPage extends StatelessWidget {
           automaticallyImplyLeading: false,
         ),
         // Container in center to contain content
-        body: Center(
-          // Only centered vertically if not on mobile device
-          heightFactor: isMobileDevice() ? 1.0 : null,
-          // Vertical scroll if necessary
-          child: SingleChildScrollView(
-            child: Container(
-              width: Constants.signInWidth,
-              height: Constants.signInHeight,
-              padding: EdgeInsets.all(Constants.signInPadding),
-              // If not on mobile, show rounded border
-              decoration: BoxDecoration(
-                border: isMobileDevice()
-                    ? null
-                    : Border.all(
-                        color: Constants.googleColor,
-                        width: 2,
+        body: LayoutBuilder(
+          // Scroll
+          builder: (context, constraints) => SingleChildScrollView(
+            // Column to hold content + padding
+            child: Column(
+              children: [
+                // A container with a minimum size of fullscreen so that we can
+                // center the content when the screen is taller than content
+                Container(
+                  constraints: BoxConstraints(
+                    minWidth: constraints.maxWidth,
+                    minHeight: constraints.maxHeight - Constants.signInPadding,
+                  ),
+                  child: Center(
+                    // Only centered vertically if not on mobile device
+                    heightFactor: isMobileDevice() ? 1.0 : null,
+                    // Vertical scroll if necessary
+                    child: Container(
+                      width: Constants.signInWidth,
+                      height: Constants.signInHeight,
+                      padding: EdgeInsets.all(Constants.signInPadding),
+                      // If not on mobile, show rounded border
+                      decoration: BoxDecoration(
+                        border: isMobileDevice()
+                            ? null
+                            : Border.all(
+                                color: Constants.googleColor,
+                                width: 2,
+                              ),
+                        borderRadius:
+                            BorderRadius.circular(Constants.signInPadding),
                       ),
-                borderRadius: BorderRadius.circular(Constants.signInPadding),
-              ),
-              // Evenly spaced column
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Sign in title text
-                  Text(
-                    Constants.signInTitle,
-                    style: TextStyle(
-                      fontSize: Constants.signInTextSize * 2,
+                      child: signInContent(),
                     ),
                   ),
-                  // Sign in welcome text (explains sign in options)
-                  Text(
-                    Constants.welcomeText,
-                    style: TextStyle(
-                      fontSize: Constants.signInTextSize,
-                    ),
-                  ),
-                  // Google sign in button
-                  SignInButton(
-                    icon: SvgPicture.asset(
-                      Constants.googleG,
-                      height: Constants.signInButtonSize,
-                    ),
-                    buttonColor: Constants.googleColor,
-                    text: Constants.signInGoogleButton,
-                    // If we are signed in anonymously, ask to transfer notes.
-                    // Otherwise, just sign in normally
-                    onPressed: (BuildContext context) {
-                      if (noteData.isOnline) {
-                        if (noteData.ownerId != null && noteData.isAnonymous) {
-                          // Pop sign in page and ask to transfer notes
-                          Navigator.of(navigatorKey.currentContext!).pop();
-                          noteData.transferNotes();
-                        } else {
-                          signInWithGoogle();
-                        }
-                      } else {
-                        // If we are offline, block from signing in
-                        showAlert(
-                          Constants.signInOfflineErrorMessage,
-                          useSnackbar: true,
-                        );
-                      }
-                    },
-                  ),
-                  // If we are already signed and anonymous, this is a cancel
-                  // sign in button. Otherwise, it's an anonymous sign in button
-                  (noteData.ownerId != null && noteData.isAnonymous)
-                      ?
-                      // Stay signed out button
-                      SignInButton(
-                          icon: Icon(
-                            Icons.close,
-                            color: Constants.googleColor,
-                            size: Constants.signInButtonSize,
-                          ),
-                          buttonColor: Constants.googleColor,
-                          text: Constants.signInCancelButton,
-                          onPressed: (BuildContext context) =>
-                              Navigator.of(context).pop(),
-                        )
-                      :
-                      // Anonymous sign in button
-                      SignInButton(
-                          icon: Icon(
-                            Icons.fast_forward,
-                            color: Constants.googleColor,
-                            size: Constants.signInButtonSize,
-                          ),
-                          buttonColor: Constants.googleColor,
-                          text: Constants.signInAnonButton,
-                          onPressed: (context) {
-                            if (noteData.isOnline) {
-                              // Sign in using anonymous account
-                              signInAnonymously();
-                            } else {
-                              // If we are offline, block from signing in
-                              showAlert(
-                                Constants.signInOfflineErrorMessage,
-                                useSnackbar: true,
-                              );
-                            }
-                          },
-                        ),
-                ],
-              ),
+                ),
+                SizedBox(height: Constants.signInPadding),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget signInContent() {
+    // Evenly spaced column
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Sign in title text
+        Text(
+          Constants.signInTitle,
+          style: TextStyle(
+            fontSize: Constants.signInTextSize * 2,
+          ),
+        ),
+        // Sign in welcome text (explains sign in options)
+        Text(
+          Constants.welcomeText,
+          style: TextStyle(
+            fontSize: Constants.signInTextSize,
+          ),
+        ),
+        // Google sign in button
+        SignInButton(
+          icon: SvgPicture.asset(
+            Constants.googleG,
+            height: Constants.signInButtonSize,
+          ),
+          buttonColor: Constants.googleColor,
+          text: Constants.signInGoogleButton,
+          // If we are signed in anonymously, ask to transfer notes.
+          // Otherwise, just sign in normally
+          onPressed: (BuildContext context) {
+            if (noteData.isOnline) {
+              if (noteData.ownerId != null && noteData.isAnonymous) {
+                // Pop sign in page and ask to transfer notes
+                Navigator.of(navigatorKey.currentContext!).pop();
+                noteData.transferNotes();
+              } else {
+                signInWithGoogle();
+              }
+            } else {
+              // If we are offline, block from signing in
+              showAlert(Constants.signInOfflineErrorMessage);
+            }
+          },
+        ),
+        // If we are already signed and anonymous, this is a cancel sign in
+        // button. Otherwise, it's an anonymous sign in button
+        (noteData.ownerId != null && noteData.isAnonymous)
+            ?
+            // Stay signed out button
+            SignInButton(
+                icon: Icon(
+                  Icons.close,
+                  color: Constants.googleColor,
+                  size: Constants.signInButtonSize,
+                ),
+                buttonColor: Constants.googleColor,
+                text: Constants.signInCancelButton,
+                onPressed: (BuildContext context) =>
+                    Navigator.of(context).pop(),
+              )
+            :
+            // Anonymous sign in button
+            SignInButton(
+                icon: Icon(
+                  Icons.fast_forward,
+                  color: Constants.googleColor,
+                  size: Constants.signInButtonSize,
+                ),
+                buttonColor: Constants.googleColor,
+                text: Constants.signInAnonButton,
+                onPressed: (context) {
+                  if (noteData.isOnline) {
+                    // Sign in using anonymous account
+                    signInAnonymously();
+                  } else {
+                    // If we are offline, block from signing in
+                    showAlert(Constants.signInOfflineErrorMessage);
+                  }
+                },
+              ),
+      ],
     );
   }
 }

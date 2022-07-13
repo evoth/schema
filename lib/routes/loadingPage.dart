@@ -10,22 +10,25 @@ class LoadingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // App bar with title
-      appBar: AppBar(
-        title: Text(Constants.appTitle),
-        elevation: 0,
-        automaticallyImplyLeading: false,
-      ),
-      // Loading symbol with text
-      body: Center(
-        child: Column(
-          children: [
-            Text(text),
-            SizedBox(height: 15),
-            CircularProgressIndicator(),
-          ],
-          mainAxisAlignment: MainAxisAlignment.center,
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        // App bar with title
+        appBar: AppBar(
+          title: Text(Constants.appTitle),
+          elevation: 0,
+          automaticallyImplyLeading: false,
+        ),
+        // Loading symbol with text
+        body: Center(
+          child: Column(
+            children: [
+              Text(text),
+              SizedBox(height: 15),
+              CircularProgressIndicator(),
+            ],
+            mainAxisAlignment: MainAxisAlignment.center,
+          ),
         ),
       ),
     );

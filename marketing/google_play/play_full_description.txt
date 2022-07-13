@@ -1,0 +1,25 @@
+A clean, customizable, and functional notes app with support for note organization, offline use, and real-time syncing across multiple devices.
+
+Organize notes:
+Using labels, each note can belong to multiple categories. Then, filter notes by a label to see the notes in that category.
+
+Arrange notes:
+Simply long press and drag a note to move it wherever you want. New notes are added at the top for easy access.
+
+Real-time sync:
+Keeping notes updated across devices is a breeze with automatic sync across all platforms when you sign in with your Google account.
+
+Edit notes offline:
+Never worry about internet connection; keep on editing offline, and your notes will sync once connection is restored.
+
+Customizable theme:
+With 18 color schemes and 3 brightness modes to choose from, have fun finding your favorite theme.
+
+Privacy:
+No data is collected unless it's absolutely necessary for the functionality of the app. See the data safety section for more information.
+
+Use Schema Notes on the web:
+Available at https://schema.ethanvoth.com
+
+Source code:
+This app is a personal project. Please see the repo at https://github.com/evoth/schema for the source code, and consider opening an issue there if you find a bug. Thank you!

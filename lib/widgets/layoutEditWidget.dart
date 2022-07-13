@@ -14,8 +14,22 @@ class LayoutEditContent extends StatefulWidget {
 }
 
 class _LayoutEditContentState extends State<LayoutEditContent> {
+  @override
+  Widget build(BuildContext context) {
+    // ScrollView in case screen is too short
+    return SingleChildScrollView(
+      // Column is min so that it doesn't fill all vertical space possible
+      child: SizedBox(
+        // Calculates correct width and height to contain tiles
+        height: 3 * Constants.layoutEditSize + Constants.layoutEditSpacing,
+        width: 3 * Constants.layoutEditSize + Constants.layoutEditSpacing,
+        child: layoutMosaic(),
+      ),
+    );
+  }
+
   // Returns a tile representing a certain note dimension choice
-  Tooltip layoutDimensionTile(
+  Widget layoutDimensionTile(
     BuildContext context,
     int dimensionId,
   ) {
@@ -38,7 +52,7 @@ class _LayoutEditContentState extends State<LayoutEditContent> {
           height: Constants.layoutDimensionOptions[dimensionId][1] *
               Constants.layoutEditSize,
           decoration: BoxDecoration(
-            color: Theme.of(context).accentColor,
+            color: Theme.of(context).primaryColor,
             borderRadius: BorderRadius.circular(
               Constants.layoutEditRadius,
             ),
@@ -65,7 +79,7 @@ class _LayoutEditContentState extends State<LayoutEditContent> {
   }
 
   // Little mosaic to represent note dimension options
-  Column layoutMosaic() {
+  Widget layoutMosaic() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       // Two rows of two options each
@@ -90,20 +104,6 @@ class _LayoutEditContentState extends State<LayoutEditContent> {
           ],
         ),
       ],
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // ScrollView in case screen is too short
-    return SingleChildScrollView(
-      // Column is min so that it doesn't fill all vertical space possible
-      child: SizedBox(
-        // Calculates correct width and height to contain tiles
-        height: 3 * Constants.layoutEditSize + Constants.layoutEditSpacing,
-        width: 3 * Constants.layoutEditSize + Constants.layoutEditSpacing,
-        child: layoutMosaic(),
-      ),
     );
   }
 }
